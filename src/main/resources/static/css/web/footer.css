@@ -1,0 +1,42 @@
+a {
+    text-decoration: none;
+}
+
+footer {
+    font-size: 0.875rem;
+}
+
+footer h5 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    text-transform: uppercase;
+}
+
+footer ul li {
+    margin-bottom: 0.5rem;
+}
+
+footer a:hover {
+    color: #007bff !important;
+    text-decoration: none;
+}
+
+.social-icons a:hover,
+.payment-icons i:hover {
+    color: #007bff;
+}
+
+hr {
+    opacity: 0.25;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    footer .row > div {
+        text-align: center;
+    }
+    .social-icons,
+    .payment-icons {
+        justify-content: center;
+    }
+}

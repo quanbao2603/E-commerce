@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WomTech</title>
+</head>
+
+<body>
+    <header th:fragment="header">
+    <!-- Top Bar: Hotline, Chi nhánh, Đăng nhập, Yêu thích, Giỏ hàng -->
+    <div class="top-bar bg-dark text-white py-2">
+        <div class="container d-flex justify-content-between align-items-center">
+            <div class="left-info d-flex align-items-center">
+                <span class="me-3"><i class="bi bi-telephone-fill me-1"></i> Hotline: 1800-123-456</span>
+                <span><i class="bi bi-geo-alt-fill me-1"></i> Chi nhánh: TP.HCM, Hà Nội, Đà Nẵng</span>
+            </div>
+            <div class="right-info d-flex align-items-center">
+                <a href="/login" class="text-white me-3"><i class="bi bi-person-fill me-1"></i> Đăng nhập / Đăng ký</a>
+                <a href="/wishlist" class="text-white me-3"><i class="bi bi-heart-fill me-1"></i> Yêu thích</a>
+                <a href="/cart" class="text-white"><i class="bi bi-cart-fill me-1"></i> Giỏ hàng (0)</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Middle Section: Logo, Search, Icons -->
+    <div class="middle-header bg-light py-3 border-bottom">
+        <div class="container d-flex align-items-center justify-content-between">
+            <!-- Logo -->
+            <a class="navbar-brand d-flex align-items-center" href="/">
+                <img th:src="@{/images/logo.png}" alt="WomTech" class="me-2" style="height: 50px;" />
+                <span class="fw-bold fs-4 text-primary">WomTech</span>
+            </a>
+
+            <!-- Search Bar -->
+            <form class="search-form d-flex w-50" th:action="@{/search}" method="get">
+                <input class="form-control me-2 rounded-pill" type="search" placeholder="Tìm kiếm laptop, phụ kiện..." aria-label="Search" name="query" />
+                <button class="btn btn-primary rounded-pill" type="submit"><i class="bi bi-search"></i></button>
+            </form>
+
+            <!-- Icons -->
+            <div class="icons d-flex align-items-center">
+                <a href="/hotline" class="d-flex flex-column align-items-center me-4 text-dark text-decoration-none">
+                    <i class="bi bi-headset fs-3"></i>
+                    <small>Hotline</small>
+                </a>
+                <a href="/account" class="d-flex flex-column align-items-center me-4 text-dark text-decoration-none">
+                    <i class="bi bi-person fs-3"></i>
+                    <small>Tài khoản</small>
+                </a>
+                <a href="/cart" class="d-flex flex-column align-items-center text-dark text-decoration-none">
+                    <i class="bi bi-bag fs-3"></i>
+                    <small>Giỏ hàng</small>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Navigation: Menu 3 cấp với Danh Mục Sản Phẩm -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#mainNav" aria-controls="mainNav" aria-expanded="false" aria-label="Toggle navigation">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="mainNav">
+                <ul class="navbar-nav me-auto mb-2 mb-lg-0">
+                    <!-- Danh Mục Sản Phẩm: Cấp 1 -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-medium" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Danh Mục Sản Phẩm</a>
+                        <ul class="dropdown-menu shadow">
+                            <!-- Cấp 2: Laptop Gaming -->
+                            <li class="dropdown-submenu">
+                                <a class="dropdown-item dropdown-toggle" href="#">Laptop Gaming</a>
+                                <!-- Cấp 3: Chi tiết dòng -->
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" th:href="@{/laptop-gaming-hi-end}">Laptop Gaming Hi-end</a></li>
+                                    <li><a class="dropdown-item" th:href="@{/top-10-laptop-gaming}">Top 10 Laptop Gaming</a></li>
+                                    <li><a class="dropdown-item" th:href="@{/laptop-cpu-ultra-ai}">Laptop CPU Ultra AI</a></li>
+                                    <li><a class="dropdown-item" th:href="@{/laptop-gaming-rtx-50-series}">RTX 50 Series</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Asus Gaming</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-asus-rog-strix}">ROG Strix</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-asus-rog-flow}">ROG Flow</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-asus-tuf}">TUF Gaming</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">MSI Gaming</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-msi-gf}">GF Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-msi-ge}">GE Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-msi-katana}">Katana</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Acer Gaming</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-acer-nitro}">Nitro Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-acer-predator}">Predator Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Lenovo Gaming</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-lenovo-legion}">Legion Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-lenovo-loq}">LOQ Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Dell Gaming</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-dell-alienware}">Alienware</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-dell-g-series}">G Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">HP Gaming</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-hp-omen}">Omen Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-gaming-hp-victus}">Victus Series</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- Cấp 2: Laptop Văn Phòng -->
+                            <li class="dropdown-submenu">
+                                <a class="dropdown-item dropdown-toggle" href="#">Laptop Văn Phòng</a>
+                                <ul class="dropdown-menu">
+                                    <li><a class="dropdown-item" th:href="@{/top-10-laptop-van-phong}">Top 10 Laptop Văn Phòng</a></li>
+                                    <li><a class="dropdown-item" th:href="@{/laptop-oled}">Laptop OLED</a></li>
+                                    <li><a class="dropdown-item" th:href="@{/laptop-ultrabook}">Ultrabook</a></li>
+                                    <li><a class="dropdown-item" th:href="@{/laptop-van-phong-cpu-ultra-ai}">CPU Ultra AI Series</a></li>
+                                    <li><hr class="dropdown-divider" /></li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Asus Văn Phòng</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-asus-vivobook}">Vivobook Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-asus-zenbook}">Zenbook Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-asus-expertbook}">ExpertBook Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">MSI Văn Phòng</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-msi-modern}">Modern Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-msi-prestige}">Prestige Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Lenovo Văn Phòng</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-lenovo-thinkpad}">ThinkPad Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-lenovo-ideapad}">IdeaPad Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Acer Văn Phòng</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-acer-aspire}">Aspire Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-acer-swift}">Swift Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">Dell Văn Phòng</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-dell-inspiron}">Inspiron Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-dell-vostro}">Vostro Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-dell-xps}">XPS Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#">HP Văn Phòng</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-hp-pavilion}">Pavilion Series</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/laptop-van-phong-hp-envy}">Envy Series</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- Cấp 2: Thương Hiệu -->
+                            <li class="dropdown-submenu">
+                                <a class="dropdown-item dropdown-toggle" href="#">Thương Hiệu</a>
+                                <ul class="dropdown-menu">
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" th:href="@{/asus}">Asus</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/asus-vivobook}">Vivobook (Văn Phòng)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/asus-zenbook}">Zenbook (Ultrabook)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/asus-rog-tuf}">ROG / TUF (Gaming)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/asus-expertbook}">ExpertBook (Doanh nghiệp)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/asus-oled}">OLED Series</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" th:href="@{/msi}">MSI</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/msi-modern-prestige}">Modern / Prestige (Văn Phòng)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/msi-gf-ge-katana}">GF / GE / Katana (Gaming)</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" th:href="@{/lenovo}">Lenovo</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/lenovo-thinkpad}">ThinkPad (Văn Phòng)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/lenovo-ideapad}">IdeaPad (Đa năng)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/lenovo-legion-loq}">Legion / LOQ (Gaming)</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" th:href="@{/acer}">Acer</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/acer-aspire-swift}">Aspire / Swift (Văn Phòng)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/acer-nitro-predator}">Nitro / Predator (Gaming)</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" th:href="@{/dell}">Dell</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/dell-inspiron-vostro}">Inspiron / Vostro (Văn Phòng)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/dell-xps}">XPS (Premium)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/dell-alienware-g}">Alienware / G Series (Gaming)</a></li>
+                                        </ul>
+                                    </li>
+                                    <li class="dropdown-submenu">
+                                        <a class="dropdown-item dropdown-toggle" href="#" th:href="@{/hp}">HP</a>
+                                        <ul class="dropdown-menu">
+                                            <li><a class="dropdown-item" th:href="@{/hp-pavilion-envy}">Pavilion / Envy (Văn Phòng)</a></li>
+                                            <li><a class="dropdown-item" th:href="@{/hp-omen-victus}">Omen / Victus (Gaming)</a></li>
+                                        </ul>
+                                    </li>
+                                </ul>
+                            </li>
+                            <!-- Cấp 2: Laptop Đồ Họa -->
+                            <li><a class="dropdown-item" th:href="@{/laptop-do-hoa}">Laptop Đồ Họa</a></li>
+                        </ul>
+                    </li>
+                    <!-- Các danh mục khác ngoài Danh Mục Sản Phẩm -->
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle fw-medium" href="#" role="button" data-bs-toggle="dropdown" aria-expanded="false">Khuyến Mãi</a>
+                        <ul class="dropdown-menu shadow">
+                            <li><a class="dropdown-item" th:href="@{/hello-tan-sinh-vien-2025}">Hello Tân Sinh Viên 2025</a></li>
+                            <li><a class="dropdown-item" th:href="@{/nang-doi-laptop}">Nâng Đời Laptop</a></li>
+                            <li><a class="dropdown-item" th:href="@{/giam-gia-dac-biet}">Giảm Giá Đặc Biệt</a></li>
+                            <li><a class="dropdown-item" th:href="@{/combo-ve-sinh-va-setup-may-moi}">Combo Vệ Sinh & Setup Máy Mới</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium" th:href="@{/phu-kien}">Phụ Kiện</a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-medium" th:href="@{/tin-tuc}">Tin Tức</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+</header>
+</body>
+
+</html>
