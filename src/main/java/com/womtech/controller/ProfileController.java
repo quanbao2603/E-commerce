@@ -27,7 +27,7 @@ public class ProfileController {
 
         // Gửi dữ liệu tới view
         model.addAttribute("user", user);
-        return "pages/profile";
+        return "user/profile";
     }
 
     // Lớp UserMock tạm để test, chưa cần entity thật
