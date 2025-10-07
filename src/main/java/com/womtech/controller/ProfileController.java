@@ -1,16 +1,50 @@
 package com.womtech.controller;
 
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 
+import com.womtech.entity.Role;
+import com.womtech.entity.User;
+import com.womtech.service.UserService;
+
 import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Controller
 @RequestMapping("/profile")
 public class ProfileController {
+	@Autowired
+	UserService userService;
 
+//    @GetMapping("")
+//    public String showProfilePage(Model model) {
+//        // Tạo user mẫu để test UI
+//        
+//        Role role = new Role();
+//        role.setRoleID("1");
+//        
+//        User user = new User();
+//        
+//        user.setRole(role);
+//        user.setUsername("Nguyễn Văn A");
+//        user.setPassword("pass123");
+//        user.setEmail("nguyenvana@example.com");
+//        user.setCreateAt(LocalDateTime.of(2023, 5, 20, 10, 0));
+//        user.setUpdateAt(LocalDateTime.of(2023, 5, 20, 10, 0));
+//        
+//        userService.save(user);
+//        
+//        Optional<User> test = userService.findByEmail(user.getEmail());
+//
+//        // Gửi dữ liệu tới view
+////        model.addAttribute("user", user);
+////        return "user/profile";
+//        return "user/index";
+//    }
+    
     @GetMapping("")
     public String showProfilePage(Model model) {
         // Tạo user mẫu để test UI
