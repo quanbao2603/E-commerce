@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 
 import com.womtech.entity.Role;
 import com.womtech.entity.User;
+import com.womtech.service.RoleService;
 import com.womtech.service.UserService;
 
 import java.time.LocalDateTime;
@@ -18,51 +19,56 @@ import java.util.Optional;
 public class ProfileController {
 	@Autowired
 	UserService userService;
+	@Autowired
+	RoleService roleService;
 
-//    @GetMapping("")
-//    public String showProfilePage(Model model) {
-//        // Tạo user mẫu để test UI
-//        
-//        Role role = new Role();
-//        role.setRoleID("1");
-//        
-//        User user = new User();
-//        
-//        user.setRole(role);
-//        user.setUsername("Nguyễn Văn A");
-//        user.setPassword("pass123");
-//        user.setEmail("nguyenvana@example.com");
-//        user.setCreateAt(LocalDateTime.of(2023, 5, 20, 10, 0));
-//        user.setUpdateAt(LocalDateTime.of(2023, 5, 20, 10, 0));
-//        
-//        userService.save(user);
-//        
-//        Optional<User> test = userService.findByEmail(user.getEmail());
-//
-//        // Gửi dữ liệu tới view
-////        model.addAttribute("user", user);
-////        return "user/profile";
-//        return "user/index";
-//    }
-    
     @GetMapping("")
     public String showProfilePage(Model model) {
         // Tạo user mẫu để test UI
-        UserMock user = new UserMock();
-        user.setFullName("Nguyễn Văn A");
+        
+        Role role = new Role();
+        role.setRolename("test");
+        role.setDescription("role dùng để test");
+        roleService.save(role);
+        
+        Optional<Role> newRole = roleService.findByRolename("test");
+        
+        User user = new User();
+        user.setRole(newRole.get());
+        user.setUsername("Nguyễn Văn A");
+        user.setPassword("pass123");
         user.setEmail("nguyenvana@example.com");
-        user.setPhone("0987654321");
-        user.setCity("Hồ Chí Minh");
-        user.setDistrict("Quận 1");
-        user.setWard("Phường Bến Nghé");
-        user.setAddress("123 Lê Lợi");
-        user.setCreatedAt(LocalDateTime.of(2023, 5, 20, 10, 0));
-        user.setAdmin(false);
+        user.setCreateAt(LocalDateTime.of(2023, 5, 20, 10, 0));
+        user.setUpdateAt(LocalDateTime.of(2023, 5, 20, 10, 0));
+        
+        userService.save(user);
+        
+//        Optional<User> test = userService.findByEmail(user.getEmail());
 
         // Gửi dữ liệu tới view
-        model.addAttribute("user", user);
-        return "user/profile";
+//        model.addAttribute("user", user);
+//        return "user/profile";
+        return "user/index";
     }
+    
+//    @GetMapping("")
+//    public String showProfilePage(Model model) {
+//        // Tạo user mẫu để test UI
+//        UserMock user = new UserMock();
+//        user.setFullName("Nguyễn Văn A");
+//        user.setEmail("nguyenvana@example.com");
+//        user.setPhone("0987654321");
+//        user.setCity("Hồ Chí Minh");
+//        user.setDistrict("Quận 1");
+//        user.setWard("Phường Bến Nghé");
+//        user.setAddress("123 Lê Lợi");
+//        user.setCreatedAt(LocalDateTime.of(2023, 5, 20, 10, 0));
+//        user.setAdmin(false);
+//
+//        // Gửi dữ liệu tới view
+//        model.addAttribute("user", user);
+//        return "user/profile";
+//    }
 
     // Lớp UserMock tạm để test, chưa cần entity thật
     static class UserMock {
