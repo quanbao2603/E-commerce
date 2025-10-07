@@ -10,6 +10,6 @@ public interface RoleService {
 
 	<S extends Role> S save(S entity);
 
-	Optional<Role> findByRolename(String rolename);
+	Optional<Role> findByRolenameIgnoreCase(String rolename);
 
 }

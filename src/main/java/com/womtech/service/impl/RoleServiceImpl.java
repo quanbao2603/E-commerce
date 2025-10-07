@@ -15,11 +15,6 @@ public class RoleServiceImpl implements RoleService {
 	RoleRepository roleRepository;
 
 	@Override
-	public Optional<Role> findByRolename(String rolename) {
-		return roleRepository.findByRolename(rolename);
-	}
-
-	@Override
 	public <S extends Role> S save(S entity) {
 		return roleRepository.save(entity);
 	}
@@ -27,5 +22,10 @@ public class RoleServiceImpl implements RoleService {
 	@Override
 	public Optional<Role> findById(String id) {
 		return roleRepository.findById(id);
+	}
+
+	@Override
+	public Optional<Role> findByRolenameIgnoreCase(String rolename) {
+		return roleRepository.findByRolenameIgnoreCase(rolename);
 	}
 }
