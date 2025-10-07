@@ -1,13 +1,11 @@
 package com.womtech.repository;
 
-import java.util.Optional;
-
+import com.womtech.entity.Role;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
-
-import com.womtech.entity.Role;
+import java.util.Optional;
 
 @Repository
 public interface RoleRepository extends JpaRepository<Role, String> {
-	Optional<Role> findByRolename(String rolename);
+	Optional<Role> findByRolenameIgnoreCase(String rolename);
 }
