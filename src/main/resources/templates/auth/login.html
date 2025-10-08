@@ -50,11 +50,12 @@
 						<!-- Login Form -->
 						<form th:action="@{/auth/login}" method="post">
 							<div class="mb-3">
-								<label for="email" class="form-label">Email</label>
+								<label for="username" class="form-label">Tên đăng nhập</label>
 								<div class="input-group">
-									<span class="input-group-text"><i class="bi bi-envelope"></i></span>
-									<input type="email" id="email" name="email"
-										class="form-control" required placeholder="Nhập email của bạn">
+									<span class="input-group-text"><i class="bi bi-person"></i></span>
+									<input type="text" id="username" name="username"
+										class="form-control" required
+										placeholder="Nhập tên đăng nhập của bạn">
 								</div>
 							</div>
 
