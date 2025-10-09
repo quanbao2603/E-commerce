@@ -90,6 +90,6 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 		}
 
 		return LoginResponse.builder().userID(user.getUserID()).username(user.getUsername())
-				.message("Login successful!").redirectUrl("/home").build();
+				.message("Login successful!").redirectUrl("/").build();
 	}
 }

@@ -44,8 +44,8 @@ public class AuthController {
 	// Cookie JWT
 	private static final String CK_AT = "AT";
 	private static final String CK_RT = "RT";
-	private static final int ACCESS_TTL_SEC = 15 * 60; 
-	private static final int REFRESH_TTL_SEC = 7 * 24 * 3600; 
+	private static final int ACCESS_TTL_SEC = 15 * 60;
+	private static final int REFRESH_TTL_SEC = 7 * 24 * 3600;
 
 	private static final String SK_REG_PENDING = "REG_PENDING_REQ";
 	private static final String SK_REG_EMAIL_MASK = "REG_EMAIL_MASK";
@@ -124,6 +124,7 @@ public class AuthController {
 			@RequestParam("password") String password, @RequestParam("confirmPassword") String confirmPassword,
 			RedirectAttributes ra, Model model, HttpSession session) {
 
+		// Validate cơ bản
 		if (!StringUtils.hasText(email) || !StringUtils.hasText(username) || !StringUtils.hasText(password)
 				|| !StringUtils.hasText(confirmPassword)) {
 			model.addAttribute("error", "Vui lòng nhập đầy đủ Email, Username, Mật khẩu và Xác nhận mật khẩu.");
@@ -150,9 +151,14 @@ public class AuthController {
 			return "auth/register";
 		}
 
-		String hashed = PasswordUtil.encode(password);
-		RegisterRequest pending = RegisterRequest.builder().email(email).username(username).password(hashed).build();
+		// ❌ KHÔNG hash tại Controller
+		// String hashed = PasswordUtil.encode(password);
 
+		// ✅ Truyền RAW password cho Service xử lý encode
+		RegisterRequest pending = RegisterRequest.builder().email(email).username(username).password(password) // raw
+				.build();
+
+		// Lưu pending + info OTP vào session cho bước verify
 		session.setAttribute(SK_REG_PENDING, pending);
 		session.setAttribute(SK_REG_EMAIL_MASK, maskEmail(email));
 
@@ -374,7 +380,7 @@ public class AuthController {
 		return local.charAt(0) + "***" + local.charAt(local.length() - 1) + "@" + parts[1];
 	}
 
-	private static void clearOtpSession(HttpSession session) { 
+	private static void clearOtpSession(HttpSession session) {
 		session.removeAttribute(SK_REG_PENDING);
 		session.removeAttribute(SK_REG_EMAIL_MASK);
 		session.removeAttribute(SK_OTP_CODE);

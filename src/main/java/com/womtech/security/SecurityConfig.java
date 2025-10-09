@@ -35,7 +35,7 @@ public class SecurityConfig {
 						org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
 
 				// ✅ Form login (Thymeleaf)
-				.formLogin(form -> form.loginPage("/auth/login").permitAll())
+				.formLogin(form -> form.disable())
 
 				// ✅ Logout
 				.logout(logout -> logout.logoutUrl("/auth/logout").logoutSuccessUrl("/auth/login?logout").permitAll())
