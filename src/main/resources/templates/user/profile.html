@@ -127,7 +127,8 @@
 											<label for="fullName" class="form-label"> <i
 												class="fas fa-user me-2"></i>Họ và Tên
 											</label> <input type="text" class="form-control" id="fullName"
-												th:field="*{fullName}" required>
+												th:value="${defaultAddress != null ? defaultAddress.fullname : user.username}"
+												name="fullName" readonly>
 										</div>
 
 										<!-- Email -->
@@ -135,7 +136,7 @@
 											<label for="email" class="form-label"> <i
 												class="fas fa-envelope me-2"></i>Email
 											</label> <input type="email" class="form-control" id="email"
-												th:field="*{email}" required>
+												th:value="${user.email}" readonly>
 										</div>
 
 										<!-- Phone -->
@@ -143,7 +144,8 @@
 											<label for="phone" class="form-label"> <i
 												class="fas fa-phone me-2"></i>Số Điện Thoại
 											</label> <input type="tel" class="form-control" id="phone"
-												th:field="*{phone}" placeholder="0xxxxxxxxx">
+												th:value="${defaultAddress != null ? defaultAddress.phone : ''}"
+												placeholder="0xxxxxxxxx" readonly>
 										</div>
 
 										<!-- City -->
@@ -151,7 +153,8 @@
 											<label for="city" class="form-label"> <i
 												class="fas fa-city me-2"></i>Tỉnh/Thành Phố
 											</label> <input type="text" class="form-control" id="city"
-												th:field="*{city}" placeholder="Hồ Chí Minh">
+												th:value="${defaultAddress != null ? defaultAddress.city : ''}"
+												placeholder="Hồ Chí Minh" readonly>
 										</div>
 
 										<!-- District -->
@@ -159,7 +162,8 @@
 											<label for="district" class="form-label"> <i
 												class="fas fa-map me-2"></i>Quận/Huyện
 											</label> <input type="text" class="form-control" id="district"
-												th:field="*{district}" placeholder="Quận 1">
+												th:value="${defaultAddress != null ? defaultAddress.district : ''}"
+												placeholder="Quận 1" readonly>
 										</div>
 
 										<!-- Ward -->
@@ -167,7 +171,8 @@
 											<label for="ward" class="form-label"> <i
 												class="fas fa-location-dot me-2"></i>Phường/Xã
 											</label> <input type="text" class="form-control" id="ward"
-												th:field="*{ward}" placeholder="Phường Bến Nghé">
+												th:value="${defaultAddress != null ? defaultAddress.ward : ''}"
+												placeholder="Phường Bến Nghé" readonly>
 										</div>
 
 										<!-- Address -->
@@ -176,16 +181,18 @@
 												class="fas fa-home me-2"></i>Địa Chỉ Chi Tiết
 											</label>
 											<textarea class="form-control" id="address" rows="3"
-												th:field="*{address}" placeholder="Số nhà, tên đường..."></textarea>
+												th:text="${defaultAddress != null ? defaultAddress.street : ''}"
+												placeholder="Số nhà, tên đường..." readonly></textarea>
 										</div>
 									</div>
 
 									<div class="d-flex justify-content-between">
 										<div class="text-muted">
 											<i class="fas fa-calendar-alt me-2"></i> Tham gia từ: <span
-												th:text="${#temporals.format(user.createdAt, 'dd/MM/yyyy')}"></span>
+												th:text="${#temporals.format(user.createAt, 'dd/MM/yyyy')}"></span>
 										</div>
-										<button type="submit" class="btn btn-primary">
+										<!-- Giữ nút này tạm không hoạt động để test -->
+										<button type="button" class="btn btn-primary disabled">
 											<i class="fas fa-save me-2"></i>Cập Nhật Thông Tin
 										</button>
 									</div>
@@ -193,6 +200,7 @@
 							</div>
 						</div>
 					</div>
+
 
 					<!-- Change Password Tab -->
 					<div class="profile-tab-content" id="password-tab">
