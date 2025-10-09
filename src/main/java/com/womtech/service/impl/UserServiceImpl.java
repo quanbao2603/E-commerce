@@ -90,7 +90,7 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 		if (!PasswordUtil.matches(request.getPassword(), user.getPassword())) {
 			return LoginResponse.builder().message("Invalid password").build();
 		}
-
+		
 		String role = (user.getRole() != null && user.getRole().getRolename() != null)
 				? user.getRole().getRolename().toUpperCase()
 				: "USER";
@@ -110,7 +110,7 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 			redirect = "/";
 			break;
 		}
-
+		
 		return LoginResponse.builder().userID(user.getUserID()).username(user.getUsername())
 				.message("Login successful!").redirectUrl(redirect).build();
 	}

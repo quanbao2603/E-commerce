@@ -5,8 +5,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
-import org.springframework.security.authentication.AbstractAuthenticationToken;
-import org.springframework.security.core.Authentication;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.web.filter.OncePerRequestFilter;
 
@@ -36,24 +35,20 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 			if (at != null && jwtService.isValidAccess(at) && !revokeService.isRevoked(at)) {
 				String userId = jwtService.getUserId(at);
 				List<String> roles = jwtService.getRoles(at);
+				if (roles == null)
+					roles = List.of();
+
 				Collection<SimpleGrantedAuthority> auths = new ArrayList<>();
 				for (String r : roles) {
-					auths.add(new SimpleGrantedAuthority("ROLE_" + r));
+					if (r != null && !r.isBlank()) {
+						auths.add(new SimpleGrantedAuthority("ROLE_" + r.toUpperCase()));
+					}
 				}
 
-				Authentication auth = new AbstractAuthenticationToken(auths) {
-					@Override
-					public Object getCredentials() {
-						return "jwt";
-					}
-
-					@Override
-					public Object getPrincipal() {
-						return userId;
-					}
-				};
-				((AbstractAuthenticationToken) auth).setDetails(req);
-				getContext().setAuthentication(auth);
+				// 👉 Sử dụng UsernamePasswordAuthenticationToken: authenticated = true
+				var authentication = new UsernamePasswordAuthenticationToken(userId, null, auths);
+				authentication.setDetails(req);
+				getContext().setAuthentication(authentication);
 			}
 		}
 
