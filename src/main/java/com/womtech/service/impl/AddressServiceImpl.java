@@ -31,7 +31,10 @@ public class AddressServiceImpl extends BaseServiceImpl<Address, String> impleme
 	}
 
 	@Override
-	public void unsetDefaultForUser(User user) {
-		addressRepository.unsetDefaultForUser(user);
+	public void setDefaultAddress(Address address) {
+		addressRepository.unsetDefaultForUser(address.getUser());
+		
+		address.setDefault(true);
+		addressRepository.save(address);
 	}
 }
