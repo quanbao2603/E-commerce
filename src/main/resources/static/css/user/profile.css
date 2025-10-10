@@ -1,34 +1,36 @@
 :root {
-	--womtech-primary: #667eea;
-	--womtech-secondary: #764ba2;
-	--womtech-accent: #0d6efd;
+	--womtech-primary: #1e90ff;   /* Dodger Blue */
+	--womtech-secondary: #007bff; /* Bootstrap blue */
+	--womtech-accent: #0d6efd;    /* Accent blue */
 }
 
+/* Global */
 body {
 	font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
 		'Helvetica Neue', Arial, sans-serif;
 	line-height: 1.6;
 	color: #333;
+	background: #f5f9ff;
 }
 
 /* Hero Section */
 .hero-section {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 50%, #6B73FF 100%);
+	background: linear-gradient(135deg, #1e90ff 0%, #007bff 50%, #0dcaf0 100%);
 	color: white;
 	padding: 60px 0;
 	position: relative;
 	overflow: hidden;
 }
 
-/* Profile Container with 2:6:2 Layout */
+/* Profile Container */
 .profile-container {
 	min-height: 100vh;
-	background: linear-gradient(135deg, #f8f9ff 0%, #e8f4fd 50%, #f0f8ff 100%);
+	background: linear-gradient(135deg, #f0f8ff 0%, #e8f4ff 50%, #ffffff 100%);
 	padding: 3rem 0;
 	position: relative;
 }
 
-/* White space on both sides */
+/* Layout */
 .profile-wrapper {
 	display: grid;
 	grid-template-columns: 2fr 6fr 2fr;
@@ -46,15 +48,15 @@ body {
 	padding: 0 2rem;
 }
 
-/* Profile Sidebar */
+/* Sidebar */
 .profile-sidebar {
 	background: white;
 	border: none;
 	box-shadow: 0 20px 60px rgba(0, 0, 0, 0.08);
 	border-radius: 24px;
 	overflow: hidden;
-	transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 	position: relative;
+	transition: all 0.4s ease;
 }
 
 .profile-sidebar::before {
@@ -64,19 +66,20 @@ body {
 	left: 0;
 	right: 0;
 	height: 4px;
-	background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #6B73FF 100%);
+	background: linear-gradient(90deg, #1e90ff 0%, #007bff 50%, #0dcaf0 100%);
 }
 
+/* Avatar */
 .avatar-circle {
 	width: 100px;
 	height: 100px;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: linear-gradient(135deg, #1e90ff 0%, #007bff 100%);
 	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	margin: 2rem auto 1rem;
-	box-shadow: 0 20px 40px rgba(102, 126, 234, 0.25);
+	box-shadow: 0 20px 40px rgba(0, 123, 255, 0.25);
 	transition: all 0.4s ease;
 }
 
@@ -84,19 +87,19 @@ body {
 	transform: translateY(-8px) scale(1.05);
 }
 
+/* Navigation */
 .profile-nav-item {
 	border: none !important;
 	font-weight: 500;
-	transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 	position: relative;
-	overflow: hidden;
 	margin: 0.25rem 0;
 	border-radius: 16px !important;
 	padding: 1rem 1.5rem;
 	color: #6c757d;
-	text-decoration: none;
 	display: flex;
 	align-items: center;
+	text-decoration: none;
+	transition: all 0.3s ease;
 }
 
 .profile-nav-item::before {
@@ -106,16 +109,15 @@ body {
 	top: 0;
 	width: 4px;
 	height: 100%;
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: linear-gradient(135deg, #1e90ff 0%, #007bff 100%);
 	transform: scaleY(0);
 	transition: transform 0.3s ease;
 }
 
 .profile-nav-item:hover {
-	background: linear-gradient(135deg, rgba(102, 126, 234, 0.08) 0%,
-		rgba(118, 75, 162, 0.08) 100%);
+	background: linear-gradient(135deg, rgba(30, 144, 255, 0.08), rgba(13, 202, 240, 0.08));
 	transform: translateX(8px);
-	color: #667eea;
+	color: var(--womtech-primary);
 	text-decoration: none;
 }
 
@@ -124,10 +126,10 @@ body {
 }
 
 .profile-nav-item.active {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: linear-gradient(135deg, #1e90ff 0%, #007bff 100%);
 	color: white !important;
 	font-weight: 600;
-	box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+	box-shadow: 0 8px 25px rgba(30, 144, 255, 0.3);
 }
 
 .profile-nav-item i {
@@ -143,17 +145,19 @@ body {
 	border-radius: 24px;
 	transition: all 0.4s ease;
 	overflow: hidden;
+	background: white;
 }
 
 .card:hover {
 	transform: translateY(-12px) scale(1.02);
-	box-shadow: 0 40px 80px rgba(0, 0, 0, 0.15);
+	box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12);
 }
 
 .card-header {
 	border: none;
 	padding: 2rem 2.5rem;
 	font-weight: 600;
+	color: var(--womtech-primary);
 }
 
 .card-body {
@@ -161,10 +165,10 @@ body {
 }
 
 .bg-gradient-primary {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+	background: linear-gradient(135deg, #1e90ff 0%, #007bff 100%) !important;
 }
 
-/* Form Controls */
+/* Form */
 .form-label {
 	font-weight: 600;
 	color: #333;
@@ -174,7 +178,7 @@ body {
 }
 
 .form-label i {
-	color: #667eea;
+	color: var(--womtech-primary);
 	margin-right: 0.75rem;
 }
 
@@ -182,13 +186,13 @@ body {
 	border: 2px solid #e8ecf4;
 	border-radius: 16px;
 	padding: 1rem 1.25rem;
-	transition: all 0.4s ease;
+	transition: all 0.3s ease;
 	background: #fafbfc;
 }
 
 .form-control:focus {
-	border-color: #667eea;
-	box-shadow: 0 0 0 0.2rem rgba(102, 126, 234, 0.15);
+	border-color: var(--womtech-primary);
+	box-shadow: 0 0 0 0.2rem rgba(30, 144, 255, 0.15);
 	transform: translateY(-3px);
 	background: white;
 }
@@ -202,13 +206,14 @@ body {
 }
 
 .btn-primary {
-	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	background: linear-gradient(135deg, #1e90ff 0%, #007bff 100%);
 	border: none;
+	color: white;
 }
 
 .btn-primary:hover {
 	transform: translateY(-3px);
-	box-shadow: 0 8px 25px rgba(102, 126, 234, 0.3);
+	box-shadow: 0 8px 25px rgba(30, 144, 255, 0.3);
 }
 
 /* Badge */
@@ -218,7 +223,7 @@ body {
 	border-radius: 20px;
 }
 
-/* Alert */
+/* Alerts */
 .alert {
 	border-radius: 16px;
 	border: none;
@@ -230,7 +235,7 @@ body {
 	color: #155724;
 }
 
-/* Tab Content */
+/* Tabs */
 .profile-tab-content {
 	display: none;
 	animation: fadeIn 0.5s ease;
@@ -241,15 +246,14 @@ body {
 }
 
 @keyframes fadeIn {
-	from { opacity:0;
-	transform: translateY(20px);
-}
-
-to {
-	opacity: 1;
-	transform: translateY(0);
-}
-
+	from {
+		opacity: 0;
+		transform: translateY(20px);
+	}
+	to {
+		opacity: 1;
+		transform: translateY(0);
+	}
 }
 
 /* Address Card */
@@ -261,13 +265,13 @@ to {
 }
 
 .address-card:hover {
-	border-color: #667eea !important;
-	box-shadow: 0 20px 40px rgba(102, 126, 234, 0.15);
+	border-color: var(--womtech-primary) !important;
+	box-shadow: 0 20px 40px rgba(30, 144, 255, 0.15);
 	transform: translateY(-8px);
 }
 
 /* Responsive */
-@media ( max-width : 768px) {
+@media (max-width: 768px) {
 	.profile-wrapper {
 		grid-template-columns: 1fr;
 	}

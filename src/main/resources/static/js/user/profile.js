@@ -1,104 +1,81 @@
-// Tab Navigation
 document.addEventListener('DOMContentLoaded', function() {
     const navItems = document.querySelectorAll('.profile-nav-item');
     const tabContents = document.querySelectorAll('.profile-tab-content');
-    
-    // Check URL params for active tab
+
     const urlParams = new URLSearchParams(window.location.search);
-    const activeTab = urlParams.get('tab') || 'info';
-    
-    // Set active tab
-    setActiveTab(activeTab);
-    
+    const defaultTab = urlParams.get('tab') || 'info';
+    setActiveTab(defaultTab);
+
     navItems.forEach(item => {
         item.addEventListener('click', function(e) {
             e.preventDefault();
             const tab = this.getAttribute('data-tab');
             setActiveTab(tab);
-            
-            // Update URL without page reload
+
             const newUrl = new URL(window.location);
             newUrl.searchParams.set('tab', tab);
             window.history.pushState({}, '', newUrl);
         });
     });
-    
+
     function setActiveTab(tab) {
-        // Remove active classes
-        navItems.forEach(item => item.classList.remove('active'));
-        tabContents.forEach(content => content.classList.remove('active'));
-        
-        // Add active classes
-        const activeNavItem = document.querySelector(`[data-tab="${tab}"]`);
-        const activeTabContent = document.getElementById(`${tab}-tab`);
-        
-        if (activeNavItem) activeNavItem.classList.add('active');
-        if (activeTabContent) activeTabContent.classList.add('active');
-    }
-});
+        navItems.forEach(i => i.classList.remove('active'));
+        tabContents.forEach(c => c.classList.remove('active'));
 
-// Toggle Password Visibility
-function togglePassword(fieldId) {
-    const field = document.getElementById(fieldId);
-    const button = field.nextElementSibling.querySelector('i');
-    
-    if (field.type === 'password') {
-        field.type = 'text';
-        button.classList.remove('fa-eye');
-        button.classList.add('fa-eye-slash');
-    } else {
-        field.type = 'password';
-        button.classList.remove('fa-eye-slash');
-        button.classList.add('fa-eye');
-    }
-}
-
-// Password Strength Checker
-document.addEventListener('DOMContentLoaded', () => {
-    const newPasswordField = document.getElementById('newPassword');
-    const confirmPasswordField = document.getElementById('confirmPassword');
-    
-    if (newPasswordField) {
-        newPasswordField.addEventListener('input', function() {
-            const password = this.value;
-            const strengthBar = document.getElementById('passwordStrength');
-            const strengthText = document.getElementById('passwordStrengthText');
-            
-            let strength = 0;
-            let text = 'Mật khẩu rất yếu';
-            let color = 'bg-danger';
-            
-            if (password.length >= 6) strength += 25;
-            if (password.match(/[a-z]/)) strength += 25;
-            if (password.match(/[A-Z]/)) strength += 25;
-            if (password.match(/[0-9]/)) strength += 25;
-            
-            if (strength >= 75) {
-                text = 'Mật khẩu mạnh';
-                color = 'bg-success';
-            } else if (strength >= 50) {
-                text = 'Mật khẩu trung bình';
-                color = 'bg-warning';
-            } else if (strength >= 25) {
-                text = 'Mật khẩu yếu';
-                color = 'bg-warning';
+        const navItem = document.querySelector(`.profile-nav-item[data-tab="${tab}"]`);
+        const tabContent = document.getElementById(`${tab}-tab`);
+        if(navItem) navItem.classList.add('active');
+        if(tabContent) {
+            tabContent.classList.add('active');
+            const header = tabContent.querySelector('.card-header');
+            if(header){
+                header.classList.add('glow');
+                setTimeout(() => header.classList.remove('glow'), 800);
             }
-            
-            strengthBar.className = `progress-bar ${color}`;
-            strengthBar.style.width = strength + '%';
-            strengthText.textContent = text;
+        }
+    }
+
+    // Password toggle
+    window.togglePassword = function(fieldId){
+        const field = document.getElementById(fieldId);
+        const button = field.nextElementSibling.querySelector('i');
+        if(field.type==='password'){
+            field.type='text';
+            button.classList.replace('bi-eye','bi-eye-slash');
+        }else{
+            field.type='password';
+            button.classList.replace('bi-eye-slash','bi-eye');
+        }
+    }
+
+    // Password strength
+    const newPassword = document.getElementById('newPassword');
+    const confirmPassword = document.getElementById('confirmPassword');
+    if(newPassword){
+        newPassword.addEventListener('input', function(){
+            const val = this.value;
+            let strength = 0;
+            if(val.length>=6) strength+=25;
+            if(/[a-z]/.test(val)) strength+=25;
+            if(/[A-Z]/.test(val)) strength+=25;
+            if(/[0-9]/.test(val)) strength+=25;
+
+            const bar = document.getElementById('passwordStrength');
+            const text = document.getElementById('passwordStrengthText');
+            bar.style.width = strength+'%';
+            if(strength>=75){ bar.className='progress-bar bg-success'; text.textContent='Mật khẩu mạnh'; }
+            else if(strength>=50){ bar.className='progress-bar bg-warning'; text.textContent='Mật khẩu trung bình'; }
+            else if(strength>=25){ bar.className='progress-bar bg-warning'; text.textContent='Mật khẩu yếu'; }
+            else { bar.className='progress-bar bg-danger'; text.textContent='Mật khẩu rất yếu'; }
         });
     }
 
-    // Password Confirmation Checker
-    if (confirmPasswordField) {
-        confirmPasswordField.addEventListener('input', function() {
-            const newPassword = newPasswordField.value;
-            const confirmPassword = this.value;
-            
-            if (newPassword !== confirmPassword) {
+    // Confirm password check
+    if(confirmPassword && newPassword){
+        confirmPassword.addEventListener('input', function(){
+            if(this.value!==newPassword.value){
                 this.setCustomValidity('Mật khẩu xác nhận không khớp!');
-            } else {
+            }else{
                 this.setCustomValidity('');
             }
         });
