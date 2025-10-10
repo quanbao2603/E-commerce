@@ -27,13 +27,14 @@ public class ProfileController {
 
 	@GetMapping("/profile")
 	public String showProfilePage(HttpSession session, Model model, Principal principal) {
-		String userId = resolveCurrentUserId(principal, session);
-		if (userId == null)
+		// Chỉ dựa vào JWT authentication (Principal), không fallback về session
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
+		}
 
+		String userId = principal.getName();
 		Optional<User> userOpt = userService.findById(userId);
 		if (userOpt.isEmpty()) {
-			session.invalidate();
 			return "redirect:/auth/login";
 		}
 		User user = userOpt.get();
@@ -55,10 +56,11 @@ public class ProfileController {
 	@PostMapping("/update")
 	public String updateProfile(HttpSession session, Principal principal, @RequestParam String email,
 			@RequestParam String username) {
-		String userId = resolveCurrentUserId(principal, session);
-		if (userId == null)
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
+		}
 
+		String userId = principal.getName();
 		var userOpt = userService.findById(userId);
 		if (userOpt.isEmpty())
 			return "redirect:/auth/login";
@@ -77,20 +79,21 @@ public class ProfileController {
 			@RequestParam String district, @RequestParam String city,
 			@RequestParam(name = "isDefault", defaultValue = "false") boolean isDefault) {
 
-		String userId = resolveCurrentUserId(principal, session);
-		if (userId == null)
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
+		}
 
+		String userId = principal.getName();
 		var userOpt = userService.findById(userId);
 		if (userOpt.isEmpty())
 			return "redirect:/auth/login";
 		var user = userOpt.get();
 
 		if (isDefault) {
-			addressService.unsetDefaultForUser(user); // cần có trong AddressService/Repository
+			addressService.unsetDefaultForUser(user); 
 		}
 
-		Address addr = Address.builder().user(user) // QUAN TRỌNG: gán user
+		Address addr = Address.builder().user(user) 
 				.fullname(fullname).phone(phone).street(street).ward(ward).district(district).city(city)
 				.isDefault(isDefault).createAt(LocalDateTime.now()).updateAt(LocalDateTime.now()).build();
 
@@ -100,10 +103,11 @@ public class ProfileController {
 
 	@PostMapping("/update-address")
 	public String updateAddress(HttpSession session, Principal principal, @ModelAttribute("address") Address address) {
-		String userId = resolveCurrentUserId(principal, session);
-		if (userId == null)
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
+		}
 
+		String userId = principal.getName();
 		var userOpt = userService.findById(userId);
 		if (userOpt.isEmpty())
 			return "redirect:/auth/login";
@@ -123,10 +127,11 @@ public class ProfileController {
 	@PostMapping("/change-password")
 	public String changePassword(HttpSession session, Principal principal, @RequestParam String currentPassword,
 			@RequestParam String newPassword, @RequestParam String confirmPassword) {
-		String userId = resolveCurrentUserId(principal, session);
-		if (userId == null)
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
+		}
 
+		String userId = principal.getName();
 		var userOpt = userService.findById(userId);
 		if (userOpt.isEmpty())
 			return "redirect:/auth/login";
@@ -144,11 +149,4 @@ public class ProfileController {
 		return "redirect:/user/profile?ok=pwd_changed";
 	}
 
-	private String resolveCurrentUserId(Principal principal, HttpSession session) {
-		if (principal != null && principal.getName() != null && !principal.getName().isBlank()) {
-			return principal.getName(); // JwtAuthFilter set principal = userId
-		}
-		Object sid = session.getAttribute("CURRENT_USER_ID");
-		return (sid != null) ? sid.toString() : null;
-	}
 }

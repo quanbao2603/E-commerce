@@ -49,6 +49,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 				var authentication = new UsernamePasswordAuthenticationToken(userId, null, auths);
 				authentication.setDetails(req);
 				getContext().setAuthentication(authentication);
+			} else if (at != null) {
+				// Có token nhưng không hợp lệ hoặc đã bị revoke -> xóa cookies
+				clearAuthCookies(req, res);
 			}
 		}
 
@@ -64,5 +67,33 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 				return c.getValue();
 		}
 		return null;
+	}
+
+	private void clearAccessTokenCookie(HttpServletResponse res) {
+		// Chỉ xóa access token cookie
+		Cookie atCookie = new Cookie("AT", "");
+		atCookie.setPath("/");
+		atCookie.setMaxAge(0);
+		res.addCookie(atCookie);
+	}
+
+	private void clearAuthCookies(HttpServletRequest req, HttpServletResponse res) {
+		// Xóa access token cookie
+		Cookie atCookie = new Cookie("AT", "");
+		atCookie.setPath("/");
+		atCookie.setMaxAge(0);
+		res.addCookie(atCookie);
+
+		// Xóa refresh token cookie
+		Cookie rtCookie = new Cookie("RT", "");
+		rtCookie.setPath("/");
+		rtCookie.setMaxAge(0);
+		res.addCookie(rtCookie);
+
+		// Xóa remember me cookie
+		Cookie rememberCookie = new Cookie("WOM_REMEMBER", "");
+		rememberCookie.setPath("/");
+		rememberCookie.setMaxAge(0);
+		res.addCookie(rememberCookie);
 	}
 }

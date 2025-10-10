@@ -21,6 +21,7 @@ import org.springframework.util.StringUtils;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
+import java.security.Principal;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.*;
@@ -33,15 +34,11 @@ public class AuthController {
 
     private final UserService userService;
     private final EmailUtil emailUtil;
-
-    // JWT services
     private final JwtService jwtService;
     private final TokenRevokeService tokenRevokeService;
 
     private static final String CK_REMEMBER = "WOM_REMEMBER";
     private static final int REMEMBER_TTL = RememberMeUtil.REMEMBER_ME_TTL;
-
-    // Cookie JWT
     private static final String CK_AT = "AT";
     private static final String CK_RT = "RT";
     private static final int ACCESS_TTL_SEC = 15 * 60;
@@ -68,7 +65,6 @@ public class AuthController {
                     HttpSession s = request.getSession(true);
                     s.setAttribute("CURRENT_USER_ID", u.getUserID());
                     s.setAttribute("CURRENT_USERNAME", u.getUsername());
-                    // lấy roles để gắn vào session khi auto-login bằng remember
                     List<String> roles = userService.getRolesByUserId(u.getUserID());
                     s.setAttribute("CURRENT_ROLES", roles);
                 });
@@ -101,21 +97,17 @@ public class AuthController {
             return "auth/login";
         }
 
-        // Lấy roles thực tế của user
         List<String> roles = userService.getRolesByUserId(res.getUserID());
 
-        // Session (render MVC)
         session.setAttribute("CURRENT_USER_ID", res.getUserID());
         session.setAttribute("CURRENT_USERNAME", res.getUsername());
         session.setAttribute("CURRENT_ROLES", roles);
 
-        // ⭐ JWT: phát hành & set cookie HttpOnly với roles thật
         String at = jwtService.generateAccessToken(res.getUserID(), res.getUsername(), roles);
         String rt = jwtService.generateRefreshToken(res.getUserID());
         CookieUtil.add(response, CK_AT, at, ACCESS_TTL_SEC, true, false, "Strict");
         CookieUtil.add(response, CK_RT, rt, REFRESH_TTL_SEC, true, false, "Strict");
 
-        // (Tuỳ chọn) remember-me cũ
         if (Boolean.TRUE.equals(rememberMe)) {
             String token = RememberMeUtil.generateToken(res.getUserID());
             CookieUtil.add(response, CK_REMEMBER, token, REMEMBER_TTL, true, false, "Lax");
@@ -140,7 +132,6 @@ public class AuthController {
                              @RequestParam("confirmPassword") String confirmPassword,
                              RedirectAttributes ra, Model model, HttpSession session) {
 
-        // Validate cơ bản
         if (!StringUtils.hasText(email) || !StringUtils.hasText(username)
                 || !StringUtils.hasText(password) || !StringUtils.hasText(confirmPassword)) {
             model.addAttribute("error", "Vui lòng nhập đầy đủ Email, Username, Mật khẩu và Xác nhận mật khẩu.");
@@ -167,14 +158,12 @@ public class AuthController {
             return "auth/register";
         }
 
-        // Truyền RAW password cho Service xử lý encode
         RegisterRequest pending = RegisterRequest.builder()
                 .email(email)
                 .username(username)
-                .password(password) // raw
+                .password(password)
                 .build();
 
-        // Lưu pending + info OTP vào session cho bước verify
         session.setAttribute(SK_REG_PENDING, pending);
         session.setAttribute(SK_REG_EMAIL_MASK, maskEmail(email));
 
@@ -291,7 +280,6 @@ public class AuthController {
         return "redirect:/auth/verify-otp";
     }
 
-    // Refresh Access Token (cookie RT -> cookie AT mới có roles)
     @PostMapping("/refresh-token")
     @ResponseBody
     public Object refreshToken(HttpServletRequest request, HttpServletResponse response) {
@@ -307,49 +295,79 @@ public class AuthController {
         var userOpt = userService.findById(userId);
         if (userOpt.isEmpty()) return Map.of("ok", false, "message", "User not found");
 
-        // Lấy roles để nhét vào AT mới
         List<String> roles = userService.getRolesByUserId(userId);
-
         String newAT = jwtService.generateAccessToken(userId, userOpt.get().getUsername(), roles);
         CookieUtil.add(response, CK_AT, newAT, ACCESS_TTL_SEC, true, false, "Strict");
-
-        // (Tuỳ chọn) rotate refresh:
-        // String newRT = jwtService.generateRefreshToken(userId);
-        // tokenRevokeService.revoke(rt, jwtService.getExpiry(rt));
-        // CookieUtil.add(response, CK_RT, newRT, REFRESH_TTL_SEC, true, false, "Strict");
 
         return Map.of("ok", true);
     }
 
-    // me (đọc theo JWT; fallback session) — trả cả roles để debug
     @GetMapping("/me")
     @ResponseBody
-    public Object me(HttpServletRequest request, HttpSession session) {
+    public Object me(HttpServletRequest request, HttpServletResponse response, HttpSession session, Principal principal) {
+        Map<String, Object> debug = new HashMap<>();
+        
         Cookie at = CookieUtil.get(request, CK_AT);
+        if (at != null) {
+            debug.put("hasATCookie", true);
+            debug.put("atValue", at.getValue().substring(0, Math.min(20, at.getValue().length())) + "...");
+            debug.put("atValid", jwtService.isValidAccess(at.getValue()));
+            debug.put("atRevoked", tokenRevokeService.isRevoked(at.getValue()));
+        } else {
+            debug.put("hasATCookie", false);
+        }
+        
+        if (principal != null) {
+            debug.put("hasPrincipal", true);
+            debug.put("principalName", principal.getName());
+        } else {
+            debug.put("hasPrincipal", false);
+        }
+        
+        Object sessionUserId = session.getAttribute("CURRENT_USER_ID");
+        if (sessionUserId != null) {
+            debug.put("hasSession", true);
+            debug.put("sessionUserId", sessionUserId);
+        } else {
+            debug.put("hasSession", false);
+        }
+        
         if (at != null && jwtService.isValidAccess(at.getValue()) && !tokenRevokeService.isRevoked(at.getValue())) {
             String userId = jwtService.getUserId(at.getValue());
             var userOpt = userService.findById(userId);
-            if (userOpt.isEmpty()) return Map.of("ok", false);
+            if (userOpt.isEmpty()) {
+                clearAuthCookies(request, response);
+                return Map.of("ok", false, "message", "User not found", "debug", debug);
+            }
 
             var u = userOpt.get();
-            List<String> tokenRoles = jwtService.getRoles(at.getValue()); // cần method này trong JwtService
+            List<String> tokenRoles = jwtService.getRoles(at.getValue());
             return Map.of(
+                    "ok", true,
                     "by", "jwt",
                     "userID", u.getUserID(),
                     "username", u.getUsername(),
-                    "roles", tokenRoles
+                    "roles", tokenRoles,
+                    "debug", debug
             );
         }
         if (session.getAttribute("CURRENT_USER_ID") != null) {
             Object roles = session.getAttribute("CURRENT_ROLES");
             return Map.of(
+                    "ok", true,
                     "by", "session",
                     "userID", session.getAttribute("CURRENT_USER_ID"),
                     "username", session.getAttribute("CURRENT_USERNAME"),
-                    "roles", roles
+                    "roles", roles,
+                    "debug", debug
             );
         }
-        return Map.of("ok", false, "message", "No auth");
+        
+        if (at != null) {
+            clearAuthCookies(request, response);
+        }
+        
+        return Map.of("ok", false, "message", "No auth", "debug", debug);
     }
 
     @PostMapping("/logout")
@@ -360,11 +378,10 @@ public class AuthController {
         if (at != null) tokenRevokeService.revoke(at.getValue(), jwtService.getExpiry(at.getValue()));
         if (rt != null) tokenRevokeService.revoke(rt.getValue(), jwtService.getExpiry(rt.getValue()));
 
-        CookieUtil.delete(response, CK_AT);
-        CookieUtil.delete(response, CK_RT);
-        CookieUtil.delete(response, CK_REMEMBER);
-
+        clearAuthCookies(request, response);
         session.invalidate();
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        
         ra.addFlashAttribute("success", "Bạn đã đăng xuất.");
         return "redirect:/auth/login";
     }
@@ -377,16 +394,32 @@ public class AuthController {
         if (at != null) tokenRevokeService.revoke(at.getValue(), jwtService.getExpiry(at.getValue()));
         if (rt != null) tokenRevokeService.revoke(rt.getValue(), jwtService.getExpiry(rt.getValue()));
 
-        CookieUtil.delete(response, CK_AT);
-        CookieUtil.delete(response, CK_RT);
-        CookieUtil.delete(response, CK_REMEMBER);
-
+        clearAuthCookies(request, response);
         session.invalidate();
+        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+        
         ra.addFlashAttribute("success", "Bạn đã đăng xuất.");
         return "redirect:/auth/login";
     }
 
-    // ===================== Helpers =====================
+    private void clearAuthCookies(HttpServletRequest request, HttpServletResponse response) {
+        CookieUtil.delete(response, CK_AT);
+        CookieUtil.delete(response, CK_RT);
+        CookieUtil.delete(response, CK_REMEMBER);
+
+        response.addHeader("Set-Cookie", "AT=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict");
+        response.addHeader("Set-Cookie", "RT=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict");
+        response.addHeader("Set-Cookie", "WOM_REMEMBER=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax");
+        response.addHeader("Set-Cookie", "JSESSIONID=; Path=/; Max-Age=0; HttpOnly");
+        
+        response.addHeader("Set-Cookie", "AT=; Path=/; Max-Age=0; Domain=localhost; HttpOnly");
+        response.addHeader("Set-Cookie", "RT=; Path=/; Max-Age=0; Domain=localhost; HttpOnly");
+        response.addHeader("Set-Cookie", "WOM_REMEMBER=; Path=/; Max-Age=0; Domain=localhost; HttpOnly");
+        
+        response.addHeader("Set-Cookie", "AT=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+        response.addHeader("Set-Cookie", "RT=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+        response.addHeader("Set-Cookie", "WOM_REMEMBER=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
+    }
 
     private static String generateOtp() {
         return String.format("%06d", new Random().nextInt(1_000_000));
@@ -416,6 +449,6 @@ public class AuthController {
         if (rs.contains("ADMIN"))  return "/admin/dashboard";
         if (rs.contains("VENDOR")) return "/vendor/dashboard";
         if (rs.contains("SHIPPER")) return "/shipper/dashboard";
-        return "/"; // USER mặc định
+        return "/";
     }
 }

@@ -131,7 +131,7 @@
 									<form th:action="@{/user/update}" method="post" th:object="${user}">
 										<div class="row">
 											<div class="col-md-6 mb-3">
-												<label class="form-label"><i class="bi bi-person me-2"></i>Họ và Tên</label>
+												<label class="form-label"><i class="bi bi-person me-2"></i>Họ và tên</label>
 												<input type="text" class="form-control"
 													th:value="${defaultAddress != null ? defaultAddress.fullname : user.username}"
 													name="fullName" readonly>

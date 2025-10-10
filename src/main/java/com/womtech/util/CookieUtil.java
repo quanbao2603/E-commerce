@@ -39,12 +39,35 @@ public final class CookieUtil {
 	}
 
 	public static void delete(HttpServletResponse response, String name) {
-		Cookie cookie = new Cookie(name, "");
-		cookie.setPath("/");
-		cookie.setMaxAge(0);
-		response.addCookie(cookie);
+		// Xóa cookie với nhiều cách khác nhau để đảm bảo browser nhận diện
+		
+		// 1. Xóa với path "/"
+		Cookie cookie1 = new Cookie(name, "");
+		cookie1.setPath("/");
+		cookie1.setMaxAge(0);
+		response.addCookie(cookie1);
 
-		response.addHeader("Set-Cookie", name + "=; Path=/; Max-Age=0");
+		// 2. Xóa với domain "localhost"
+		Cookie cookie2 = new Cookie(name, "");
+		cookie2.setPath("/");
+		cookie2.setMaxAge(0);
+		cookie2.setDomain("localhost");
+		response.addCookie(cookie2);
+
+		// 3. Xóa với domain ".localhost" (subdomain)
+		Cookie cookie3 = new Cookie(name, "");
+		cookie3.setPath("/");
+		cookie3.setMaxAge(0);
+		cookie3.setDomain(".localhost");
+		response.addCookie(cookie3);
+
+		// 4. Thêm headers Set-Cookie với nhiều format khác nhau
+		response.addHeader("Set-Cookie", name + "=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict");
+		response.addHeader("Set-Cookie", name + "=; Path=/; Max-Age=0; Domain=localhost; HttpOnly; SameSite=Strict");
+		response.addHeader("Set-Cookie", name + "=; Path=/; Max-Age=0; Domain=.localhost; HttpOnly; SameSite=Strict");
+		
+		// 5. Thêm với Expires header (cho browser cũ)
+		response.addHeader("Set-Cookie", name + "=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly");
 	}
 
 	private static String buildHeaderValue(String name, String value, int maxAgeSec, boolean httpOnly, boolean secure,

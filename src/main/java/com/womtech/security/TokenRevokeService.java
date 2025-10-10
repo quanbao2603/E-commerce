@@ -62,4 +62,13 @@ public class TokenRevokeService {
 		long now = Instant.now().toEpochMilli();
 		revokedTokens.entrySet().removeIf(e -> e.getValue() <= now);
 	}
+
+	/**
+	 * Force revoke tất cả tokens (dùng khi server restart)
+	 */
+	public void revokeAllTokens() {
+		// Clear tất cả tokens đã revoke
+		revokedTokens.clear();
+		System.out.println("🔥 All tokens revoked - fresh start");
+	}
 }
