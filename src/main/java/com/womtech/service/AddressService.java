@@ -11,5 +11,6 @@ public interface AddressService extends BaseService<Address, String> {
 	Optional<Address> findByUserAndIsDefaultTrue(User user);
 
 	List<Address> findByUser(User user);
-
+	
+	 void unsetDefaultForUser(User user);
 }

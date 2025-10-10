@@ -29,4 +29,9 @@ public class AddressServiceImpl extends BaseServiceImpl<Address, String> impleme
 	public List<Address> findByUser(User user) {
 		return addressRepository.findByUser(user);
 	}
+
+	@Override
+	public void unsetDefaultForUser(User user) {
+		addressRepository.unsetDefaultForUser(user);
+	}
 }

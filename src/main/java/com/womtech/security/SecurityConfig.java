@@ -20,29 +20,18 @@ public class SecurityConfig {
 
 	@Bean
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-		http
-				// ❌ Tắt CSRF để test (bật lại khi triển khai thực tế)
-				.csrf(csrf -> csrf.disable())
-
-				// ✅ Quy định quyền truy cập
+		http.csrf(csrf -> csrf.disable())
 				.authorizeHttpRequests(auth -> auth.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
 						.permitAll().requestMatchers("/", "/auth/**", "/products/**", "/error").permitAll()
+						.requestMatchers("/user/**").authenticated() // ✅ cho phép user đã login vào
 						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/vendor/**").hasRole("VENDOR")
 						.requestMatchers("/shipper/**").hasRole("SHIPPER").anyRequest().authenticated())
-
-				// ✅ Thêm filter JWT (đọc cookie AT)
 				.addFilterBefore(new JwtAuthFilter(jwtService, revokeService),
 						org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
-
-				// ✅ Form login (Thymeleaf)
-				.formLogin(form -> form.loginPage("/auth/login").permitAll())
-
-				// ✅ Logout
+				.formLogin(form -> form.disable())
 				.logout(logout -> logout.logoutUrl("/auth/logout").logoutSuccessUrl("/auth/login?logout").permitAll())
-
-				// ✅ Cho phép gọi API test cơ bản
 				.httpBasic(Customizer.withDefaults());
-
 		return http.build();
 	}
+
 }

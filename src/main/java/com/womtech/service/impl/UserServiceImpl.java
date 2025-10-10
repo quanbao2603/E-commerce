@@ -1,7 +1,9 @@
 package com.womtech.service.impl;
 
+import java.util.Collections;
+import java.util.List;
+import java.util.Locale;
 import java.util.Optional;
-
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
@@ -88,8 +90,41 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 		if (!PasswordUtil.matches(request.getPassword(), user.getPassword())) {
 			return LoginResponse.builder().message("Invalid password").build();
 		}
+		
+		String role = (user.getRole() != null && user.getRole().getRolename() != null)
+				? user.getRole().getRolename().toUpperCase()
+				: "USER";
 
+		String redirect;
+		switch (role) {
+		case "ADMIN":
+			redirect = "/admin/dashboard";
+			break;
+		case "VENDOR":
+			redirect = "/vendor/dashboard";
+			break;
+		case "SHIPPER":
+			redirect = "/shipper/dashboard";
+			break;
+		default:
+			redirect = "/";
+			break;
+		}
+		
 		return LoginResponse.builder().userID(user.getUserID()).username(user.getUsername())
-				.message("Login successful!").redirectUrl("/home").build();
+				.message("Login successful!").redirectUrl(redirect).build();
+	}
+
+	@Override
+	public List<String> getRolesByUserId(String userId) {
+		if (userId == null || userId.isBlank()) {
+			return Collections.emptyList();
+		}
+		return userRepository.findById(userId).map(u -> {
+			Role r = u.getRole();
+			if (r == null || r.getRolename() == null)
+				return Collections.<String>emptyList();
+			return List.of(r.getRolename().toUpperCase(Locale.ROOT));
+		}).orElseGet(Collections::emptyList);
 	}
 }
