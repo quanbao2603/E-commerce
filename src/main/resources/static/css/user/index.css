@@ -1,0 +1,70 @@
+/* Hero section */
+.hero-section {
+  background: linear-gradient(135deg, #1e3a8a 0%, #1e40af 100%);
+  color: #fff;
+  padding: 100px 0;
+  text-align: center;
+  position: relative;
+  overflow: hidden;
+}
+
+.hero-section h1 {
+  font-weight: 800;
+  font-size: 2.8rem;
+}
+
+.hero-section p {
+  font-size: 1.2rem;
+  color: #e0e7ff;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.hero-section .btn-primary {
+  margin-top: 1.5rem;
+}
+
+/* Product grid */
+.product-card {
+  border: none;
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 15px rgba(0, 0, 0, 0.08);
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-6px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+.product-card img {
+  transition: transform 0.3s ease;
+}
+
+.product-card:hover img {
+  transform: scale(1.05);
+}
+
+.price {
+  font-weight: 700;
+  color: var(--womtech-accent);
+  font-size: 1.25rem;
+}
+
+/* Animation background */
+.hero-section::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  left: -50%;
+  width: 200%;
+  height: 200%;
+  background: radial-gradient(circle, rgba(255,255,255,0.05) 0%, transparent 60%);
+  animation: pulse-bg 8s infinite linear;
+}
+
+@keyframes pulse-bg {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}

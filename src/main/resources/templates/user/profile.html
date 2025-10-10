@@ -4,10 +4,12 @@
 	layout:decorate="~{user/layout}">
 
 <head>
-<meta charset="UTF-8">
-<th:block layout:fragment="css">
-	<link th:href="@{/css/user/profile.css}" rel="stylesheet">
-</th:block>
+	<meta charset="UTF-8">
+	<th:block layout:fragment="css">
+		<link th:href="@{/css/user/profile.css}" rel="stylesheet">
+		<!-- Bootstrap Icons -->
+		<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
+	</th:block>
 </head>
 
 <body>
@@ -18,7 +20,7 @@
 				<div class="row align-items-center">
 					<div class="col-md-8">
 						<h1 class="display-5 fw-bold text-white mb-3">
-							<i class="fas fa-user-circle me-3"></i>Thông Tin Cá Nhân
+							<i class="bi bi-person-circle me-3"></i>Thông Tin Cá Nhân
 						</h1>
 						<p class="lead text-white-50 mb-0">Quản lý thông tin tài khoản
 							và cài đặt cá nhân của bạn</p>
@@ -26,7 +28,7 @@
 					<div class="col-md-4 text-end">
 						<div class="profile-stats d-none d-md-block">
 							<div class="stat-item text-white text-center">
-								<i class="fas fa-shield-alt fa-2x mb-2 text-warning"></i>
+								<i class="bi bi-shield-check fa-2x mb-2 text-warning"></i>
 								<div class="fw-bold">Tài Khoản Được Xác Thực</div>
 								<small class="text-white-50">Bảo mật cao</small>
 							</div>
@@ -39,32 +41,29 @@
 		<!-- Profile Content -->
 		<section class="py-5">
 			<div class="container">
+
 				<!-- Alert Messages -->
 				<div th:if="${success}"
-					class="alert alert-success alert-dismissible fade show"
-					role="alert">
-					<i class="fas fa-check-circle me-2"></i> <span th:text="${success}"></span>
+					class="alert alert-success alert-dismissible fade show" role="alert">
+					<i class="bi bi-check-circle me-2"></i> <span th:text="${success}"></span>
 					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 				</div>
 
 				<div th:if="${error}"
 					class="alert alert-danger alert-dismissible fade show" role="alert">
-					<i class="fas fa-exclamation-circle me-2"></i> <span
-						th:text="${error}"></span>
+					<i class="bi bi-exclamation-circle me-2"></i> <span th:text="${error}"></span>
 					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 				</div>
 
 				<div th:if="${passwordSuccess}"
-					class="alert alert-success alert-dismissible fade show"
-					role="alert">
-					<i class="fas fa-key me-2"></i> <span th:text="${passwordSuccess}"></span>
+					class="alert alert-success alert-dismissible fade show" role="alert">
+					<i class="bi bi-key me-2"></i> <span th:text="${passwordSuccess}"></span>
 					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 				</div>
 
 				<div th:if="${passwordError}"
 					class="alert alert-danger alert-dismissible fade show" role="alert">
-					<i class="fas fa-exclamation-triangle me-2"></i> <span
-						th:text="${passwordError}"></span>
+					<i class="bi bi-exclamation-triangle me-2"></i> <span th:text="${passwordError}"></span>
 					<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
 				</div>
 
@@ -76,22 +75,19 @@
 								<!-- Profile Avatar -->
 								<div class="profile-avatar mb-3">
 									<div class="avatar-circle">
-										<i class="fas fa-user fa-3x text-primary"></i>
+										<i class="bi bi-person-fill fa-3x text-primary"></i>
 									</div>
 								</div>
 
-								<!-- Tên hiển thị: ưu tiên defaultAddress.fullname, fallback username -->
 								<h5 class="card-title mb-1"
 									th:text="${defaultAddress != null ? defaultAddress.fullname : user.username}">
 									Tên Người Dùng</h5>
 
 								<p class="text-muted mb-3" th:text="${user.email}">email@example.com</p>
 
-								<!-- Badge vai trò: dùng biến isAdmin từ Controller -->
 								<div class="badge bg-primary mb-3">
-									<i class="fas fa-crown me-1"></i> <span
-										th:text="${isAdmin} ? 'Quản Trị Viên' : 'Khách Hàng'">Khách
-										Hàng</span>
+									<i class="bi bi-award me-1"></i>
+									<span th:text="${isAdmin} ? 'Quản Trị Viên' : 'Khách Hàng'">Khách Hàng</span>
 								</div>
 							</div>
 
@@ -99,20 +95,24 @@
 							<div class="list-group list-group-flush">
 								<a href="#profile-info"
 									class="list-group-item list-group-item-action profile-nav-item active"
-									data-tab="info"> <i class="fas fa-user me-3"></i>Thông Tin
-									Cá Nhân
-								</a> <a href="#profile-password"
+									data-tab="info">
+									<i class="bi bi-person me-3"></i>Thông Tin Cá Nhân
+								</a>
+								<a href="#profile-password"
 									class="list-group-item list-group-item-action profile-nav-item"
-									data-tab="password"> <i class="fas fa-lock me-3"></i>Đổi
-									Mật Khẩu
-								</a> <a href="#profile-orders"
+									data-tab="password">
+									<i class="bi bi-lock me-3"></i>Đổi Mật Khẩu
+								</a>
+								<a href="#profile-orders"
 									class="list-group-item list-group-item-action profile-nav-item"
-									data-tab="orders"> <i class="fas fa-shopping-bag me-3"></i>Lịch
-									Sử Đơn Hàng <span class="badge bg-secondary ms-auto">0</span>
-								</a> <a href="#profile-address"
+									data-tab="orders">
+									<i class="bi bi-bag me-3"></i>Lịch Sử Đơn Hàng
+									<span class="badge bg-secondary ms-auto">0</span>
+								</a>
+								<a href="#profile-address"
 									class="list-group-item list-group-item-action profile-nav-item"
-									data-tab="address"> <i class="fas fa-map-marker-alt me-3"></i>Địa
-									Chỉ Giao Hàng
+									data-tab="address">
+									<i class="bi bi-geo-alt me-3"></i>Địa Chỉ Giao Hàng
 								</a>
 							</div>
 						</div>
@@ -125,87 +125,61 @@
 						<div class="profile-tab-content active" id="info-tab">
 							<div class="card">
 								<div class="card-header bg-gradient-primary text-white">
-									<h5 class="mb-0">
-										<i class="fas fa-user me-2"></i>Thông Tin Cá Nhân
-									</h5>
+									<h5 class="mb-0"><i class="bi bi-person me-2"></i>Thông Tin Cá Nhân</h5>
 								</div>
 								<div class="card-body">
-									<!-- Sửa action đúng /user/update -->
-									<form th:action="@{/user/update}" method="post"
-										th:object="${user}">
+									<form th:action="@{/user/update}" method="post" th:object="${user}">
 										<div class="row">
-											<!-- Full Name -->
 											<div class="col-md-6 mb-3">
-												<label for="fullName" class="form-label"> <i
-													class="fas fa-user me-2"></i>Họ và Tên
-												</label> <input type="text" class="form-control" id="fullName"
+												<label class="form-label"><i class="bi bi-person me-2"></i>Họ và Tên</label>
+												<input type="text" class="form-control"
 													th:value="${defaultAddress != null ? defaultAddress.fullname : user.username}"
 													name="fullName" readonly>
 											</div>
 
-											<!-- Email -->
 											<div class="col-md-6 mb-3">
-												<label for="email" class="form-label"> <i
-													class="fas fa-envelope me-2"></i>Email
-												</label> <input type="email" class="form-control" id="email"
-													th:value="${user.email}" name="email" readonly>
+												<label class="form-label"><i class="bi bi-envelope me-2"></i>Email</label>
+												<input type="email" class="form-control" th:value="${user.email}" readonly>
 											</div>
 
-											<!-- Phone -->
 											<div class="col-md-6 mb-3">
-												<label for="phone" class="form-label"> <i
-													class="fas fa-phone me-2"></i>Số Điện Thoại
-												</label> <input type="tel" class="form-control" id="phone"
-													th:value="${defaultAddress != null ? defaultAddress.phone : ''}"
-													placeholder="0xxxxxxxxx" readonly>
+												<label class="form-label"><i class="bi bi-telephone me-2"></i>Số Điện Thoại</label>
+												<input type="tel" class="form-control"
+													th:value="${defaultAddress != null ? defaultAddress.phone : ''}" readonly>
 											</div>
 
-											<!-- City -->
 											<div class="col-md-6 mb-3">
-												<label for="city" class="form-label"> <i
-													class="fas fa-city me-2"></i>Tỉnh/Thành Phố
-												</label> <input type="text" class="form-control" id="city"
-													th:value="${defaultAddress != null ? defaultAddress.city : ''}"
-													placeholder="Hồ Chí Minh" readonly>
+												<label class="form-label"><i class="bi bi-building me-2"></i>Tỉnh/Thành Phố</label>
+												<input type="text" class="form-control"
+													th:value="${defaultAddress != null ? defaultAddress.city : ''}" readonly>
 											</div>
 
-											<!-- District -->
 											<div class="col-md-6 mb-3">
-												<label for="district" class="form-label"> <i
-													class="fas fa-map me-2"></i>Quận/Huyện
-												</label> <input type="text" class="form-control" id="district"
-													th:value="${defaultAddress != null ? defaultAddress.district : ''}"
-													placeholder="Quận 1" readonly>
+												<label class="form-label"><i class="bi bi-map me-2"></i>Quận/Huyện</label>
+												<input type="text" class="form-control"
+													th:value="${defaultAddress != null ? defaultAddress.district : ''}" readonly>
 											</div>
 
-											<!-- Ward -->
 											<div class="col-md-6 mb-3">
-												<label for="ward" class="form-label"> <i
-													class="fas fa-location-dot me-2"></i>Phường/Xã
-												</label> <input type="text" class="form-control" id="ward"
-													th:value="${defaultAddress != null ? defaultAddress.ward : ''}"
-													placeholder="Phường Bến Nghé" readonly>
+												<label class="form-label"><i class="bi bi-geo me-2"></i>Phường/Xã</label>
+												<input type="text" class="form-control"
+													th:value="${defaultAddress != null ? defaultAddress.ward : ''}" readonly>
 											</div>
 
-											<!-- Address -->
 											<div class="col-12 mb-4">
-												<label for="address" class="form-label"> <i
-													class="fas fa-home me-2"></i>Địa Chỉ Chi Tiết
-												</label>
-												<textarea class="form-control" id="address" rows="3"
-													th:text="${defaultAddress != null ? defaultAddress.street : ''}"
-													placeholder="Số nhà, tên đường..." readonly></textarea>
+												<label class="form-label"><i class="bi bi-house-door me-2"></i>Địa Chỉ Chi Tiết</label>
+												<textarea class="form-control" rows="3"
+													th:text="${defaultAddress != null ? defaultAddress.street : ''}" readonly></textarea>
 											</div>
 										</div>
 
 										<div class="d-flex justify-content-between">
 											<div class="text-muted">
-												<i class="fas fa-calendar-alt me-2"></i> Tham gia từ: <span
-													th:text="${#temporals.format(user.createAt, 'dd/MM/yyyy')}"></span>
+												<i class="bi bi-calendar me-2"></i> Tham gia từ:
+												<span th:text="${#temporals.format(user.createAt, 'dd/MM/yyyy')}"></span>
 											</div>
-											<!-- Giữ nút này tạm không hoạt động để test -->
 											<button type="button" class="btn btn-primary disabled">
-												<i class="fas fa-save me-2"></i>Cập Nhật Thông Tin
+												<i class="bi bi-save me-2"></i>Cập Nhật Thông Tin
 											</button>
 										</div>
 									</form>
@@ -216,83 +190,59 @@
 						<!-- Change Password Tab -->
 						<div class="profile-tab-content" id="password-tab">
 							<div class="card">
-								<div class="card-header bg-gradient-warning text-white">
-									<h5 class="mb-0">
-										<i class="fas fa-lock me-2"></i>Đổi Mật Khẩu
-									</h5>
+								<div class="card-header bg-gradient-primary text-white">
+									<h5 class="mb-0"><i class="bi bi-shield-lock me-2"></i>Đổi Mật Khẩu</h5>
 								</div>
 								<div class="card-body">
-									<!-- Sửa action đúng /user/change-password -->
 									<form th:action="@{/user/change-password}" method="post">
 										<div class="row">
-											<!-- Current Password -->
 											<div class="col-12 mb-3">
-												<label for="currentPassword" class="form-label"> <i
-													class="fas fa-key me-2"></i>Mật Khẩu Hiện Tại
-												</label>
+												<label class="form-label"><i class="bi bi-key me-2"></i>Mật Khẩu Hiện Tại</label>
 												<div class="input-group">
-													<input type="password" class="form-control"
-														id="currentPassword" name="currentPassword" required>
-													<button class="btn btn-outline-secondary" type="button"
-														onclick="togglePassword('currentPassword')">
-														<i class="fas fa-eye"></i>
+													<input type="password" class="form-control" id="currentPassword" name="currentPassword" required>
+													<button class="btn btn-outline-secondary" type="button" onclick="togglePassword('currentPassword')">
+														<i class="bi bi-eye"></i>
 													</button>
 												</div>
 											</div>
 
-											<!-- New Password -->
 											<div class="col-md-6 mb-3">
-												<label for="newPassword" class="form-label"> <i
-													class="fas fa-lock me-2"></i>Mật Khẩu Mới
-												</label>
+												<label class="form-label"><i class="bi bi-lock me-2"></i>Mật Khẩu Mới</label>
 												<div class="input-group">
-													<input type="password" class="form-control"
-														id="newPassword" name="newPassword" minlength="6" required>
-													<button class="btn btn-outline-secondary" type="button"
-														onclick="togglePassword('newPassword')">
-														<i class="fas fa-eye"></i>
+													<input type="password" class="form-control" id="newPassword" name="newPassword" minlength="6" required>
+													<button class="btn btn-outline-secondary" type="button" onclick="togglePassword('newPassword')">
+														<i class="bi bi-eye"></i>
 													</button>
 												</div>
-												<div class="form-text">Mật khẩu phải có ít nhất 6 ký
-													tự</div>
+												<div class="form-text">Mật khẩu phải có ít nhất 6 ký tự</div>
 											</div>
 
-											<!-- Confirm Password -->
 											<div class="col-md-6 mb-3">
-												<label for="confirmPassword" class="form-label"> <i
-													class="fas fa-check-circle me-2"></i>Xác Nhận Mật Khẩu
-												</label>
+												<label class="form-label"><i class="bi bi-check-circle me-2"></i>Xác Nhận Mật Khẩu</label>
 												<div class="input-group">
-													<input type="password" class="form-control"
-														id="confirmPassword" name="confirmPassword" minlength="6"
-														required>
-													<button class="btn btn-outline-secondary" type="button"
-														onclick="togglePassword('confirmPassword')">
-														<i class="fas fa-eye"></i>
+													<input type="password" class="form-control" id="confirmPassword" name="confirmPassword" minlength="6" required>
+													<button class="btn btn-outline-secondary" type="button" onclick="togglePassword('confirmPassword')">
+														<i class="bi bi-eye"></i>
 													</button>
 												</div>
 											</div>
 										</div>
 
-										<!-- Password Strength Indicator -->
 										<div class="mb-4">
 											<div class="password-strength">
 												<div class="progress" style="height: 5px;">
-													<div class="progress-bar" id="passwordStrength"
-														role="progressbar" style="width: 0%"></div>
+													<div class="progress-bar" id="passwordStrength" role="progressbar" style="width: 0%"></div>
 												</div>
-												<small class="text-muted" id="passwordStrengthText">Nhập
-													mật khẩu để kiểm tra độ mạnh</small>
+												<small class="text-muted" id="passwordStrengthText">Nhập mật khẩu để kiểm tra độ mạnh</small>
 											</div>
 										</div>
 
 										<div class="d-flex justify-content-between align-items-center">
 											<div class="text-muted">
-												<i class="fas fa-shield-alt me-2"></i> Mật khẩu được mã hóa
-												an toàn
+												<i class="bi bi-shield-lock-fill me-2"></i> Mật khẩu được mã hóa an toàn
 											</div>
 											<button type="submit" class="btn btn-warning">
-												<i class="fas fa-key me-2"></i>Đổi Mật Khẩu
+												<i class="bi bi-key-fill me-2"></i>Đổi Mật Khẩu
 											</button>
 										</div>
 									</form>
@@ -303,21 +253,16 @@
 						<!-- Order History Tab -->
 						<div class="profile-tab-content" id="orders-tab">
 							<div class="card">
-								<div class="card-header bg-gradient-success text-white">
-									<h5 class="mb-0">
-										<i class="fas fa-shopping-bag me-2"></i>Lịch Sử Đơn Hàng
-									</h5>
+								<div class="card-header bg-gradient-primary text-white">
+									<h5 class="mb-0"><i class="bi bi-bag-check me-2"></i>Lịch Sử Đơn Hàng</h5>
 								</div>
-								<div class="card-body">
-									<div class="text-center py-5">
-										<i class="fas fa-shopping-cart fa-4x text-muted mb-3"></i>
-										<h5 class="text-muted">Chưa Có Đơn Hàng Nào</h5>
-										<p class="text-muted mb-4">Bạn chưa thực hiện đơn hàng
-											nào. Hãy khám phá các sản phẩm tuyệt vời của chúng tôi!</p>
-										<a href="/products" class="btn btn-primary"> <i
-											class="fas fa-shopping-bag me-2"></i>Mua Sắm Ngay
-										</a>
-									</div>
+								<div class="card-body text-center py-5">
+									<i class="bi bi-cart4 display-4 text-muted mb-3"></i>
+									<h5 class="text-muted">Chưa Có Đơn Hàng Nào</h5>
+									<p class="text-muted mb-4">Bạn chưa thực hiện đơn hàng nào. Hãy khám phá sản phẩm của chúng tôi!</p>
+									<a href="/products" class="btn btn-primary">
+										<i class="bi bi-bag me-2"></i>Mua Sắm Ngay
+									</a>
 								</div>
 							</div>
 						</div>
@@ -325,76 +270,48 @@
 						<!-- Address Tab -->
 						<div class="profile-tab-content" id="address-tab">
 							<div class="card">
-								<div class="card-header bg-gradient-info text-white">
-									<h5 class="mb-0">
-										<i class="fas fa-map-marker-alt me-2"></i>Địa Chỉ Giao Hàng
-									</h5>
+								<div class="card-header bg-gradient-primary text-white">
+									<h5 class="mb-0"><i class="bi bi-geo-alt me-2"></i>Địa Chỉ Giao Hàng</h5>
 								</div>
 								<div class="card-body">
 									<div class="row">
-										<!-- Current Address -->
 										<div class="col-12 mb-4">
 											<div class="address-card p-4 border rounded-3">
-												<div
-													class="d-flex justify-content-between align-items-start mb-3">
+												<div class="d-flex justify-content-between align-items-start mb-3">
 													<h6 class="mb-0">
-														<i class="fas fa-home me-2 text-primary"></i>Địa Chỉ Chính
+														<i class="bi bi-house-door me-2 text-primary"></i>Địa Chỉ Chính
 													</h6>
-													<span class="badge bg-primary"
-														th:if="${defaultAddress != null}">Mặc Định</span>
+													<span class="badge bg-primary" th:if="${defaultAddress != null}">Mặc Định</span>
 												</div>
 
-												<!-- Hiển thị theo defaultAddress -->
-												<div class="address-details"
-													th:if="${defaultAddress != null}">
-													<p class="mb-2">
-														<i class="fas fa-user me-2"></i> <strong
-															th:text="${defaultAddress.fullname}">Họ Tên</strong>
-													</p>
-													<p class="mb-2">
-														<i class="fas fa-phone me-2"></i> <span
-															th:text="${defaultAddress.phone}">Số điện thoại</span>
-													</p>
-													<p class="mb-0">
-														<i class="fas fa-map-marker-alt me-2"></i> <span
-															th:text="${defaultAddress.street + ', ' + defaultAddress.ward + ', ' + defaultAddress.district + ', ' + defaultAddress.city}">
-															Địa chỉ đầy đủ </span>
-													</p>
+												<div class="address-details" th:if="${defaultAddress != null}">
+													<p class="mb-2"><i class="bi bi-person me-2"></i><strong th:text="${defaultAddress.fullname}">Họ Tên</strong></p>
+													<p class="mb-2"><i class="bi bi-telephone me-2"></i><span th:text="${defaultAddress.phone}">Số điện thoại</span></p>
+													<p class="mb-0"><i class="bi bi-geo-alt me-2"></i><span th:text="${defaultAddress.street + ', ' + defaultAddress.ward + ', ' + defaultAddress.district + ', ' + defaultAddress.city}"></span></p>
 												</div>
 
-												<!-- Chưa có địa chỉ -->
-												<div th:if="${defaultAddress == null}"
-													class="text-center py-4">
-													<i class="fas fa-plus-circle fa-3x text-muted mb-3"></i>
+												<div th:if="${defaultAddress == null}" class="text-center py-4">
+													<i class="bi bi-plus-circle display-4 text-muted mb-3"></i>
 													<h6 class="text-muted">Chưa Có Địa Chỉ</h6>
-													<p class="text-muted mb-3">Vui lòng thêm địa chỉ giao
-														hàng để tiện cho việc đặt hàng</p>
-													<a href="#profile-info"
-														class="btn btn-primary profile-nav-item" data-tab="info">
-														<i class="fas fa-plus me-2"></i>Thêm Địa Chỉ
+													<p class="text-muted mb-3">Vui lòng thêm địa chỉ giao hàng để tiện đặt hàng</p>
+													<a href="#profile-info" class="btn btn-primary profile-nav-item" data-tab="info">
+														<i class="bi bi-plus-lg me-2"></i>Thêm Địa Chỉ
 													</a>
 												</div>
 											</div>
 										</div>
 									</div>
 
-									<!-- Address Guidelines -->
-									<div class="row">
-										<div class="col-12">
-											<div class="alert alert-info">
-												<h6 class="alert-heading">
-													<i class="fas fa-info-circle me-2"></i>Lưu Ý Về Địa Chỉ
-													Giao Hàng
-												</h6>
-												<ul class="mb-0">
-													<li>Vui lòng cung cấp địa chỉ chi tiết và chính xác</li>
-													<li>Số điện thoại phải sẵn sàng để nhận cuộc gọi từ
-														shipper</li>
-													<li>Chúng tôi hỗ trợ giao hàng toàn quốc</li>
-													<li>Thời gian giao hàng: 2-5 ngày làm việc</li>
-												</ul>
-											</div>
-										</div>
+									<div class="alert alert-info">
+										<h6 class="alert-heading">
+											<i class="bi bi-info-circle me-2"></i>Lưu Ý Về Địa Chỉ Giao Hàng
+										</h6>
+										<ul class="mb-0">
+											<li>Vui lòng cung cấp địa chỉ chi tiết và chính xác</li>
+											<li>Số điện thoại phải sẵn sàng để nhận cuộc gọi từ shipper</li>
+											<li>Chúng tôi hỗ trợ giao hàng toàn quốc</li>
+											<li>Thời gian giao hàng: 2–5 ngày làm việc</li>
+										</ul>
 									</div>
 
 								</div>
