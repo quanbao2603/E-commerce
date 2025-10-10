@@ -1,45 +1,39 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
-      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{user/layout}">
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{user/layout}">
 
 <head>
-    <meta charset="UTF-8">
-    <title>Trang chủ - WOMTech</title>
-	<link th:href="@{/css/user/index.css}" rel="stylesheet" >
-	<script th:src="@{/js/index.js}"></script>
+<meta charset="UTF-8">
+<title>Trang chủ - WOMTech</title>
+<link th:href="@{/css/user/index.css}" rel="stylesheet">
+<script th:src="@{/js/index.js}"></script>
 </head>
 
 <body>
-    <div layout:fragment="content">
-        <!-- HERO -->
-        <section class="hero-home">
-            <div class="container position-relative">
-                <h1>Khám phá thế giới Laptop chính hãng</h1>
-                <p>Hiệu năng mạnh mẽ, thiết kế tinh tế – tất cả tại WOMTech.</p>
-                <a th:href="@{/products}" class="btn-glow mt-3">Mua ngay</a>
-            </div>
-        </section>
+	<div layout:fragment="content">
+		<!-- HERO -->
+		<section class="hero-home">
+			<div class="container position-relative">
+				<h1>Khám phá thế giới Laptop chính hãng</h1>
+				<p>Hiệu năng mạnh mẽ, thiết kế tinh tế – tất cả tại WOMTech.</p>
+				<a th:href="@{/products}" class="btn-glow mt-3">Mua ngay</a>
+			</div>
+		</section>
 
-        <!-- PRODUCTS -->
-        <div class="container py-5">
-            <h2 class="section-title">🔥 Sản phẩm nổi bật</h2>
-            <div class="row g-4">
-                <!-- Load từ database -->
-                <div class="col-md-3" th:each="p : ${featuredProducts}">
-                    <div class="product-card h-100">
-                        <img th:src="@{|/images/${p.image}|}" th:alt="${p.name}">
-                        <div class="product-info">
-                            <h5 th:text="${p.name}"></h5>
-                            <p class="price" th:text="${#numbers.formatDecimal(p.price, 0, 'POINT', '.', 'VNĐ')}"></p>
-                            <a th:href="@{/product/{id}(id=${p.id})}" class="btn btn-outline-light w-100 mt-2">
-                                Xem chi tiết
-                            </a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
+		<!-- PRODUCTS -->
+		<div class="col-md-3" th:each="p : ${featuredProducts}">
+			<div class="product-card h-100">
+				<img th:src="@{|/images/${p.thumbnail}|}" th:alt="${p.name}">
+				<div class="product-info">
+					<h5 th:text="${p.name}"></h5>
+					<p class="price"
+						th:text="${#numbers.formatDecimal(p.price, 0, 'POINT', 0, 'POINT')} + ' VNĐ'"></p>
+					<a th:href="@{/product/{id}(id=${p.productID})}"
+						class="btn btn-outline-light w-100 mt-2"> Xem chi tiết </a>
+				</div>
+			</div>
+		</div>
+	</div>
 </body>
 </html>
