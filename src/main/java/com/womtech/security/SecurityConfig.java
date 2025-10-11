@@ -32,7 +32,7 @@ public class SecurityConfig {
 				.addFilterBefore(new JwtAuthFilter(jwtService, revokeService),
 						org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
 				.formLogin(form -> form.disable())
-				.logout(logout -> logout.logoutUrl("/auth/logout").logoutSuccessUrl("/auth/login?logout").permitAll())
+				.logout(logout -> logout.disable())
 				.httpBasic(Customizer.withDefaults());
 		return http.build();
 	}

@@ -370,13 +370,23 @@ public class AuthController {
         return Map.of("ok", false, "message", "No auth", "debug", debug);
     }
 
-    @PostMapping("/logout")
+    @PostMapping("/manual-logout")
     public String doLogout(HttpServletRequest request, HttpServletResponse response, HttpSession session,
                            RedirectAttributes ra) {
         Cookie at = CookieUtil.get(request, CK_AT);
         Cookie rt = CookieUtil.get(request, CK_RT);
-        if (at != null) tokenRevokeService.revoke(at.getValue(), jwtService.getExpiry(at.getValue()));
-        if (rt != null) tokenRevokeService.revoke(rt.getValue(), jwtService.getExpiry(rt.getValue()));
+        
+        System.out.println("=== DEBUG LOGOUT ===");
+        if (at != null) {
+            System.out.println("Revoking AT token: " + at.getValue().substring(0, Math.min(20, at.getValue().length())) + "...");
+            tokenRevokeService.revoke(at.getValue(), jwtService.getExpiry(at.getValue()));
+            System.out.println("AT token revoked: " + tokenRevokeService.isRevoked(at.getValue()));
+        }
+        if (rt != null) {
+            System.out.println("Revoking RT token: " + rt.getValue().substring(0, Math.min(20, rt.getValue().length())) + "...");
+            tokenRevokeService.revoke(rt.getValue(), jwtService.getExpiry(rt.getValue()));
+        }
+        System.out.println("===================");
 
         clearAuthCookies(request, response);
         session.invalidate();
@@ -386,13 +396,23 @@ public class AuthController {
         return "redirect:/auth/login";
     }
 
-    @GetMapping("/logout")
+    @GetMapping("/manual-logout")
     public String doLogoutGet(HttpServletRequest request, HttpServletResponse response, HttpSession session,
                               RedirectAttributes ra) {
         Cookie at = CookieUtil.get(request, CK_AT);
         Cookie rt = CookieUtil.get(request, CK_RT);
-        if (at != null) tokenRevokeService.revoke(at.getValue(), jwtService.getExpiry(at.getValue()));
-        if (rt != null) tokenRevokeService.revoke(rt.getValue(), jwtService.getExpiry(rt.getValue()));
+        
+        System.out.println("=== DEBUG LOGOUT GET ===");
+        if (at != null) {
+            System.out.println("Revoking AT token: " + at.getValue().substring(0, Math.min(20, at.getValue().length())) + "...");
+            tokenRevokeService.revoke(at.getValue(), jwtService.getExpiry(at.getValue()));
+            System.out.println("AT token revoked: " + tokenRevokeService.isRevoked(at.getValue()));
+        }
+        if (rt != null) {
+            System.out.println("Revoking RT token: " + rt.getValue().substring(0, Math.min(20, rt.getValue().length())) + "...");
+            tokenRevokeService.revoke(rt.getValue(), jwtService.getExpiry(rt.getValue()));
+        }
+        System.out.println("=======================");
 
         clearAuthCookies(request, response);
         session.invalidate();

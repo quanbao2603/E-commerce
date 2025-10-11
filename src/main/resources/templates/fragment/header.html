@@ -37,32 +37,33 @@
 				<!-- Cart -->
 				<li class="nav-item position-relative me-3"><a class="nav-link"
 					th:href="@{/cart}"> <i class="bi bi-cart3 fs-5"></i> <span
-						class="cart-badge" th:if="${session.CURRENT_USER_ID != null}"
+						class="cart-badge" th:if="${isAuthenticated}"
 						id="cartBadge">0</span>
 				</a></li>
 
 				<!-- User Menu -->
-				<li class="nav-item dropdown"
-					th:if="${session.CURRENT_USER_ID != null}"><a
-					class="nav-link dropdown-toggle" href="#" role="button"
-					data-bs-toggle="dropdown"> <i class="bi bi-person-circle me-1"></i>
-						<span th:text="${session.CURRENT_USERNAME}">User</span>
-				</a>
+				<li class="nav-item dropdown" th:if="${isAuthenticated}">
+					<a class="nav-link dropdown-toggle" href="#" role="button"
+						data-bs-toggle="dropdown" onclick="console.log('Dropdown clicked!')"> 
+						<i class="bi bi-person-circle me-1"></i>
+						<span th:text="${currentUsername}">User</span>
+					</a>
 					<ul class="dropdown-menu">
 						<li><a class="dropdown-item" th:href="@{/user/profile}">
 								<i class="bi bi-person me-2"></i>Thông tin cá nhân
 						</a></li>
 						<li><hr class="dropdown-divider"></li>
-						<li><a class="dropdown-item" th:href="@{/auth/logout}"> <i
-								class="bi bi-box-arrow-right me-2"></i>Đăng xuất
+						<li><a class="dropdown-item" th:href="@{/auth/logout}" onclick="console.log('Logout clicked!')"> 
+								<i class="bi bi-box-arrow-right me-2"></i>Đăng xuất
 						</a></li>
-					</ul></li>
+					</ul>
+				</li>
 
 				<!-- Login/Register -->
-				<li class="nav-item" th:if="${session.CURRENT_USER_ID == null}">
-					<a class="nav-link" th:href="@{/auth/login}"> <i
-						class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
-				</a>
+				<li class="nav-item" th:if="${!isAuthenticated}">
+					<a class="nav-link" th:href="@{/auth/login}"> 
+						<i class="bi bi-box-arrow-in-right me-1"></i>Đăng nhập
+					</a>
 				</li>
 
 			</ul>

@@ -13,7 +13,7 @@ public class StartupConfig implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
-        // Force revoke tất cả tokens khi                                                                                        start (fresh start)
+        // Force revoke tất cả tokens khi start (fresh start)
         tokenRevokeService.revokeAllTokens();
         System.out.println("🚀 Server started - All tokens invalidated for fresh start");
     }
