@@ -1,5 +1,6 @@
 package com.womtech.controller;
 
+import com.womtech.service.CategoryService;
 import com.womtech.service.ProductService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpSession;
@@ -15,6 +16,7 @@ import java.security.Principal;
 public class HomeController {
 
     private final ProductService productService;
+    private final CategoryService categoryService;
 
     @GetMapping("/")
     public String home(Model model, Principal principal, HttpSession session, HttpServletRequest request) {
@@ -44,6 +46,8 @@ public class HomeController {
         model.addAttribute("currentUserId", currentUserId);
         model.addAttribute("currentUsername", currentUsername);
 
+        model.addAttribute("featuredCategories", categoryService.findAll());
+        
         return "index";
     }
 }
