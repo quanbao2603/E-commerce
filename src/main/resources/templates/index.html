@@ -6,40 +6,71 @@
 <head>
     <meta charset="UTF-8">
     <title>Trang chủ - WOMTech</title>
-	<link th:href="@{/css/user/index.css}" rel="stylesheet" >
-	<script th:src="@{/js/index.js}"></script>
+    <link th:href="@{/css/user/index.css}" rel="stylesheet">
+    <script th:src="@{/js/index.js}"></script>
 </head>
 
 <body>
-    <div layout:fragment="content">
-        <!-- HERO -->
-        <section class="hero-home">
-            <div class="container position-relative">
-                <h1>Khám phá thế giới Laptop chính hãng</h1>
-                <p>Hiệu năng mạnh mẽ, thiết kế tinh tế – tất cả tại WOMTech.</p>
-                <a th:href="@{/products}" class="btn-glow mt-3">Mua ngay</a>
-            </div>
-        </section>
+<div layout:fragment="content">
 
-        <!-- PRODUCTS -->
-        <div class="container py-5">
-            <h2 class="section-title">🔥 Sản phẩm nổi bật</h2>
-            <div class="row g-4">
-                <!-- Load từ database -->
-                <div class="col-md-3" th:each="p : ${featuredProducts}">
-                    <div class="product-card h-100">
-                        <img th:src="@{|/images/${p.image}|}" th:alt="${p.name}">
-                        <div class="product-info">
-                            <h5 th:text="${p.name}"></h5>
-                            <p class="price" th:text="${#numbers.formatDecimal(p.price, 0, 'POINT', '.', 'VNĐ')}"></p>
-                            <a th:href="@{/product/{id}(id=${p.id})}" class="btn btn-outline-light w-100 mt-2">
-                                Xem chi tiết
-                            </a>
-                        </div>
+    <!-- HERO -->
+    <section class="hero-with-categories">
+        <div class="container-xxl">
+            <div class="row align-items-stretch">
+                <div class="hero-area">
+                    <div class="hero-content text-center">
+                        <h1>Khám phá thế giới Laptop đỉnh cao</h1>
+                        <p>Hiệu năng vượt trội – Thiết kế tinh tế – Chỉ có tại <strong>WOMTech</strong></p>
+                        <a th:href="@{/products}" class="btn-glow mt-3">Mua ngay</a>
                     </div>
                 </div>
             </div>
         </div>
-    </div>
+    </section>
+
+    <!-- DANH MỤC NỔI BẬT -->
+	<section class="container py-5">
+	    <h2 class="text-center mb-4">
+	        Danh mục nổi bật
+	    </h2>
+	
+	    <div class="row g-4 justify-content-center">
+	        <div class="col-lg-2 col-md-3 col-sm-4 col-6" th:each="cate : ${featuredCategories}">
+	            <a th:href="@{/products(category=${cate.categoryID})}"
+	               class="category-card d-flex flex-column align-items-center justify-content-center text-decoration-none">
+	                <div class="category-icon mb-3">
+	                    <i th:class="'bi ' + 
+			                (${cate.name.equalsIgnoreCase('Laptop')} ? 'bi-laptop' :
+			                (${cate.name.equalsIgnoreCase('PC & Gaming')} ? 'bi-pc' :
+			                (${cate.name.equalsIgnoreCase('Phụ kiện')} ? 'bi-headphones' :
+			                'bi-box-seam')))" 
+			               class="fs-1 text-light"></i>
+	                </div>
+	                <h6 th:text="${cate.name}" class="category-name text-dark fw-semibold mb-0 text-center"></h6>
+	            </a>
+	        </div>
+	    </div>
+	</section>
+
+    <!-- SẢN PHẨM NỔI BẬT -->
+    <section class="container py-5">
+        <h2 class="text-center mb-4">Sản phẩm nổi bật</h2>
+        <div class="row g-4">
+            <div class="col-lg-3 col-md-4 col-sm-6" th:each="p : ${featuredProducts}">
+                <div class="product-card h-100 text-center">
+                    <img th:src="@{|/images/${p.thumbnail}|}" th:alt="${p.name}">
+                    <div class="product-info p-3">
+                        <h5 th:text="${p.name}"></h5>
+                        <p class="price"
+                           th:text="${#numbers.formatDecimal(p.price, 0, 'POINT', 0, 'POINT')} + ' VNĐ'"></p>
+                        <a th:href="@{/product/{id}(id=${p.productID})}"
+   							class="btn btn-primary w-100 mt-2">Xem chi tiết</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+</div>
 </body>
 </html>
