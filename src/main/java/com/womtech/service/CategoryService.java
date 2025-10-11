@@ -22,4 +22,5 @@ public interface CategoryService {
     boolean existsByName(String name);
 
     long getTotalCount();
+    List<Category> findAll();
 }
