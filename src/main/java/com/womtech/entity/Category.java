@@ -12,7 +12,7 @@ import java.util.*;
 @AllArgsConstructor
 @Builder
 public class Category {
-	@Id
+	@Id 	
 	@GeneratedValue(strategy = GenerationType.UUID)
 	@Column(name = "categoryID", length = 36)
 	private String categoryID;
@@ -27,4 +27,6 @@ public class Category {
 	@Builder.Default
 	@OneToMany(mappedBy = "category")
 	private List<Subcategory> subcategories = new ArrayList<>();
+	
+	
 }
