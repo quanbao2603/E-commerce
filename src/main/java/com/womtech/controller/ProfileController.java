@@ -16,6 +16,9 @@ import com.womtech.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+
 
 @Controller
 @RequestMapping("/user")
@@ -39,7 +42,7 @@ public class ProfileController {
 		}
 		User user = userOpt.get();
 
-		Address defaultAddress = addressService.findByUserAndIsDefaultTrue(user).orElse(null);
+		Address defaultAddress = addressService.findByUserAndIsDefaultTrue(user).orElse(new Address());
 		List<Address> listAddress = addressService.findByUser(user);
 
 		boolean isAdmin = user.getRole() != null && user.getRole().getRolename() != null
@@ -72,6 +75,43 @@ public class ProfileController {
 
 		return "redirect:/user/profile";
 	}
+	
+	@PostMapping("/update-defaultAddress")
+	public String updateDefaultAddress(HttpSession session, Principal principal, @ModelAttribute("defaultAddress") Address defaultAddress) {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+			return "redirect:/auth/login";
+		}
+
+		String userId = principal.getName();
+		var userOpt = userService.findById(userId);
+		if (userOpt.isEmpty())
+			return "redirect:/auth/login";
+		var user = userOpt.get();
+		
+		Optional<Address> addressDbOpt = addressService.findById(defaultAddress.getAddressID());
+		
+		if (addressDbOpt.isEmpty()) {
+			defaultAddress.setAddressID(null);
+			defaultAddress.setUser(user);
+			defaultAddress.setCreateAt(LocalDateTime.now());
+			defaultAddress.setUpdateAt(LocalDateTime.now());
+			addressService.save(defaultAddress);
+			addressService.setDefaultAddress(defaultAddress);
+		} else {
+			Address addressDb = addressDbOpt.get();
+			addressDb.setFullname(defaultAddress.getFullname());
+			addressDb.setPhone(defaultAddress.getPhone());
+			addressDb.setStreet(defaultAddress.getStreet());
+			addressDb.setWard(defaultAddress.getWard());
+			addressDb.setDistrict(defaultAddress.getDistrict());
+			addressDb.setCity(defaultAddress.getCity());
+			addressDb.setUpdateAt(LocalDateTime.now());
+		    addressService.save(addressDb);
+		}
+		
+		return "redirect:/user/profile";
+	}
+	
 
 	@PostMapping("/add-address")
 	public String addAddress(HttpSession session, Principal principal, @RequestParam String fullname,
@@ -89,9 +129,9 @@ public class ProfileController {
 			return "redirect:/auth/login";
 		var user = userOpt.get();
 
-		if (isDefault) {
-			addressService.unsetDefaultForUser(user); 
-		}
+//		if (isDefault) {
+//			addressService.unsetDefaultForUser(user); 
+//		}
 
 		Address addr = Address.builder().user(user) 
 				.fullname(fullname).phone(phone).street(street).ward(ward).district(district).city(city)
@@ -116,9 +156,9 @@ public class ProfileController {
 		address.setUser(user);
 		address.setUpdateAt(LocalDateTime.now());
 
-		if (Boolean.TRUE.equals(address.isDefault())) {
-			addressService.unsetDefaultForUser(user);
-		}
+//		if (Boolean.TRUE.equals(address.isDefault())) {
+//			addressService.unsetDefaultForUser(user);
+//		}
 
 		addressService.save(address);
 		return "redirect:/user/profile";

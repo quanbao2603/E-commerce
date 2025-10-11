@@ -128,13 +128,13 @@
 									<h5 class="mb-0"><i class="bi bi-person me-2"></i>Thông Tin Cá Nhân</h5>
 								</div>
 								<div class="card-body">
-									<form th:action="@{/user/update}" method="post" th:object="${user}">
+									<form th:action="@{/user/update-defaultAddress}" method="post" th:object="${defaultAddress}">
+									<input type="hidden" th:field=*{addressID}>
 										<div class="row">
 											<div class="col-md-6 mb-3">
 												<label class="form-label"><i class="bi bi-person me-2"></i>Họ và tên</label>
 												<input type="text" class="form-control"
-													th:value="${defaultAddress != null ? defaultAddress.fullname : user.username}"
-													name="fullName" readonly>
+													th:field="*{fullname}">
 											</div>
 
 											<div class="col-md-6 mb-3">
@@ -145,31 +145,31 @@
 											<div class="col-md-6 mb-3">
 												<label class="form-label"><i class="bi bi-telephone me-2"></i>Số Điện Thoại</label>
 												<input type="tel" class="form-control"
-													th:value="${defaultAddress != null ? defaultAddress.phone : ''}" readonly>
+													th:field="*{phone}">
 											</div>
 
 											<div class="col-md-6 mb-3">
 												<label class="form-label"><i class="bi bi-building me-2"></i>Tỉnh/Thành Phố</label>
 												<input type="text" class="form-control"
-													th:value="${defaultAddress != null ? defaultAddress.city : ''}" readonly>
+													th:field="*{city}">
 											</div>
 
 											<div class="col-md-6 mb-3">
 												<label class="form-label"><i class="bi bi-map me-2"></i>Quận/Huyện</label>
 												<input type="text" class="form-control"
-													th:value="${defaultAddress != null ? defaultAddress.district : ''}" readonly>
+													th:field="*{district}">
 											</div>
 
 											<div class="col-md-6 mb-3">
 												<label class="form-label"><i class="bi bi-geo me-2"></i>Phường/Xã</label>
 												<input type="text" class="form-control"
-													th:value="${defaultAddress != null ? defaultAddress.ward : ''}" readonly>
+													th:field="*{ward}">
 											</div>
 
 											<div class="col-12 mb-4">
 												<label class="form-label"><i class="bi bi-house-door me-2"></i>Địa Chỉ Chi Tiết</label>
 												<textarea class="form-control" rows="3"
-													th:text="${defaultAddress != null ? defaultAddress.street : ''}" readonly></textarea>
+													th:field="*{street}"></textarea>
 											</div>
 										</div>
 
@@ -178,7 +178,7 @@
 												<i class="bi bi-calendar me-2"></i> Tham gia từ:
 												<span th:text="${#temporals.format(user.createAt, 'dd/MM/yyyy')}"></span>
 											</div>
-											<button type="button" class="btn btn-primary disabled">
+											<button type="submit" class="btn btn-primary">
 												<i class="bi bi-save me-2"></i>Cập Nhật Thông Tin
 											</button>
 										</div>
