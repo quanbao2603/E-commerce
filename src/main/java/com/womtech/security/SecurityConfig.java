@@ -26,7 +26,7 @@ public class SecurityConfig {
 				.securityContext(sc -> sc.requireExplicitSave(true))
 				.authorizeHttpRequests(auth -> auth.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
 						.permitAll().requestMatchers("/", "/auth/**", "/products/**", "/error").permitAll()
-						.requestMatchers("/user/**").authenticated() // ✅ cho phép user đã login vào
+						.requestMatchers("/user/**").authenticated()
 						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/vendor/**").hasRole("VENDOR")
 						.requestMatchers("/shipper/**").hasRole("SHIPPER").anyRequest().authenticated())
 				.addFilterBefore(new JwtAuthFilter(jwtService, revokeService),
