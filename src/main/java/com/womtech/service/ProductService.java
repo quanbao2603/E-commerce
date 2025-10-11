@@ -9,6 +9,9 @@ import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface ProductService {
     // BASIC CRUD
     List<Product> getAllProducts();
@@ -46,4 +49,5 @@ public interface ProductService {
 //    void activateProduct(String productID);
 //    void deactivateProduct(String productID);
 //    void setOutOfStock(String productID);
+	  Page<Product> getAllProducts(Pageable pageable);
 }

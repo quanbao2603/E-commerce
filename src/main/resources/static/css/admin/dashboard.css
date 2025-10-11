@@ -8,14 +8,19 @@
 	--womtech-warning: #ffc107;
 }
 
-/* Dashboard Container */
+/* ============================================
+   DASHBOARD CONTAINER
+   ============================================ */
 .dashboard-container {
 	max-width: 1400px;
 	margin: 0 auto;
 	padding: 2rem;
+	background: #f8f9fa;
 }
 
-/* Page Title */
+/* ============================================
+   PAGE TITLE
+   ============================================ */
 h1[layout\:fragment="page-title"] {
 	color: var(--womtech-primary);
 	font-weight: 700;
@@ -27,15 +32,18 @@ h1[layout\:fragment="page-title"] {
 	animation: fadeInDown 0.6s ease;
 }
 
-/* Statistics Cards */
+/* ============================================
+   STATISTICS CARDS
+   ============================================ */
 .dashboard-stat-card {
-	background: white;
-	border-radius: 24px;
-	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-	padding: 25px;
-	transition: all 0.4s ease;
+	background: #ffffff;
+	border-radius: 20px;
+	padding: 30px 25px;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+	border: 1px solid rgba(0, 0, 0, 0.05);
 	position: relative;
-	border: none;
+	overflow: hidden;
 	height: 100%;
 	display: flex;
 	flex-direction: column;
@@ -44,6 +52,7 @@ h1[layout\:fragment="page-title"] {
 	animation: dashboardFadeIn 0.6s ease;
 }
 
+/* Top Border Gradient */
 .dashboard-stat-card::before {
 	content: '';
 	position: absolute;
@@ -52,135 +61,210 @@ h1[layout\:fragment="page-title"] {
 	right: 0;
 	height: 4px;
 	background: linear-gradient(90deg, #1e90ff 0%, #007bff 50%, #0dcaf0 100%);
+	opacity: 0;
+	transition: opacity 0.3s ease;
+}
+
+.dashboard-stat-card:hover::before {
+	opacity: 1;
 }
 
 .dashboard-stat-card:hover {
-	transform: translateY(-12px) scale(1.02);
-	box-shadow: 0 40px 80px rgba(0, 0, 0, 0.12);
+	transform: translateY(-10px);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
-.dashboard-stat-card .stat-icon {
+/* Stat Icon Styles */
+.stat-icon {
 	width: 70px;
 	height: 70px;
-	border-radius: 16px;
+	border-radius: 18px;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 28px;
-	color: white;
 	margin-bottom: 20px;
-	box-shadow: 0 8px 20px rgba(0, 123, 255, 0.25);
+	font-size: 30px;
+	transition: all 0.4s ease;
+	position: relative;
+	color: white;
 }
 
-.dashboard-stat-card .stat-icon.primary {
-	background: linear-gradient(135deg, #1e90ff 0%, #007bff 100%);
+/* Icon Glow Effect */
+.stat-icon::after {
+	content: '';
+	position: absolute;
+	inset: -8px;
+	border-radius: 18px;
+	background: inherit;
+	opacity: 0;
+	filter: blur(15px);
+	transition: all 0.4s ease;
+	z-index: -1;
 }
 
-.dashboard-stat-card .stat-icon.success {
-	background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+.dashboard-stat-card:hover .stat-icon {
+	transform: scale(1.1) rotate(-5deg);
 }
 
-.dashboard-stat-card .stat-icon.info {
-	background: linear-gradient(135deg, #17a2b8 0%, #6f42c1 100%);
+.dashboard-stat-card:hover .stat-icon::after {
+	opacity: 0.5;
 }
 
-.dashboard-stat-card .stat-icon.warning {
-	background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+/* Icon Color Variants */
+.stat-icon.primary {
+	background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+	box-shadow: 0 8px 20px rgba(102, 126, 234, 0.35);
 }
 
-.dashboard-stat-card .stat-label {
+.stat-icon.success {
+	background: linear-gradient(135deg, #48c774 0%, #38b864 100%);
+	box-shadow: 0 8px 20px rgba(72, 199, 116, 0.35);
+}
+
+.stat-icon.info {
+	background: linear-gradient(135deg, #3298dc 0%, #2377bd 100%);
+	box-shadow: 0 8px 20px rgba(50, 152, 220, 0.35);
+}
+
+.stat-icon.warning {
+	background: linear-gradient(135deg, #ffdd57 0%, #ffc107 100%);
+	box-shadow: 0 8px 20px rgba(255, 221, 87, 0.35);
+	color: #333;
+}
+
+/* Stat Label & Value */
+.stat-label {
 	color: #6c757d;
-	font-size: 16px;
-	font-weight: 500;
+	font-size: 13px;
+	font-weight: 600;
 	text-transform: uppercase;
+	letter-spacing: 0.8px;
 	margin-bottom: 10px;
 }
 
-.dashboard-stat-card .stat-value {
-	font-size: 36px;
+.stat-value {
+	font-size: 42px;
 	font-weight: 700;
-	margin-bottom: 20px;
-	color: #343a40;
+	color: #2c3e50;
+	margin: 0 0 20px 0;
+	line-height: 1;
 }
 
-/* Alert Cards */
+/* Card Buttons */
+.dashboard-stat-card .btn {
+	border-radius: 12px;
+	font-weight: 600;
+	font-size: 13px;
+	padding: 10px 20px;
+	transition: all 0.3s ease;
+	border-width: 2px;
+	display: inline-flex;
+	align-items: center;
+	gap: 6px;
+}
+
+.dashboard-stat-card .btn:hover {
+	transform: translateX(3px);
+}
+
+/* ============================================
+   ALERT CARDS (Inventory Warnings)
+   ============================================ */
 .dashboard-alert-card {
-	background: white;
-	border-radius: 24px;
-	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
-	padding: 25px;
-	transition: all 0.4s ease;
+	background: #ffffff;
+	border-radius: 20px;
+	padding: 28px;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
+	border: 2px solid;
+	transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
 	position: relative;
 	overflow: hidden;
-	height: 100%;
 	animation: dashboardFadeIn 0.6s ease;
 }
 
+/* Background Circle Effect */
 .dashboard-alert-card::before {
 	content: '';
 	position: absolute;
-	top: 0;
-	left: 0;
-	right: 0;
-	height: 4px;
-}
-
-.dashboard-alert-card.warning::before {
-	background: linear-gradient(90deg, #ffc107 0%, #fd7e14 100%);
-}
-
-.dashboard-alert-card.danger::before {
-	background: linear-gradient(90deg, #dc3545 0%, #e83e8c 100%);
+	top: -50px;
+	right: -50px;
+	width: 200px;
+	height: 200px;
+	border-radius: 50%;
+	opacity: 0.08;
+	transition: all 0.5s ease;
 }
 
 .dashboard-alert-card:hover {
 	transform: translateY(-8px);
-	box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
 }
 
-.dashboard-alert-card .alert-stat-icon {
+.dashboard-alert-card:hover::before {
+	transform: scale(1.3);
+	opacity: 0.12;
+}
+
+/* Warning Alert Card */
+.dashboard-alert-card.warning {
+	border-color: #ffc107;
+	background: linear-gradient(135deg, #ffffff 0%, #fffcf5 100%);
+}
+
+.dashboard-alert-card.warning::before {
+	background: #ffc107;
+}
+
+/* Danger Alert Card */
+.dashboard-alert-card.danger {
+	border-color: #dc3545;
+	background: linear-gradient(135deg, #ffffff 0%, #fff8f8 100%);
+}
+
+.dashboard-alert-card.danger::before {
+	background: #dc3545;
+}
+
+/* Alert Icon */
+.alert-stat-icon {
 	width: 60px;
 	height: 60px;
-	border-radius: 12px;
+	border-radius: 50%;
 	display: flex;
 	align-items: center;
 	justify-content: center;
-	font-size: 24px;
-	color: white;
+	font-size: 26px;
+	transition: all 0.4s ease;
 }
 
-.dashboard-alert-card .alert-stat-icon.warning {
-	background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
-	box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
+.alert-stat-icon.warning {
+	background: rgba(255, 193, 7, 0.15);
+	color: #ffc107;
+	box-shadow: 0 8px 20px rgba(255, 193, 7, 0.2);
 }
 
-.dashboard-alert-card .alert-stat-icon.danger {
-	background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
-	box-shadow: 0 8px 20px rgba(220, 53, 69, 0.3);
+.alert-stat-icon.danger {
+	background: rgba(220, 53, 69, 0.15);
+	color: #dc3545;
+	box-shadow: 0 8px 20px rgba(220, 53, 69, 0.2);
 }
 
-.dashboard-alert-card .stat-label {
-	color: #6c757d;
-	font-size: 16px;
-	font-weight: 500;
-	text-transform: uppercase;
+.dashboard-alert-card:hover .alert-stat-icon {
+	transform: scale(1.15) rotate(5deg);
 }
 
-.dashboard-alert-card .stat-value {
-	font-size: 36px;
-	font-weight: 700;
-}
-
-/* Buttons */
+/* ============================================
+   BUTTONS
+   ============================================ */
 .btn {
 	border-radius: 12px;
 	font-weight: 600;
 	padding: 0.75rem 1.5rem;
 	transition: all 0.3s ease;
-	border: none;
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
+	gap: 8px;
 }
 
 .btn i {
@@ -188,7 +272,7 @@ h1[layout\:fragment="page-title"] {
 }
 
 .btn:hover i {
-	transform: scale(1.1);
+	transform: translateX(3px);
 }
 
 .btn-outline-primary {
@@ -238,7 +322,7 @@ h1[layout\:fragment="page-title"] {
 
 .btn-outline-warning:hover {
 	background: var(--womtech-warning);
-	color: white;
+	color: #333;
 	transform: translateY(-2px);
 	box-shadow: 0 8px 20px rgba(255, 193, 7, 0.3);
 }
@@ -246,40 +330,45 @@ h1[layout\:fragment="page-title"] {
 .btn-warning {
 	background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
 	color: white;
+	border: none;
 }
 
 .btn-warning:hover {
 	transform: translateY(-3px);
-	box-shadow: 0 12px 35px rgba(255, 193, 7, 0.4);
+	box-shadow: 0 12px 30px rgba(255, 193, 7, 0.4);
 	background: linear-gradient(135deg, #fd7e14 0%, #ffc107 100%);
 }
 
 .btn-danger {
 	background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
 	color: white;
+	border: none;
 }
 
 .btn-danger:hover {
 	transform: translateY(-3px);
-	box-shadow: 0 12px 35px rgba(220, 53, 69, 0.4);
+	box-shadow: 0 12px 30px rgba(220, 53, 69, 0.4);
 	background: linear-gradient(135deg, #e83e8c 0%, #dc3545 100%);
 }
 
 .btn-sm {
-	padding: 0.5rem 0.75rem;
-	border-radius: 8px;
+	padding: 0.5rem 1rem;
+	border-radius: 10px;
 	font-size: 0.875rem;
 }
 
-/* Admin Table */
+/* ============================================
+   ADMIN TABLE
+   ============================================ */
 .admin-table {
 	background: white;
-	border-radius: 24px;
-	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+	border-radius: 20px;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 	overflow: hidden;
 	margin-bottom: 2rem;
 	transition: all 0.4s ease;
 	animation: dashboardFadeIn 0.6s ease;
+	position: relative;
 }
 
 .admin-table::before {
@@ -293,16 +382,13 @@ h1[layout\:fragment="page-title"] {
 }
 
 .admin-table:hover {
-	box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
 }
 
 .admin-table .table-header {
 	background: linear-gradient(135deg, #f8fafe 0%, #ffffff 100%);
 	padding: 1.5rem 2rem;
 	border-bottom: 2px solid #e8ecf4;
-	display: flex;
-	justify-content: space-between;
-	align-items: center;
 }
 
 .admin-table .table-header h5 {
@@ -311,11 +397,12 @@ h1[layout\:fragment="page-title"] {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	font-size: 1.4rem;
+	font-size: 1.25rem;
+	color: #343a40;
 }
 
 .admin-table .table-header h5.text-warning {
-	color: var(--womtech-warning);
+	color: var(--womtech-warning) !important;
 }
 
 .table-responsive {
@@ -324,8 +411,6 @@ h1[layout\:fragment="page-title"] {
 
 .table {
 	margin: 0;
-	border-collapse: separate;
-	border-spacing: 0;
 }
 
 .table thead th {
@@ -335,11 +420,8 @@ h1[layout\:fragment="page-title"] {
 	text-transform: uppercase;
 	font-size: 0.875rem;
 	letter-spacing: 0.5px;
-	padding: 1.25rem 1rem;
+	padding: 1rem;
 	border: none;
-	position: sticky;
-	top: 0;
-	z-index: 10;
 }
 
 .table tbody tr {
@@ -349,29 +431,29 @@ h1[layout\:fragment="page-title"] {
 
 .table tbody tr:hover {
 	background: linear-gradient(135deg, rgba(30, 144, 255, 0.03), rgba(13, 202, 240, 0.03));
-	transform: translateX(5px);
-	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+	transform: translateX(3px);
+	box-shadow: 0 3px 10px rgba(0, 0, 0, 0.05);
 }
 
 .table tbody td {
-	padding: 1.25rem 1rem;
+	padding: 1rem;
 	vertical-align: middle;
 	border: none;
 }
 
-/* Product Image */
-.dashboard-product-image {
+/* Product Image in Table */
+.table img.rounded {
 	width: 45px;
 	height: 45px;
 	object-fit: cover;
-	border-radius: 8px;
+	border-radius: 10px !important;
 	border: 2px solid #e8ecf4;
 	transition: all 0.3s ease;
 }
 
-.dashboard-product-image:hover {
+.table img.rounded:hover {
 	border-color: var(--womtech-primary);
-	transform: scale(1.05);
+	transform: scale(1.1);
 }
 
 /* Code/ID Display */
@@ -408,7 +490,9 @@ code:hover {
 	box-shadow: 0 5px 15px rgba(0, 0, 0, 0.15);
 }
 
-/* Alert */
+/* ============================================
+   ALERT SUCCESS
+   ============================================ */
 .alert-success {
 	background: linear-gradient(135deg, #d4edda 0%, #c3e6cb 100%);
 	color: #155724;
@@ -416,7 +500,7 @@ code:hover {
 	border: none;
 	padding: 1.25rem 1.5rem;
 	margin-bottom: 1.5rem;
-	box-shadow: 0 10px 30px rgba(0, 0, 0, 0.08);
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 	position: relative;
 	overflow: hidden;
 	animation: slideInRight 0.5s ease;
@@ -434,13 +518,16 @@ code:hover {
 
 .alert-success i {
 	font-size: 1.5rem;
+	color: var(--womtech-success);
 }
 
-/* Quick Actions */
+/* ============================================
+   QUICK ACTIONS
+   ============================================ */
 .dashboard-quick-actions {
 	background: white;
-	border-radius: 24px;
-	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.08);
+	border-radius: 20px;
+	box-shadow: 0 8px 20px rgba(0, 0, 0, 0.08);
 	padding: 2rem;
 	transition: all 0.4s ease;
 	position: relative;
@@ -459,7 +546,7 @@ code:hover {
 }
 
 .dashboard-quick-actions:hover {
-	box-shadow: 0 30px 60px rgba(0, 0, 0, 0.12);
+	box-shadow: 0 20px 40px rgba(0, 0, 0, 0.12);
 }
 
 .dashboard-quick-actions h5 {
@@ -468,7 +555,7 @@ code:hover {
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	font-size: 1.4rem;
+	font-size: 1.25rem;
 	color: var(--womtech-primary);
 }
 
@@ -484,7 +571,7 @@ code:hover {
 	color: #343a40;
 	text-decoration: none;
 	transition: all 0.3s ease;
-	font-weight: 500;
+	font-weight: 600;
 	height: 100%;
 }
 
@@ -493,10 +580,21 @@ code:hover {
 	color: white;
 	border-color: var(--womtech-primary);
 	transform: translateY(-5px);
-	box-shadow: 0 10px 25px rgba(30, 144, 255, 0.2);
+	box-shadow: 0 10px 25px rgba(30, 144, 255, 0.25);
 }
 
-/* Text Utilities */
+.dashboard-action-btn i {
+	font-size: 1.1rem;
+	transition: transform 0.3s ease;
+}
+
+.dashboard-action-btn:hover i {
+	transform: scale(1.2) rotate(5deg);
+}
+
+/* ============================================
+   TEXT UTILITIES
+   ============================================ */
 .text-warning {
 	color: var(--womtech-warning) !important;
 }
@@ -510,18 +608,16 @@ code:hover {
 }
 
 .fw-bold {
-	font-weight: 600 !important;
+	font-weight: 700 !important;
 }
 
-.small {
-	font-size: 0.875rem;
-}
-
-/* Animations */
+/* ============================================
+   ANIMATIONS
+   ============================================ */
 @keyframes dashboardFadeIn {
 	from {
 		opacity: 0;
-		transform: translateY(20px);
+		transform: translateY(30px);
 	}
 	to {
 		opacity: 1;
@@ -551,10 +647,12 @@ code:hover {
 	}
 }
 
-/* Responsive Design */
+/* ============================================
+   RESPONSIVE DESIGN
+   ============================================ */
 @media (max-width: 768px) {
 	.dashboard-container {
-		padding: 1.5rem;
+		padding: 1rem;
 	}
 
 	h1[layout\:fragment="page-title"] {
@@ -565,70 +663,45 @@ code:hover {
 	.dashboard-stat-card,
 	.dashboard-alert-card,
 	.dashboard-quick-actions {
-		padding: 1rem;
+		padding: 1.25rem;
 	}
 
-	.dashboard-stat-card .stat-icon,
-	.dashboard-alert-card .alert-stat-icon {
-		width: 50px;
-		height: 50px;
-		font-size: 20px;
+	.stat-icon,
+	.alert-stat-icon {
+		width: 55px;
+		height: 55px;
+		font-size: 24px;
 	}
 
-	.dashboard-stat-card .stat-value,
-	.dashboard-alert-card .stat-value {
-		font-size: 28px;
+	.stat-value {
+		font-size: 32px;
 	}
 
-	.dashboard-stat-card .stat-label,
-	.dashboard-alert-card .stat-label {
-		font-size: 14px;
+	.stat-label {
+		font-size: 12px;
 	}
 
 	.admin-table .table-header {
 		flex-direction: column;
 		gap: 1rem;
-		text-align: center;
 		padding: 1rem;
 	}
 
-	.admin-table .table-responsive {
-		padding: 1rem;
-	}
-
-	.table thead th {
-		padding: 1rem 0.5rem;
-		font-size: 0.75rem;
-	}
-
+	.table thead th,
 	.table tbody td {
-		padding: 1rem 0.5rem;
+		padding: 0.75rem 0.5rem;
 		font-size: 0.875rem;
-	}
-
-	.dashboard-product-image {
-		width: 40px;
-		height: 40px;
 	}
 
 	.dashboard-action-btn {
-		padding: 0.8rem;
-		font-size: 0.875rem;
-	}
-
-	.alert-success {
 		padding: 1rem;
 		font-size: 0.875rem;
 	}
 }
 
 @media (max-width: 576px) {
-	.admin-table .table-header h5 {
-		font-size: 1rem;
-	}
-
-	.dashboard-quick-actions h5 {
-		font-size: 1.2rem;
+	.stat-value {
+		font-size: 28px;
 	}
 
 	.dashboard-stat-card,
@@ -636,12 +709,8 @@ code:hover {
 		border-radius: 16px;
 	}
 
-	.dashboard-stat-card .stat-value,
-	.dashboard-alert-card .stat-value {
-		font-size: 24px;
-	}
-
-	.text-muted {
-		font-size: 1rem;
+	.btn {
+		font-size: 0.875rem;
+		padding: 0.6rem 1rem;
 	}
 }

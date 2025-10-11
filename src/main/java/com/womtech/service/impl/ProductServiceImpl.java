@@ -7,6 +7,8 @@ import com.womtech.entity.Subcategory;
 import com.womtech.repository.ProductRepository;
 import com.womtech.service.ProductService;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,7 +30,11 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getAllProducts() {
         return productRepository.findAll();
     }
-
+    @Override
+    public Page<Product> getAllProducts(Pageable pageable) {
+        return productRepository.findAll(pageable);
+    }
+    
     @Override
     public List<Product> getActiveProducts() {
         return productRepository.findByStatus(1);

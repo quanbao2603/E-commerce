@@ -6,6 +6,10 @@ import com.womtech.service.*;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -202,10 +206,17 @@ public class AdminController {
 
 	// ========== PRODUCT MANAGEMENT ==========
 	@GetMapping("/products")
-	public String listProducts(Model model) {
-		model.addAttribute("products", productService.getAllProducts());
-		return "admin/products";
-	}
+    public String listProducts(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+        Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
+        Page<Product> productPage = productService.getAllProducts(pageable);
+        
+        model.addAttribute("products", productPage.getContent());
+        model.addAttribute("page", productPage);
+        return "admin/products";
+    }
 
 	@GetMapping("/products/new")
 	public String newProductForm(Model model) {
