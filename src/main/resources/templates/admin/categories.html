@@ -4,6 +4,8 @@
 	layout:decorate="~{admin/layout}">
 <head>
 <title>Quản Lý Danh Mục - WomTech Admin</title>
+<link rel="stylesheet" href="/css/admin/categories.css">
+
 </head>
 <body>
 	<h1 layout:fragment="page-title">Quản Lý Danh Mục</h1>
@@ -38,9 +40,11 @@
 							</td>
 							<td><strong th:text="${category.name}">Category
 									Name</strong></td>
-							<td><span class="badge bg-info"
+							<td><a
+								th:href="@{/admin/subcategories/category/{id}(id=${category.categoryID})}"
+								class="badge bg-info text-decoration-none"
 								th:text="${category.subcategories != null ? category.subcategories.size() : 0} + ' danh mục con'">
-									0 danh mục con </span></td>
+									0 danh mục con </a></td>
 							<td><span class="badge"
 								th:classappend="${category.status == 1 ? 'bg-success' : 'bg-danger'}"
 								th:text="${category.status == 1 ? 'Hoạt động' : 'Ẩn'}">
@@ -48,17 +52,20 @@
 							<td>
 								<div class="btn-group">
 									<a
+										th:href="@{/admin/subcategories/category/{id}(id=${category.categoryID})}"
+										class="btn btn-sm btn-outline-info" title="Xem danh mục con">
+										<i class="fas fa-list"></i> Xem
+									</a> <a
 										th:href="@{/admin/categories/edit/{id}(id=${category.categoryID})}"
-										class="btn btn-sm btn-outline-primary"> <i
-										class="fas fa-edit"></i>
+										class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
+										<i class="fas fa-edit"></i> Chỉnh sửa
 									</a> <a
 										th:href="@{/admin/categories/delete/{id}(id=${category.categoryID})}"
-										class="btn btn-sm btn-outline-danger"
+										class="btn btn-sm btn-outline-danger" title="Xóa"
 										onclick="return confirm('Bạn có chắc muốn xóa danh mục này?')">
-										<i class="fas fa-trash"></i>
+										<i class="fas fa-trash"></i> Xóa
 									</a>
 								</div>
-
 							</td>
 						</tr>
 						<tr th:if="${categories.empty}">
@@ -75,11 +82,11 @@
 			</div>
 		</div>
 		<div th:if="${error}"
-			class="alert alert-danger alert-dismissible fade show" role="alert">
-			<i class="fas fa-exclamation-triangle me-2"></i><span
-				th:text="${error}"></span>
-			<button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-		</div>
+				class="alert alert-info alert-dismissible fade show" role="alert">
+				<span th:text="${error}"></span>
+				<button type="button" class="btn-close" data-bs-dismiss="alert"
+					aria-label="Close"></button>
+			</div>
 	</div>
 </body>
 </html>
