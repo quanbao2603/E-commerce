@@ -91,6 +91,8 @@ public class HomeController {
 
         System.out.println("Final result - isAuthenticated: " + isAuthenticated + ", username: " + currentUsername);
 
+        // Load featured products (lấy 8 sản phẩm đầu tiên)
+        model.addAttribute("featuredProducts", productService.getAllProducts().stream().limit(8).toList());
         model.addAttribute("isAuthenticated", isAuthenticated);
         model.addAttribute("currentUserId", currentUserId);
         model.addAttribute("currentUsername", currentUsername);
