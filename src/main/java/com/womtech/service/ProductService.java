@@ -51,4 +51,5 @@ public interface ProductService {
 //    void deactivateProduct(String productID);
 //    void setOutOfStock(String productID);
 	  Page<Product> getAllProducts(Pageable pageable);
+	  Page<Product> getActiveProducts(Pageable pageable);
 }

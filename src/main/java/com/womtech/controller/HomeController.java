@@ -40,7 +40,7 @@ public class HomeController {
             Model model) {
 
         Pageable pageable = PageRequest.of(page, 10, Sort.by("createAt").descending());
-        Page<Product> productPage = productService.getAllProducts(pageable);
+        Page<Product> productPage = productService.getActiveProducts(pageable);
 
         model.addAttribute("featuredProducts", productPage.getContent());
         model.addAttribute("page", productPage);

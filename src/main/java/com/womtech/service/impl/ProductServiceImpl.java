@@ -40,6 +40,11 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getActiveProducts() {
         return productRepository.findByStatus(1);
     }
+    
+    @Override
+	  public Page<Product> getActiveProducts(Pageable pageable) {
+    	return productRepository.findByStatus(1, pageable);
+	  }
 
     @Override
     public List<Product> getActiveProductsNewest() {

@@ -4,6 +4,9 @@ import com.womtech.entity.Brand;
 import com.womtech.entity.Category;
 import com.womtech.entity.Product;
 import com.womtech.entity.Subcategory;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -30,6 +33,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 //    
 //    // Find by status
 		List<Product> findByStatus(Integer status);
+		Page<Product> findByStatus(Integer status, Pageable pageable);
 //    
 //    List<Product> findByStatusOrderByCreateAtDesc(Integer status);
 //    
