@@ -30,7 +30,7 @@ public class HomeController {
 
     @GetMapping("/")
     public String home(Model model) {
-        model.addAttribute("featuredProducts", productService.findAll().stream().limit(8).toList());
+        model.addAttribute("featuredProducts", productService.getActiveProductsNewest().stream().limit(8).toList());
         model.addAttribute("featuredCategories", categoryService.findAll());
         return "index";
     }
@@ -40,6 +40,7 @@ public class HomeController {
         boolean isAuthenticated = false;
         String currentUserId = null;
         String currentUsername = null;
+        String currentRole = null;
 
         System.out.println("=== DEBUG AUTHENTICATION ===");
         System.out.println("Principal: " + (principal != null ? principal.getName() : "null"));
@@ -74,11 +75,26 @@ public class HomeController {
                     model.addAttribute("currentUsername", user.getUsername());
                 });
             }
+            if (currentUserId != null) {
+                var userOpt = userService.findById(currentUserId);
+                if (userOpt.isPresent()) {
+                    var user = userOpt.get();
+                    currentUsername = user.getUsername();
+                    currentRole = user.getRole().getRolename();
+                }
+            }
         } else if (cookie != null && jwtService.isValidAccess(cookie.getValue()) && !tokenRevokeService.isRevoked(cookie.getValue())) {
             // Nếu Principal null nhưng có valid JWT token và chưa bị revoke -> vẫn authenticated
             isAuthenticated = true;
             currentUserId = jwtService.getUserId(cookie.getValue());
             currentUsername = jwtService.getUsername(cookie.getValue());
+            
+            if (currentUserId != null) {
+                var userOpt = userService.findById(currentUserId);
+                if (userOpt.isPresent()) {
+                    currentRole = userOpt.get().getRole().getRolename();
+                }
+            }
         } else {
             // Nếu có cookie nhưng token bị revoke -> xóa cookies
             if (cookie != null && tokenRevokeService.isRevoked(cookie.getValue())) {
@@ -96,6 +112,7 @@ public class HomeController {
         model.addAttribute("isAuthenticated", isAuthenticated);
         model.addAttribute("currentUserId", currentUserId);
         model.addAttribute("currentUsername", currentUsername);
+        model.addAttribute("currentRole", currentRole);
     }
 
     private void clearAuthCookies(HttpServletRequest request) {
