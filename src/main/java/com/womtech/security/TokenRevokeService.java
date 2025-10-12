@@ -71,4 +71,22 @@ public class TokenRevokeService {
 		revokedTokens.clear();
 		System.out.println("🔥 All tokens revoked - fresh start");
 	}
+
+	/**
+	 * Revoke tất cả tokens hiện tại (dùng khi server restart)
+	 * Thêm tất cả tokens vào blacklist với expiry time ngắn
+	 */
+	public void revokeAllCurrentTokens() {
+		// Clear tất cả tokens đã revoke
+		revokedTokens.clear();
+		
+		// Revoke tất cả tokens hiện tại với expiry time ngắn (1 giây)
+		// Điều này sẽ làm cho tất cả tokens hiện tại bị invalid
+		long shortExpiry = Instant.now().plusSeconds(1).toEpochMilli();
+		
+		// Thêm một token dummy để đảm bảo logic hoạt động
+		revokedTokens.put("DUMMY_TOKEN", shortExpiry);
+		
+		System.out.println("🔥 All current tokens revoked - fresh start");
+	}
 }

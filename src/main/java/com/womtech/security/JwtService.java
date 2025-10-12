@@ -16,9 +16,13 @@ import java.util.*;
 public class JwtService {
 
 	@Value("${app.jwt.access.secret}")
-	private String accessSecret;
+	private String baseAccessSecret;
 
 	@Value("${app.jwt.refresh.secret}")
+	private String baseRefreshSecret;
+	
+	// Dynamic secrets that change on server restart
+	private String accessSecret;
 	private String refreshSecret;
 
 	@Value("${app.jwt.access.ttl-minutes}")
@@ -26,6 +30,15 @@ public class JwtService {
 
 	@Value("${app.jwt.refresh.ttl-days}")
 	private long refreshTtlDays;
+	
+	// Initialize dynamic secrets on startup
+	@jakarta.annotation.PostConstruct
+	public void initSecrets() {
+		String timestamp = String.valueOf(System.currentTimeMillis());
+		this.accessSecret = baseAccessSecret + "_" + timestamp;
+		this.refreshSecret = baseRefreshSecret + "_" + timestamp;
+		System.out.println("🔑 JWT secrets regenerated - all old tokens invalidated");
+	}
 
 	private SecretKey key(String raw) {
 		// đảm bảo dài ít nhất 32 ký tự

@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import com.womtech.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.PostMapping;
 
 @Controller
 @RequestMapping("/user")
@@ -39,7 +41,7 @@ public class ProfileController {
 		}
 		User user = userOpt.get();
 
-		Address defaultAddress = addressService.findByUserAndIsDefaultTrue(user).orElse(null);
+		Address defaultAddress = addressService.findByUserAndIsDefaultTrue(user).orElse(new Address());
 		List<Address> listAddress = addressService.findByUser(user);
 
 		boolean isAdmin = user.getRole() != null && user.getRole().getRolename() != null
@@ -72,12 +74,62 @@ public class ProfileController {
 
 		return "redirect:/user/profile";
 	}
+	
+	@PostMapping("/update-info")
+	public String updateDefaultAddress(HttpSession session, Principal principal,
+									   @ModelAttribute("defaultAddress") Address defaultAddress,
+									   @ModelAttribute("user") User currentUser) {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+			return "redirect:/auth/login";
+		}
+
+		String userId = principal.getName();
+		var userOpt = userService.findById(userId);
+		if (userOpt.isEmpty())
+			return "redirect:/auth/login";
+		var user = userOpt.get();
+		
+		if (!user.getUserID().equals(currentUser.getUserID()))
+			throw new AccessDeniedException("Không có quyền truy cập");
+		
+		Optional<Address> addressDbOpt = addressService.findById(defaultAddress.getAddressID());
+		if (addressDbOpt.isEmpty()) {
+			defaultAddress.setAddressID(null);
+			defaultAddress.setUser(user);
+			defaultAddress.setCreateAt(LocalDateTime.now());
+			defaultAddress.setUpdateAt(LocalDateTime.now());
+			addressService.save(defaultAddress);
+			addressService.setDefaultAddress(defaultAddress);
+		} else {
+			Address addressDb = addressDbOpt.get();
+			if (!addressDb.getUser().equals(user))
+				throw new AccessDeniedException("Không có quyền truy cập");
+			addressDb.setFullname(defaultAddress.getFullname());
+			addressDb.setPhone(defaultAddress.getPhone());
+			addressDb.setStreet(defaultAddress.getStreet());
+			addressDb.setWard(defaultAddress.getWard());
+			addressDb.setDistrict(defaultAddress.getDistrict());
+			addressDb.setCity(defaultAddress.getCity());
+			addressDb.setUpdateAt(LocalDateTime.now());
+		    addressService.save(addressDb);
+		}
+		
+		// Đổi mail
+//		user.setEmail(currentUser.getEmail());
+//		userService.save(user);
+		
+		return "redirect:/user/profile";
+	}
+	
 
 	@PostMapping("/add-address")
-	public String addAddress(HttpSession session, Principal principal, @RequestParam String fullname,
-			@RequestParam String phone, @RequestParam String street, @RequestParam String ward,
-			@RequestParam String district, @RequestParam String city,
-			@RequestParam(name = "isDefault", defaultValue = "false") boolean isDefault) {
+	public String addAddress(HttpSession session, Principal principal,
+							 @RequestParam String fullname,
+							 @RequestParam String phone,
+							 @RequestParam String street,
+							 @RequestParam String ward,
+							 @RequestParam String district,
+							 @RequestParam String city) {
 
 		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
@@ -88,21 +140,26 @@ public class ProfileController {
 		if (userOpt.isEmpty())
 			return "redirect:/auth/login";
 		var user = userOpt.get();
-
-		if (isDefault) {
-			addressService.unsetDefaultForUser(user); 
-		}
-
-		Address addr = Address.builder().user(user) 
-				.fullname(fullname).phone(phone).street(street).ward(ward).district(district).city(city)
-				.isDefault(isDefault).createAt(LocalDateTime.now()).updateAt(LocalDateTime.now()).build();
-
-		addressService.save(addr);
-		return "redirect:/user/profile";
+		
+		Address address = Address.builder().user(user).fullname(fullname).phone(phone).street(street).ward(ward)
+				.district(district).city(city).createAt(LocalDateTime.now()).updateAt(LocalDateTime.now()).build();
+		addressService.save(address);
+		
+		if (addressService.findByUserAndIsDefaultTrue(user).isEmpty())
+			addressService.setDefaultAddress(address);
+		
+		return "redirect:/user/profile?tab=address";
 	}
 
 	@PostMapping("/update-address")
-	public String updateAddress(HttpSession session, Principal principal, @ModelAttribute("address") Address address) {
+	public String updateAddress(HttpSession session, Principal principal,
+								@RequestParam String addressID,
+								@RequestParam String fullname,
+								@RequestParam String phone,
+								@RequestParam String street,
+								@RequestParam String ward,
+								@RequestParam String district,
+								@RequestParam String city) throws Exception {
 		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
 		}
@@ -113,15 +170,85 @@ public class ProfileController {
 			return "redirect:/auth/login";
 		var user = userOpt.get();
 
-		address.setUser(user);
-		address.setUpdateAt(LocalDateTime.now());
-
-		if (Boolean.TRUE.equals(address.isDefault())) {
-			addressService.unsetDefaultForUser(user);
+		Optional<Address> addressDbOpt = addressService.findById(addressID);
+		
+		if (addressDbOpt.isEmpty()) {
+			throw new Exception("Không tìm thấy ID địa chỉ");
+		} else {
+			Address addressDb = addressDbOpt.get();
+			if (!addressDb.getUser().equals(user))
+				throw new AccessDeniedException("Không có quyền truy cập");
+			addressDb.setFullname(fullname);
+			addressDb.setPhone(phone);
+			addressDb.setStreet(street);
+			addressDb.setWard(ward);
+			addressDb.setDistrict(district);
+			addressDb.setCity(city);
+			addressDb.setUpdateAt(LocalDateTime.now());
+		    addressService.save(addressDb);
+		}
+		return "redirect:/user/profile?tab=address";
+	}
+	
+	@PostMapping("/setdefault-address")
+	public String setDefault(HttpSession session, Principal principal,
+							 @RequestParam String addressID) throws Exception {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+			return "redirect:/auth/login";
 		}
 
-		addressService.save(address);
-		return "redirect:/user/profile";
+		String userId = principal.getName();
+		var userOpt = userService.findById(userId);
+		if (userOpt.isEmpty())
+			return "redirect:/auth/login";
+		var user = userOpt.get();
+		
+		Optional<Address> addressDbOpt = addressService.findById(addressID);
+		
+		if (addressDbOpt.isEmpty()) {
+			throw new Exception("Không tìm thấy ID địa chỉ");
+		} else {
+			Address addressDb = addressDbOpt.get();
+			if (!addressDb.getUser().equals(user))
+				throw new AccessDeniedException("Không có quyền truy cập");
+			addressService.setDefaultAddress(addressDb);
+		}
+		
+		return "redirect:/user/profile?tab=address";
+	}
+	
+	@PostMapping("/delete-address")
+	public String deleteAddress(HttpSession session, Principal principal,
+							 @RequestParam String addressID) throws Exception {
+		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+			return "redirect:/auth/login";
+		}
+
+		String userId = principal.getName();
+		var userOpt = userService.findById(userId);
+		if (userOpt.isEmpty())
+			return "redirect:/auth/login";
+		var user = userOpt.get();
+		
+		Optional<Address> addressDbOpt = addressService.findById(addressID);
+		
+		if (addressDbOpt.isEmpty()) {
+			throw new Exception("Không tìm thấy ID địa chỉ");
+		} else {
+			Address addressDb = addressDbOpt.get();
+			if (!addressDb.getUser().equals(user))
+				throw new AccessDeniedException("Không có quyền truy cập");
+			
+			addressService.deleteById(addressID);
+			
+			if (addressService.findByUserAndIsDefaultTrue(user).isEmpty()) {
+				List<Address> listAddress = addressService.findByUser(user);
+				if (!listAddress.isEmpty())
+					addressService.setDefaultAddress(listAddress.get(0));
+			}
+		}
+		
+		return "redirect:/user/profile?tab=address";
 	}
 
 	@PostMapping("/change-password")

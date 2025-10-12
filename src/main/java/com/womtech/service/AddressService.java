@@ -12,5 +12,9 @@ public interface AddressService extends BaseService<Address, String> {
 
 	List<Address> findByUser(User user);
 	
-	 void unsetDefaultForUser(User user);
+	/**
+	 * Đặt một địa chỉ của user thành địa chỉ mặc định.
+	 * Đồng thời gỡ bỏ mặc định cho các địa chỉ khác của user.
+	 */
+	void setDefaultAddress(Address address);
 }

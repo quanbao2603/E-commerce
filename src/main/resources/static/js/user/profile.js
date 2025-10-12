@@ -81,3 +81,17 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 });
+
+function showEditForm(id) {
+	document.getElementById('view-' + id).classList.add('d-none');
+	document.getElementById('form-' + id).classList.remove('d-none');
+}
+
+function cancelEdit(id) {
+	document.getElementById('view-' + id).classList.remove('d-none');
+	document.getElementById('form-' + id).classList.add('d-none');
+}
+
+function toggleAddAddressForm() {
+	document.getElementById('add-address-form').classList.toggle('d-none');
+}
