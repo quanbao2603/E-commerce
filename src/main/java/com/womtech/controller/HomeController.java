@@ -4,6 +4,7 @@ import com.womtech.service.CategoryService;
 import com.womtech.service.ProductService;
 import com.womtech.service.UserService;
 import com.womtech.util.CookieUtil;
+import com.womtech.entity.Product;
 import com.womtech.security.JwtService;
 import com.womtech.security.TokenRevokeService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -14,6 +15,11 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 
 import java.security.Principal;
 
@@ -29,12 +35,18 @@ public class HomeController {
     private final TokenRevokeService tokenRevokeService;
 
     @GetMapping("/")
-    public String home(Model model) {
-        model.addAttribute("featuredProducts", productService.getActiveProductsNewest().stream().limit(8).toList());
+    public String home(
+            @RequestParam(defaultValue = "0") int page,
+            Model model) {
+
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("createAt").descending());
+        Page<Product> productPage = productService.getAllProducts(pageable);
+
+        model.addAttribute("featuredProducts", productPage.getContent());
+        model.addAttribute("page", productPage);
         model.addAttribute("featuredCategories", categoryService.findAll());
         return "index";
     }
-
     @ModelAttribute
     public void addAuthenticationInfo(Model model, Principal principal, HttpServletRequest request, HttpSession session) {
         boolean isAuthenticated = false;
@@ -108,7 +120,7 @@ public class HomeController {
         System.out.println("Final result - isAuthenticated: " + isAuthenticated + ", username: " + currentUsername);
 
         // Load featured products (lấy 8 sản phẩm đầu tiên)
-        model.addAttribute("featuredProducts", productService.getAllProducts().stream().limit(8).toList());
+        model.addAttribute("featuredProducts", productService.getAllProducts().stream().limit(10).toList());
         model.addAttribute("isAuthenticated", isAuthenticated);
         model.addAttribute("currentUserId", currentUserId);
         model.addAttribute("currentUsername", currentUsername);

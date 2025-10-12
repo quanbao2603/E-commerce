@@ -70,7 +70,17 @@
             </div>
         </div>
     </section>
-
+	<div class="pagination mt-4 text-center">
+		<a th:href="@{/(page=0)}" class="btn btn-outline-primary">« First</a>
+	    <a th:if="${page.hasPrevious()}" 
+	       th:href="@{/(page=${page.number - 1})}" class="btn btn-outline-primary">&laquo; Prev</a>
+	
+	    <span class="mx-2" th:text="${page.number + 1} + ' / ' + ${page.totalPages}"></span>
+	
+	    <a th:if="${page.hasNext()}" 
+	       th:href="@{/(page=${page.number + 1})}" class="btn btn-outline-primary">Next &raquo;</a>
+		<a th:href="@{/(page=${page.totalPages - 1})}" class="btn btn-outline-primary">Last »</a>
+	</div>
 </div>
 </body>
 </html>
