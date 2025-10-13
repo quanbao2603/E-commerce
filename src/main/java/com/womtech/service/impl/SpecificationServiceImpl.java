@@ -7,6 +7,8 @@ import com.womtech.service.SpecificationService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,6 +23,9 @@ public class SpecificationServiceImpl implements SpecificationService {
     @Override
     public List<Specification> getAllSpecifications() {
         return specificationRepository.findAll();
+    }
+    public Page<Specification> getAllSpecifications(Pageable pageable) {
+        return specificationRepository.findAll(pageable);
     }
 
     @Override

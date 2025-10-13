@@ -23,7 +23,7 @@ public interface ProductService {
     void deleteProduct(String id);
 
 //    // FIND BY RELATIONSHIPS
-//    List<Product> getProductsBySubcategory(Subcategory subcategory);
+    List<Product> getProductsBySubcategory(Subcategory subcategory);
 //    List<Product> getProductsBySubcategorySubcategoryID(String subcategoryID);
 //    List<Product> getProductsByBrand(Brand brand);
 //    List<Product> getProductsByBrandBrandID(String brandID);

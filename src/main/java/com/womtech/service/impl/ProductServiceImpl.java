@@ -71,10 +71,10 @@ public class ProductServiceImpl implements ProductService {
 
 //    // FIND BY RELATIONSHIPS
 //
-//    @Override
-//    public List<Product> getProductsBySubcategory(Subcategory subcategory) {
-//        return productRepository.findBySubcategory(subcategory);
-//    }
+    @Override
+    public List<Product> getProductsBySubcategory(Subcategory subcategory) {
+        return productRepository.findBySubcategory(subcategory);
+    }
 //
 //    @Override
 //    public List<Product> getProductsBySubcategorySubcategoryID(String subcategoryID) {

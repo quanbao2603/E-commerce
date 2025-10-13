@@ -42,18 +42,23 @@ public class AdminController {
 	public String adminDashboard(Model model) {
 		model.addAttribute("totalCategories", categoryService.getTotalCount());
 		model.addAttribute("totalBrands", brandService.getTotalCount());
-        model.addAttribute("totalSpecifications", specificationService.getTotalCount());
-        model.addAttribute("totalProducts", productService.getTotalCount());
-        model.addAttribute("lowStockCount", inventoryService.getLowStockCount());
-        model.addAttribute("outOfStockCount", inventoryService.getOutOfStockCount());
-        model.addAttribute("lowStockItems", inventoryService.getLowStockItems());
+		model.addAttribute("totalSpecifications", specificationService.getTotalCount());
+		model.addAttribute("totalProducts", productService.getTotalCount());
+		model.addAttribute("lowStockCount", inventoryService.getLowStockCount());
+		model.addAttribute("outOfStockCount", inventoryService.getOutOfStockCount());
+		model.addAttribute("lowStockItems", inventoryService.getLowStockItems());
 		return "admin/dashboard";
 	}
 
 	// ========== CATEGORY MANAGEMENT ==========
 	@GetMapping("/categories")
-	public String listCategories(Model model) {
-		model.addAttribute("categories", categoryService.getAllCategories());
+	public String listCategories(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size,
+			Model model) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+		Page<Category> categoryPage = categoryService.getAllCategories(pageable);
+
+		model.addAttribute("categories", categoryPage.getContent());
+		model.addAttribute("page", categoryPage);
 		return "admin/categories";
 	}
 
@@ -107,6 +112,20 @@ public class AdminController {
 		model.addAttribute("subcategories", subcategoryService.getSubcategoriesByCategoryId(categoryID));
 		return "admin/subcategories";
 	}
+	
+	@GetMapping("/subcategories/{subcategoryId}/products")
+    public String listProductsBySubcategory(@PathVariable String subcategoryId, Model model) {
+        Subcategory subcategory = subcategoryService.getSubcategoryById(subcategoryId)
+                .orElseThrow(() -> new RuntimeException("Subcategory not found"));
+        List<Product> products = productService.getProductsBySubcategory(subcategory);
+        
+        model.addAttribute("subcategory", subcategory);
+        model.addAttribute("category", subcategory.getCategory());
+        model.addAttribute("products", products);
+        model.addAttribute("productCount", products.size());
+        
+        return "admin/product-by-subcategory";
+    }
 
 	@GetMapping("/subcategories/new/{categoryID}")
 	public String newSubcategoryForm(@PathVariable String categoryID, Model model) {
@@ -157,8 +176,13 @@ public class AdminController {
 
 	// ========== BRAND MANAGEMENT ==========
 	@GetMapping("/brands")
-	public String listBrands(Model model) {
-		model.addAttribute("brands", brandService.getAllBrands());
+	public String listBrands(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "5") int size,
+			Model model) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("name").ascending());
+		Page<Brand> brandPage = brandService.getAllBrands(pageable);
+
+		model.addAttribute("brands", brandPage.getContent());
+		model.addAttribute("page", brandPage);
 		return "admin/brands";
 	}
 
@@ -206,17 +230,15 @@ public class AdminController {
 
 	// ========== PRODUCT MANAGEMENT ==========
 	@GetMapping("/products")
-    public String listProducts(
-            @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "10") int size,
-            Model model) {
-        Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
-        Page<Product> productPage = productService.getAllProducts(pageable);
-        
-        model.addAttribute("products", productPage.getContent());
-        model.addAttribute("page", productPage);
-        return "admin/products";
-    }
+	public String listProducts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
+			Model model) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
+		Page<Product> productPage = productService.getAllProducts(pageable);
+
+		model.addAttribute("products", productPage.getContent());
+		model.addAttribute("page", productPage);
+		return "admin/products";
+	}
 
 	@GetMapping("/products/new")
 	public String newProductForm(Model model) {
@@ -261,80 +283,84 @@ public class AdminController {
 	// ========== SPECIFICATION MANAGEMENT (UPDATED) ==========
 
 	@GetMapping("/specifications")
-	public String listSpecifications(Model model) {
-	    model.addAttribute("specifications", specificationService.getAllSpecifications());
-	    return "admin/specifications";
+	public String listSpecifications(@RequestParam(defaultValue = "0") int page,
+			@RequestParam(defaultValue = "20") int size, Model model) {
+		Pageable pageable = PageRequest.of(page, size, Sort.by("product.productID").ascending());
+		Page<Specification> specificationPage = specificationService.getAllSpecifications(pageable);
+
+		model.addAttribute("specifications", specificationPage.getContent());
+		model.addAttribute("page", specificationPage);
+		return "admin/specifications";
 	}
 
 	@GetMapping("/specifications/product/{productID}")
 	public String listSpecificationsByProduct(@PathVariable String productID, Model model) {
-	    Product product = productService.getProductById(productID)
-	            .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-	    
-	    model.addAttribute("product", product);
-	    model.addAttribute("specifications", product.getSpecifications());
-	    
-	    return "admin/specifications-by-product";
+		Product product = productService.getProductById(productID)
+				.orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+		model.addAttribute("product", product);
+		model.addAttribute("specifications", product.getSpecifications());
+
+		return "admin/specifications-by-product";
 	}
 
 	@GetMapping("/specifications/new/{productID}")
 	public String newSpecificationFormForProduct(@PathVariable String productID, Model model) {
-	    Product product = productService.getProductById(productID)
-	            .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-	    
-	    Specification specification = new Specification();
-	    specification.setProduct(product);
-	    
-	    model.addAttribute("specification", specification);
-	    model.addAttribute("product", product);
-	    
-	    return "admin/specification-form";
+		Product product = productService.getProductById(productID)
+				.orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+
+		Specification specification = new Specification();
+		specification.setProduct(product);
+
+		model.addAttribute("specification", specification);
+		model.addAttribute("product", product);
+
+		return "admin/specification-form";
 	}
 
 	@GetMapping("/specifications/new")
 	public String newSpecificationForm(Model model) {
-	    model.addAttribute("specification", new Specification());
-	    model.addAttribute("products", productService.getAllProducts());
-	    return "admin/specification-form";
+		model.addAttribute("specification", new Specification());
+		model.addAttribute("products", productService.getAllProducts());
+		return "admin/specification-form";
 	}
 
 	@GetMapping("/specifications/edit/{id}")
 	public String editSpecificationForm(@PathVariable String id, Model model) {
-	    Specification specification = specificationService.getSpecificationByID(id)
-	            .orElseThrow(() -> new RuntimeException("Không tìm thấy thông số kỹ thuật"));
-	    
-	    model.addAttribute("specification", specification);
-	    model.addAttribute("product", specification.getProduct());
-	    model.addAttribute("products", productService.getAllProducts());
-	    
-	    return "admin/specification-form";
+		Specification specification = specificationService.getSpecificationByID(id)
+				.orElseThrow(() -> new RuntimeException("Không tìm thấy thông số kỹ thuật"));
+
+		model.addAttribute("specification", specification);
+		model.addAttribute("product", specification.getProduct());
+		model.addAttribute("products", productService.getAllProducts());
+
+		return "admin/specification-form";
 	}
 
 	@PostMapping("/specifications/save")
-	public String saveSpecification(@ModelAttribute Specification specification, 
-	                               @RequestParam(required = false) String productID,
-	                               RedirectAttributes redirectAttributes) {
-	    try {
-	        // Nếu có productID từ form, set product
-	        if (productID != null && !productID.isEmpty()) {
-	            Product product = productService.getProductById(productID)
-	                    .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
-	            specification.setProduct(product);
-	        }
-	        
-	        specificationService.saveSpecification(specification);
-	        redirectAttributes.addFlashAttribute("success", "Thông số kỹ thuật đã được lưu thành công!");
-	        
-	        // Redirect về trang specifications của product nếu có
-	        if (specification.getProduct() != null) {
-	            return "redirect:/admin/specifications/product/" + specification.getProduct().getProductID();
-	        }
-	        
-	    } catch (Exception e) {
-	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu thông số: " + e.getMessage());
-	    }
-	    
-	    return "redirect:/admin/specifications";
+	public String saveSpecification(@ModelAttribute Specification specification,
+			@RequestParam(required = false) String productID, RedirectAttributes redirectAttributes) {
+		try {
+			// Nếu có productID từ form, set product
+			if (productID != null && !productID.isEmpty()) {
+				Product product = productService.getProductById(productID)
+						.orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm"));
+				specification.setProduct(product);
+			}
+
+			specificationService.saveSpecification(specification);
+			redirectAttributes.addFlashAttribute("success", "Thông số kỹ thuật đã được lưu thành công!");
+
+			// Redirect về trang specifications của product nếu có
+			if (specification.getProduct() != null) {
+				return "redirect:/admin/specifications/product/" + specification.getProduct().getProductID();
+			}
+
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu thông số: " + e.getMessage());
+		}
+
+		return "redirect:/admin/specifications";
 	}
 
 	/**
@@ -342,87 +368,99 @@ public class AdminController {
 	 */
 	@GetMapping("/specifications/delete/{id}")
 	public String deleteSpecification(@PathVariable String id, RedirectAttributes redirectAttributes) {
-	    try {
-	        Specification specification = specificationService.getSpecificationByID(id)
-	                .orElseThrow(() -> new RuntimeException("Không tìm thấy thông số kỹ thuật"));
-	        
-	        String productID = specification.getProduct().getProductID();
-	        specificationService.deleteSpecification(id);
-	        
-	        redirectAttributes.addFlashAttribute("success", "Thông số kỹ thuật đã được xóa thành công!");
-	        
-	        // Redirect về trang specifications của product
-	        return "redirect:/admin/specifications/product/" + productID;
-	        
-	    } catch (Exception e) {
-	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa thông số: " + e.getMessage());
-	        return "redirect:/admin/specifications";
-	    }
+		try {
+			Specification specification = specificationService.getSpecificationByID(id)
+					.orElseThrow(() -> new RuntimeException("Không tìm thấy thông số kỹ thuật"));
+
+			String productID = specification.getProduct().getProductID();
+			specificationService.deleteSpecification(id);
+
+			redirectAttributes.addFlashAttribute("success", "Thông số kỹ thuật đã được xóa thành công!");
+
+			// Redirect về trang specifications của product
+			return "redirect:/admin/specifications/product/" + productID;
+
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa thông số: " + e.getMessage());
+			return "redirect:/admin/specifications";
+		}
 	}
 
-    // ========== INVENTORY MANAGEMENT ==========
+	// ========== INVENTORY MANAGEMENT ==========
+
 	@GetMapping("/inventory")
-	public String listInventory(
-	        @RequestParam(value = "filter", required = false) String filter,
-	        Model model) {
-	    
-	    List<Inventory> inventoryItems;
+	public String listInventory(@RequestParam(value = "filter", defaultValue = "all") String filter,
+			@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size, Model model) {
 
-	    if ("low-stock".equalsIgnoreCase(filter)) {
-	        inventoryItems = inventoryService.getAllInventory();
-	        model.addAttribute("title", "Sản phẩm sắp hết hàng");
-	    } else if ("out-of-stock".equalsIgnoreCase(filter)) {
-	        inventoryItems = inventoryService.getLowStockItems();
-	        model.addAttribute("title", "Sản phẩm đã hết hàng");
-	    } else {
-	        inventoryItems = inventoryService.getAllInventory();
-	        model.addAttribute("title", "Tất cả sản phẩm tồn kho");
-	    }
+		Pageable pageable = PageRequest.of(page, size, Sort.by("updateAt").descending());
+		Page<Inventory> inventoryPage;
 
-	    model.addAttribute("inventoryItems", inventoryItems);
-	    model.addAttribute("lowStockItems", inventoryService.getLowStockItems());
-	    model.addAttribute("outOfStockItems", inventoryService.getOutOfStockItems());
+		switch (filter.toLowerCase()) {
+		case "low-stock":
+			inventoryPage = inventoryService.getLowStockItems(pageable);
+			model.addAttribute("title", "Sản phẩm sắp hết hàng");
+			break;
+		case "out-of-stock":
+			inventoryPage = inventoryService.getOutOfStockItems(pageable);
+			model.addAttribute("title", "Sản phẩm đã hết hàng");
+			break;
+		default:
+			inventoryPage = inventoryService.getAllInventory(pageable);
+			model.addAttribute("title", "Tất cả sản phẩm tồn kho");
+			break;
+		}
 
-	    return "admin/inventory";
+		model.addAttribute("inventoryItems", inventoryPage.getContent());
+		model.addAttribute("page", inventoryPage);
+		model.addAttribute("filter", filter);
+
+		// Dữ liệu tổng quan
+		model.addAttribute("totalCount", inventoryService.getTotalCount());
+		model.addAttribute("lowStockCount", inventoryService.getLowStockCount());
+		model.addAttribute("outOfStockCount", inventoryService.getOutOfStockCount());
+
+		return "admin/inventory";
+
 	}
 
-    @GetMapping("/inventory/new")
-    public String newInventoryForm(Model model) {
-        model.addAttribute("inventory", new Inventory());
-        model.addAttribute("products", productService.getAllProducts());
-        model.addAttribute("locations", inventoryService.getAllLocations());
-        return "admin/inventory-form";
-    }
+	@GetMapping("/inventory/new")
+	public String newInventoryForm(Model model) {
+		model.addAttribute("inventory", new Inventory());
+		model.addAttribute("products", productService.getAllProducts());
+		model.addAttribute("locations", inventoryService.getAllLocations());
+		return "admin/inventory-form";
+	}
 
-    @GetMapping("/inventory/edit/{id}")
-    public String editInventoryForm(@PathVariable String id, Model model) {
-        Inventory inventory = inventoryService.getInventoryByID(id)
-                .orElseThrow(() -> new RuntimeException("Inventory not found"));
-        model.addAttribute("inventory", inventory);
-        model.addAttribute("products", productService.getAllProducts());
-        model.addAttribute("locations", inventoryService.getAllLocations());
-        return "admin/inventory-form";
-    }
+	@GetMapping("/inventory/edit/{id}")
+	public String editInventoryForm(@PathVariable String id, Model model) {
+		Inventory inventory = inventoryService.getInventoryByID(id)
+				.orElseThrow(() -> new RuntimeException("Inventory not found"));
+		model.addAttribute("inventory", inventory);
+		model.addAttribute("products", productService.getAllProducts());
+		model.addAttribute("locations", inventoryService.getAllLocations());
+		return "admin/inventory-form";
+	}
 
-    @PostMapping("/inventory/save")
-    public String saveInventory(@ModelAttribute Inventory inventory, RedirectAttributes redirectAttributes) {
-        try {
-            inventoryService.saveInventory(inventory);
-            redirectAttributes.addFlashAttribute("success", "Tồn kho đã được cập nhật thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật tồn kho: " + e.getMessage());
-        }
-        return "redirect:/admin/inventory";
-    }
+	@PostMapping("/inventory/save")
+	public String saveInventory(@ModelAttribute Inventory inventory, RedirectAttributes redirectAttributes) {
+		try {
+			inventoryService.saveInventory(inventory);
+			redirectAttributes.addFlashAttribute("success", "Tồn kho đã được cập nhật thành công!");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật tồn kho: " + e.getMessage());
+		}
+		return "redirect:/admin/inventory";
+	}
 
-    @PostMapping("/inventory/restock/{id}")
-    public String restockInventory(@PathVariable String id, @RequestParam Integer quantity, RedirectAttributes redirectAttributes) {
-        try {
-            inventoryService.restockInventory(id, quantity);
-            redirectAttributes.addFlashAttribute("success", "Nhập kho thành công!");
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi khi nhập kho: " + e.getMessage());
-        }
-        return "redirect:/admin/inventory";
-    }
+	@PostMapping("/inventory/restock/{id}")
+	public String restockInventory(@PathVariable String id, @RequestParam Integer quantity,
+			RedirectAttributes redirectAttributes) {
+		try {
+			inventoryService.restockInventory(id, quantity);
+			redirectAttributes.addFlashAttribute("success", "Nhập kho thành công!");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi khi nhập kho: " + e.getMessage());
+		}
+		return "redirect:/admin/inventory";
+	}
 }

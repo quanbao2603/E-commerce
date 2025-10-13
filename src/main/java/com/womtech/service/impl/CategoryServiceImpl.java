@@ -6,6 +6,8 @@ import com.womtech.entity.Subcategory;
 import com.womtech.repository.CategoryRepository;
 import com.womtech.service.CategoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +26,10 @@ public class CategoryServiceImpl implements CategoryService {
     public List<Category> getAllCategories() {
         return categoryRepository.findAll();
     }
-
+    
+    public Page<Category> getAllCategories(Pageable pageable) {
+        return categoryRepository.findAll(pageable);
+    }
     @Override
     public List<Category> getActiveCategories() {
         return categoryRepository.findByStatus(1);

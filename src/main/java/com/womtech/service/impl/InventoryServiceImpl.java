@@ -7,6 +7,8 @@ import com.womtech.repository.InventoryRepository;
 import com.womtech.repository.LocationRepository;
 import com.womtech.service.InventoryService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -27,6 +29,10 @@ public class InventoryServiceImpl implements InventoryService {
     public List<Inventory> getAllInventory() {
         return inventoryRepository.findAll();
     }
+    
+    public Page<Inventory> getAllInventory(Pageable pageable) {
+        return inventoryRepository.findAll(pageable);
+    }
 
     @Override
     public Optional<Inventory> getInventoryByID(String id) {
@@ -42,10 +48,18 @@ public class InventoryServiceImpl implements InventoryService {
     public List<Inventory> getLowStockItems() {
         return inventoryRepository.findLowStockItems();
     }
-
+    
+    @Override
+    public Page<Inventory> getLowStockItems(Pageable pageable) {
+        return inventoryRepository.findLowStockItems(pageable);
+    }
     @Override
     public List<Inventory> getOutOfStockItems() {
         return inventoryRepository.findOutOfStockItems();
+    }
+    @Override
+    public Page<Inventory> getOutOfStockItems(Pageable pageable) {
+        return inventoryRepository.findOutOfStockItems(pageable);
     }
 
     @Override
