@@ -18,24 +18,33 @@
 
 <!-- JavaScript để force clear cookies -->
 <script>
-// Force clear cookies khi trang login được load
-document.addEventListener('DOMContentLoaded', function() {
-    // Xóa tất cả cookies liên quan đến authentication
-    const cookiesToDelete = ['AT', 'RT', 'WOM_REMEMBER', 'JSESSIONID'];
-    
-    cookiesToDelete.forEach(function(cookieName) {
-        // Xóa với path "/"
-        document.cookie = cookieName + '=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict';
-        // Xóa với domain "localhost"
-        document.cookie = cookieName + '=; Path=/; Max-Age=0; Domain=localhost; HttpOnly';
-        // Xóa với domain ".localhost"
-        document.cookie = cookieName + '=; Path=/; Max-Age=0; Domain=.localhost; HttpOnly';
-        // Xóa với Expires header
-        document.cookie = cookieName + '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly';
-    });
-    
-    console.log('Authentication cookies cleared');
-});
+	// Force clear cookies khi trang login được load
+	document
+			.addEventListener(
+					'DOMContentLoaded',
+					function() {
+						// Xóa tất cả cookies liên quan đến authentication
+						const cookiesToDelete = [ 'AT', 'RT', 'WOM_REMEMBER',
+								'JSESSIONID' ];
+
+						cookiesToDelete
+								.forEach(function(cookieName) {
+									// Xóa với path "/"
+									document.cookie = cookieName
+											+ '=; Path=/; Max-Age=0; HttpOnly; SameSite=Strict';
+									// Xóa với domain "localhost"
+									document.cookie = cookieName
+											+ '=; Path=/; Max-Age=0; Domain=localhost; HttpOnly';
+									// Xóa với domain ".localhost"
+									document.cookie = cookieName
+											+ '=; Path=/; Max-Age=0; Domain=.localhost; HttpOnly';
+									// Xóa với Expires header
+									document.cookie = cookieName
+											+ '=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT; HttpOnly';
+								});
+
+						console.log('Authentication cookies cleared');
+					});
 </script>
 </head>
 <body>
@@ -94,12 +103,19 @@ document.addEventListener('DOMContentLoaded', function() {
 								</div>
 							</div>
 
+							<!-- Quên mật khẩu -->
+							<div class="text-end mb-3">
+								<a th:href="@{/auth/forgot}" class="small text-decoration-none">Quên
+									mật khẩu?</a>
+							</div>
+
 							<div class="d-grid mb-3">
 								<button type="submit" class="btn btn-primary btn-lg">
 									<i class="bi bi-box-arrow-in-right me-2"></i>Đăng nhập
 								</button>
 							</div>
 						</form>
+
 
 						<!-- Register Link -->
 						<div class="text-center">

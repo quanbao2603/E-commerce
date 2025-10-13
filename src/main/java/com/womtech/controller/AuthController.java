@@ -52,6 +52,17 @@ public class AuthController {
 	private static final int OTP_TTL_MINUTES = 10;
 	private static final int RESEND_COOLDOWN_SECONDS = 60;
 
+	private static final String SK_FP_EMAIL = "FP_EMAIL";
+	private static final String SK_FP_OTP = "FP_OTP";
+	private static final String SK_FP_EXPIRE = "FP_EXPIRE";
+	private static final String SK_FP_ATTEMPTS = "FP_ATTEMPTS";
+	private static final String SK_FP_LASTSEND = "FP_LASTSEND";
+	private static final String SK_FP_VERIFIED = "FP_VERIFIED";
+
+	private static final int FP_OTP_TTL_MIN = 15;
+	private static final int FP_MAX_ATTEMPTS = 5;
+	private static final long FP_RESEND_COOLDN = 60_000L;
+
 	@GetMapping("/login")
 	public String showLogin(HttpServletRequest request, HttpSession session) {
 		if (session.getAttribute("CURRENT_USER_ID") != null) {
@@ -403,6 +414,173 @@ public class AuthController {
 		return "redirect:/auth/login";
 	}
 
+	@GetMapping("/forgot")
+	public String forgotForm() {
+		return "auth/forgot";
+	}
+
+	@PostMapping("/forgot")
+	public String forgotHandle(@RequestParam("email") String email, HttpServletRequest req, RedirectAttributes ra) {
+		if (!StringUtils.hasText(email)) {
+			ra.addFlashAttribute("error", "Vui lòng nhập email đã đăng ký.");
+			return "redirect:/auth/forgot";
+		}
+
+		var userOpt = userService.findByEmail(email.trim());
+
+		if (userOpt.isEmpty()) {
+			// Tránh lộ thông tin tồn tại email
+			ra.addFlashAttribute("info", "Nếu email hợp lệ, mã OTP sẽ được gửi trong giây lát.");
+			return "redirect:/auth/forgot";
+		}
+
+		HttpSession session = req.getSession(true);
+		Long last = (Long) session.getAttribute(SK_FP_LASTSEND);
+		long now = System.currentTimeMillis();
+
+		if (last != null && now - last < FP_RESEND_COOLDN) {
+			ra.addFlashAttribute("error", "Vui lòng đợi 1 phút trước khi gửi lại OTP.");
+			return "redirect:/auth/forgot";
+		}
+
+		String otp = generateOtp();
+		long expireAt = now + FP_OTP_TTL_MIN * 60_000L;
+
+		session.setAttribute(SK_FP_EMAIL, email.trim());
+		session.setAttribute(SK_FP_OTP, otp);
+		session.setAttribute(SK_FP_EXPIRE, expireAt);
+		session.setAttribute(SK_FP_ATTEMPTS, 0);
+		session.setAttribute(SK_FP_LASTSEND, now);
+		session.removeAttribute(SK_FP_VERIFIED);
+
+		try {
+			// EmailUtil của bạn ở flow đăng ký có chữ ký (email, username, otp, minutes)
+			var user = userOpt.get();
+			emailUtil.sendForgotPassword(email.trim(), user.getUsername(), otp, FP_OTP_TTL_MIN, null);
+			ra.addFlashAttribute("success", "Đã gửi mã OTP tới email. Vui lòng kiểm tra hộp thư.");
+		} catch (Exception ex) {
+			ra.addFlashAttribute("error", "Không thể gửi OTP lúc này. Vui lòng thử lại.");
+			return "redirect:/auth/forgot";
+		}
+
+		return "redirect:/auth/forgot/verify";
+	}
+
+	@GetMapping("/forgot/verify")
+	public String forgotVerifyForm(HttpServletRequest req, Model model, RedirectAttributes ra) {
+		HttpSession s = req.getSession(false);
+		if (s == null || s.getAttribute(SK_FP_EMAIL) == null) {
+			ra.addFlashAttribute("error", "Vui lòng nhập email để nhận OTP trước.");
+			return "redirect:/auth/forgot";
+		}
+		Integer attempts = (Integer) s.getAttribute(SK_FP_ATTEMPTS);
+		int attemptsLeft = FP_MAX_ATTEMPTS - (attempts == null ? 0 : attempts);
+		model.addAttribute("email", s.getAttribute(SK_FP_EMAIL));
+		model.addAttribute("attemptsLeft", attemptsLeft);
+		return "auth/verify-reset-otp";
+	}
+
+	@PostMapping("/forgot/verify")
+	public String forgotVerifyHandle(@RequestParam("otp") String otp, HttpServletRequest req, RedirectAttributes ra) {
+		HttpSession s = req.getSession(false);
+		if (s == null) {
+			ra.addFlashAttribute("error", "Phiên khôi phục không hợp lệ. Vui lòng làm lại.");
+			return "redirect:/auth/forgot";
+		}
+
+		String saved = (String) s.getAttribute(SK_FP_OTP);
+		Long expire = (Long) s.getAttribute(SK_FP_EXPIRE);
+		Integer attempts = (Integer) s.getAttribute(SK_FP_ATTEMPTS);
+		if (attempts == null)
+			attempts = 0;
+
+		if (saved == null || expire == null) {
+			ra.addFlashAttribute("error", "OTP không tồn tại hoặc đã hết hạn. Vui lòng gửi lại.");
+			clearForgotSession(s);
+			return "redirect:/auth/forgot";
+		}
+		if (System.currentTimeMillis() > expire) {
+			ra.addFlashAttribute("error", "OTP đã hết hạn. Vui lòng gửi lại.");
+			clearForgotSession(s);
+			return "redirect:/auth/forgot";
+		}
+		if (attempts >= FP_MAX_ATTEMPTS) {
+			ra.addFlashAttribute("error", "Bạn đã nhập sai quá số lần cho phép. Vui lòng gửi lại OTP.");
+			clearForgotSession(s);
+			return "redirect:/auth/forgot";
+		}
+		if (!StringUtils.hasText(otp) || !saved.equals(otp.trim())) {
+			s.setAttribute(SK_FP_ATTEMPTS, attempts + 1);
+			ra.addFlashAttribute("error", "OTP không đúng. Vui lòng thử lại.");
+			return "redirect:/auth/forgot/verify";
+		}
+
+		s.setAttribute(SK_FP_VERIFIED, true);
+		ra.addFlashAttribute("success", "Xác minh OTP thành công. Vui lòng đặt mật khẩu mới.");
+		return "redirect:/auth/reset";
+	}
+
+	@GetMapping("/reset")
+	public String resetForm(HttpServletRequest req, RedirectAttributes ra) {
+		HttpSession s = req.getSession(false);
+		if (s == null || !Boolean.TRUE.equals(s.getAttribute(SK_FP_VERIFIED))) {
+			ra.addFlashAttribute("error", "Phiên khôi phục không hợp lệ. Vui lòng thực hiện lại.");
+			return "redirect:/auth/forgot";
+		}
+		return "auth/reset-password";
+	}
+
+	@PostMapping("/reset")
+	public String handleReset(@RequestParam("password") String newPassword,
+			@RequestParam("confirm") String confirmPassword, HttpSession session, HttpServletRequest request,
+			HttpServletResponse response, RedirectAttributes ra) {
+
+		// 1️ Kiểm tra phiên OTP hợp lệ
+		String email = (String) session.getAttribute("FP_EMAIL");
+		Boolean verified = (Boolean) session.getAttribute("FP_VERIFIED");
+
+		if (email == null || !Boolean.TRUE.equals(verified)) {
+			ra.addFlashAttribute("error", "Phiên khôi phục không hợp lệ hoặc đã hết hạn.");
+			return "redirect:/auth/forgot";
+		}
+
+		// 2️ Kiểm tra dữ liệu nhập
+		if (!StringUtils.hasText(newPassword) || !StringUtils.hasText(confirmPassword)) {
+			ra.addFlashAttribute("error", "Vui lòng nhập đầy đủ thông tin mật khẩu.");
+			return "redirect:/auth/reset";
+		}
+		if (!newPassword.equals(confirmPassword)) {
+			ra.addFlashAttribute("error", "Xác nhận mật khẩu không khớp.");
+			return "redirect:/auth/reset";
+		}
+		if (newPassword.length() < 8) {
+			ra.addFlashAttribute("error", "Mật khẩu phải có ít nhất 8 ký tự.");
+			return "redirect:/auth/reset";
+		}
+
+		// 3️ Tìm user theo email
+		var userOpt = userService.findByEmail(email);
+		if (userOpt.isEmpty()) {
+			ra.addFlashAttribute("error", "Tài khoản không tồn tại hoặc đã bị khóa.");
+			clearForgotSession(session);
+			return "redirect:/auth/forgot";
+		}
+
+		var user = userOpt.get();
+
+		// 4️ Cập nhật mật khẩu mới
+		user.setPassword(com.womtech.util.PasswordUtil.encode(newPassword));
+		userService.save(user);
+
+		// 5️ Thu hồi cookie / token đăng nhập (nếu có)
+		clearAuthCookies(request, response);
+		session.invalidate();
+
+		// 6️ Hoàn tất
+		ra.addFlashAttribute("success", "Đổi mật khẩu thành công. Vui lòng đăng nhập lại.");
+		return "redirect:/auth/login";
+	}
+
 	private void clearAuthCookies(HttpServletRequest request, HttpServletResponse response) {
 		CookieUtil.delete(request, response, CK_AT);
 		CookieUtil.delete(request, response, CK_RT);
@@ -453,5 +631,14 @@ public class AuthController {
 		if (rs.contains("SHIPPER"))
 			return "/shipper/dashboard";
 		return "/";
+	}
+
+	private void clearForgotSession(HttpSession s) {
+		s.removeAttribute(SK_FP_EMAIL);
+		s.removeAttribute(SK_FP_OTP);
+		s.removeAttribute(SK_FP_EXPIRE);
+		s.removeAttribute(SK_FP_ATTEMPTS);
+		s.removeAttribute(SK_FP_LASTSEND);
+		s.removeAttribute(SK_FP_VERIFIED);
 	}
 }
