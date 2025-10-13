@@ -40,7 +40,7 @@ public class SecurityConfig {
 						.requestMatchers("/api/chats/**").authenticated()
 
 						// Public pages
-						.requestMatchers("/", "/auth/**", "/products/**", "/about", "/contact", "/error").permitAll()
+						.requestMatchers("/", "/chat" ,"/auth/**", "/products/**", "/about", "/contact", "/error").permitAll()
 
 						// Khu vực cần đăng nhập / phân quyền
 						.requestMatchers("/user/**").authenticated().requestMatchers("/admin/**").hasRole("ADMIN")
