@@ -5,7 +5,9 @@ import com.womtech.entity.Subcategory;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 
 public interface ProductService {
 	// BASIC CRUD
@@ -38,6 +40,7 @@ public interface ProductService {
 //    List<Product> getProductsOnSale();
 //    List<Product> getDiscountedProducts();
 //
+    Page<Product> searchActiveProducts(String keyword, Pageable pageable);
 //    // COUNT & STATISTICS
 	long getTotalCount();
 
@@ -51,6 +54,7 @@ public interface ProductService {
 //    void activateProduct(String productID);
 //    void deactivateProduct(String productID);
 //    void setOutOfStock(String productID);
+	  Page<Product> getActiveProductsByCategory(String categoryId, Pageable pageable);
 	Page<Product> getAllProducts(Pageable pageable);
 
 	Page<Product> getActiveProducts(Pageable pageable);
