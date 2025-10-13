@@ -34,6 +34,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 //    // Find by status
 		List<Product> findByStatus(Integer status);
 		Page<Product> findByStatus(Integer status, Pageable pageable);
+		Page<Product> findBySubcategory_Category_CategoryIDAndStatusTrue(String categoryId, Pageable pageable);
 //    
 //    List<Product> findByStatusOrderByCreateAtDesc(Integer status);
 //    
@@ -47,6 +48,8 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 //    List<Product> searchProducts(@Param("keyword") String keyword);
 //    
 //    List<Product> findByNameContainingIgnoreCase(String keyword);
+	Page<Product> findByNameContainingIgnoreCase(String keyword, Pageable pageable);
+	Page<Product> findByNameContainingIgnoreCaseAndStatus(String keyword, Integer status, Pageable pageable);
 //    
 //    // Price queries
 //    List<Product> findByPriceBetween(BigDecimal minPrice, BigDecimal maxPrice);

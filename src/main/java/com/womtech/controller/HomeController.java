@@ -22,6 +22,9 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.security.Principal;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Map;
 
 @Controller
 @ControllerAdvice
@@ -37,14 +40,29 @@ public class HomeController {
     @GetMapping("/")
     public String home(
             @RequestParam(defaultValue = "0") int page,
-            Model model) {
+            Model model,
+            Principal principal // để biết user login chưa
+    ) {
+        // Nếu có user -> 20 sản phẩm/trang, nếu không -> 10
+        int pageSize = (principal != null) ? 20 : 8;
 
-        Pageable pageable = PageRequest.of(page, 10, Sort.by("createAt").descending());
+        Pageable pageable = PageRequest.of(page, pageSize, Sort.by("createAt").descending());
         Page<Product> productPage = productService.getActiveProducts(pageable);
+        
+        var categories = categoryService.findAll();
+        Map<String, List<Product>> productsByCategory = new LinkedHashMap<>();
+        for (var cate : categories) {
+            List<Product> cateProducts = productService
+                    .getActiveProductsByCategory(cate.getCategoryID(), PageRequest.of(0, 8))
+                    .getContent();
+            productsByCategory.put(cate.getName(), cateProducts);
+        }
 
         model.addAttribute("featuredProducts", productPage.getContent());
         model.addAttribute("page", productPage);
         model.addAttribute("featuredCategories", categoryService.findAll());
+        model.addAttribute("productsByCategory", productsByCategory);
+
         return "index";
     }
     @ModelAttribute
@@ -142,5 +160,20 @@ public class HomeController {
     @GetMapping("/contact")
     public String contact() {
         return "user/contact";
+    }
+    
+    @GetMapping("/search")
+    public String searchProducts(@RequestParam("keyword") String keyword,
+                                 @RequestParam(defaultValue = "0") int page,
+                                 Model model) {
+
+        int pageSize = 8;
+        Pageable pageable = PageRequest.of(page, pageSize);
+        Page<Product> products = productService.searchActiveProducts(keyword, pageable);
+        model.addAttribute("products", products);
+        model.addAttribute("keyword", keyword);
+        model.addAttribute("totalElements", products.getTotalElements());
+
+        return "user/search";
     }
 }

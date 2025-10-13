@@ -75,6 +75,19 @@ public class ProductServiceImpl implements ProductService {
     public List<Product> getProductsBySubcategory(Subcategory subcategory) {
         return productRepository.findBySubcategory(subcategory);
     }
+    
+    @Override
+    public Page<Product> getActiveProductsByCategory(String categoryId, Pageable pageable) {
+        return productRepository.findBySubcategory_Category_CategoryIDAndStatusTrue(categoryId, pageable);
+    }
+    
+    @Override
+    public Page<Product> searchActiveProducts(String keyword, Pageable pageable) {
+        if (keyword == null || keyword.trim().isEmpty()) {
+            return productRepository.findByStatus(1, pageable); // nếu ko có keyword thì trả sp active
+        }
+        return productRepository.findByNameContainingIgnoreCaseAndStatus(keyword, 1, pageable);
+    }
 //
 //    @Override
 //    public List<Product> getProductsBySubcategorySubcategoryID(String subcategoryID) {
