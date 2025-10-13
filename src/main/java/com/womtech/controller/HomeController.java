@@ -133,4 +133,14 @@ public class HomeController {
         // Nên sẽ xóa cookies ở client-side hoặc trong filter
         System.out.println("Token bị revoke - cần xóa cookies");
     }
+    
+    @GetMapping("/about")
+    public String about() {
+        return "user/about";
+    }
+
+    @GetMapping("/contact")
+    public String contact() {
+        return "user/contact";
+    }
 }

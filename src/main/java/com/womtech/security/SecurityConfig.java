@@ -32,7 +32,7 @@ public class SecurityConfig {
 						.permitAll()
 						.requestMatchers(PathRequest.toStaticResources().atCommonLocations())
 						.permitAll()
-						.requestMatchers("/", "/auth/**", "/products/**", "/error").permitAll()
+						.requestMatchers("/", "/auth/**", "/products/**", "/about", "/contact", "/error").permitAll()
 						.requestMatchers("/user/**").authenticated().requestMatchers("/admin/**").hasRole("ADMIN")
 						.requestMatchers("/vendor/**").hasRole("VENDOR").requestMatchers("/shipper/**")
 						.hasRole("SHIPPER").anyRequest().authenticated())
