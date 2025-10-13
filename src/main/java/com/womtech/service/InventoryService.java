@@ -7,17 +7,27 @@ import com.womtech.entity.Location;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface InventoryService {
 
     List<Inventory> getAllInventory();
+   
+    Page<Inventory> getAllInventory(Pageable pageable);
 
     Optional<Inventory> getInventoryByID(String id);
 
     Optional<Inventory> getInventoryByProductAndLocation(Product product, Location location);
 
     List<Inventory> getLowStockItems();
+    
+    Page<Inventory> getLowStockItems(Pageable pageable);
+
 
     List<Inventory> getOutOfStockItems();
+    Page<Inventory> getOutOfStockItems(Pageable pageable);
+
 
     List<Inventory> getInventoryByStatus(Integer status);
 

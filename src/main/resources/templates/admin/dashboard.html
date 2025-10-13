@@ -147,7 +147,8 @@
 							</tr>
 						</thead>
 						<tbody>
-							<tr th:each="item : ${lowStockItems}">
+							<tr th:each="item, iterStat : ${lowStockItems}"
+								th:if="${iterStat.index < 5}">
 								<td><code
 										th:text="${#strings.abbreviate(item.product.productID, 12)}">ID</code></td>
 								<td>
@@ -175,6 +176,18 @@
 								<td colspan="5" class="text-center py-4 text-muted"><i
 									class="fas fa-check-circle me-2 text-success"></i>Không có sản
 									phẩm nào sắp hết hàng.</td>
+							</tr>
+							<!-- Nếu có hơn 5 sản phẩm thì hiển thị dòng này -->
+							<tr th:if="${#lists.size(lowStockItems) > 5}">
+								<td colspan="5" class="text-center py-3 text-muted">
+									<h6 class="mb-0">
+										<i class="fas fa-exclamation-triangle me-2 text-warning"></i>
+										Còn nhiều sản phẩm khác, xem chi tiết ở <a
+											href="/admin/inventory"
+											class="text-primary fw-bold text-decoration-none"> Quản
+											Lý Tồn Kho </a>
+									</h6>
+								</td>
 							</tr>
 						</tbody>
 					</table>

@@ -10,6 +10,8 @@ import org.hibernate.Hibernate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 import java.util.Optional;
@@ -25,6 +27,10 @@ public class BrandServiceImpl implements BrandService {
 	public List<Brand> getAllBrands() {
 		return brandRepository.findAll();
 	}
+	
+	public Page<Brand> getAllBrands(Pageable pageable) {
+        return brandRepository.findAll(pageable);
+    }
 
 	@Override
 	public List<Brand> getActiveBrands() {

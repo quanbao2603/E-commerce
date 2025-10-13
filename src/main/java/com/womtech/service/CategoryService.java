@@ -5,6 +5,9 @@ import com.womtech.entity.Category;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface CategoryService {
 
     List<Category> getAllCategories();
@@ -23,4 +26,6 @@ public interface CategoryService {
 
     long getTotalCount();
     List<Category> findAll();
+    
+    Page<Category> getAllCategories(Pageable pageable);
 }

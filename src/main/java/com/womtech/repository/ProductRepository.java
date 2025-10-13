@@ -19,7 +19,7 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, String> {
     
 //    // Find by relationships
-//    List<Product> findBySubcategory(Subcategory subcategory);
+    List<Product> findBySubcategory(Subcategory subcategory);
 //    
 //    List<Product> findBySubcategorySubcategoryID(String subcategoryID);
 //    
