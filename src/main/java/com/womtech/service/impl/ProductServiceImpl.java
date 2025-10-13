@@ -5,10 +5,12 @@ import com.womtech.entity.Category;
 import com.womtech.entity.Product;
 import com.womtech.entity.Subcategory;
 import com.womtech.repository.ProductRepository;
+import com.womtech.repository.UserRepository;
 import com.womtech.service.ProductService;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -22,52 +24,67 @@ import java.util.Optional;
 @Transactional
 public class ProductServiceImpl implements ProductService {
 
-    @Autowired
-    private ProductRepository productRepository;
+	@Autowired
+	private ProductRepository productRepository;
+	private final UserRepository userRepository = null;
 
-    // BASIC CRUD
+	private String currentUserId() {
+		var ctx = org.springframework.security.core.context.SecurityContextHolder.getContext();
+		var auth = ctx != null ? ctx.getAuthentication() : null;
+		return (auth != null && auth.getName() != null) ? auth.getName() : null; // getName() = userId
+	}
 
-    @Override
-    public List<Product> getAllProducts() {
-        return productRepository.findAll();
-    }
-    @Override
-    public Page<Product> getAllProducts(Pageable pageable) {
-        return productRepository.findAll(pageable);
-    }
-    
-    @Override
-    public List<Product> getActiveProducts() {
-        return productRepository.findByStatus(1);
-    }
-    
-    @Override
-	  public Page<Product> getActiveProducts(Pageable pageable) {
-    	return productRepository.findByStatus(1, pageable);
-	  }
+	private boolean hasAdminRole() {
+		var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+		if (auth == null)
+			return false;
+		return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+	}
 
-    @Override
-    public List<Product> getActiveProductsNewest() {
-        return productRepository.findActiveProductsOrderByNewest();
-    }
+	// BASIC CRUD
 
-    @Override
-    public Optional<Product> getProductById(String id) {
-        return productRepository.findById(id);
-    }
+	@Override
+	public List<Product> getAllProducts() {
+		return productRepository.findAll();
+	}
 
-    @Override
-    public Product saveProduct(Product product) {
-    	if (product.getProductID() != null && product.getProductID().trim().isEmpty()) {
-    		product.setProductID(null); // <- ép về null để Hibernate tự sinh UUID
-        }
-        return productRepository.save(product);
-    }
+	@Override
+	public Page<Product> getAllProducts(Pageable pageable) {
+		return productRepository.findAll(pageable);
+	}
 
-    @Override
-    public void deleteProduct(String id) {
-        productRepository.deleteById(id);
-    }
+	@Override
+	public List<Product> getActiveProducts() {
+		return productRepository.findByStatus(1);
+	}
+
+	@Override
+	public Page<Product> getActiveProducts(Pageable pageable) {
+		return productRepository.findByStatus(1, pageable);
+	}
+
+	@Override
+	public List<Product> getActiveProductsNewest() {
+		return productRepository.findActiveProductsOrderByNewest();
+	}
+
+	@Override
+	public Optional<Product> getProductById(String id) {
+		return productRepository.findById(id);
+	}
+
+	@Override
+	public Product saveProduct(Product product) {
+		if (product.getProductID() != null && product.getProductID().trim().isEmpty()) {
+			product.setProductID(null); // <- ép về null để Hibernate tự sinh UUID
+		}
+		return productRepository.save(product);
+	}
+
+	@Override
+	public void deleteProduct(String id) {
+		productRepository.deleteById(id);
+	}
 
 //    // FIND BY RELATIONSHIPS
 //
@@ -151,10 +168,76 @@ public class ProductServiceImpl implements ProductService {
 //
 //    // COUNT & STATISTICS
 //
-      @Override
-	    public long getTotalCount() {
-	        return productRepository.count();
-	    }
+	@Override
+	public long getTotalCount() {
+		return productRepository.count();
+	}
+
+	@Override
+	@PreAuthorize("hasRole('VENDOR')")
+	public Page<Product> getMyProducts(Pageable pageable) {
+		return productRepository.findByOwnerUser_UserID(currentUserId(), pageable);
+	}
+
+	@Override
+	@PreAuthorize("hasRole('VENDOR')")
+	public Optional<Product> getMyProductById(String id) {
+		return productRepository.findByProductIDAndOwnerUser_UserID(id, currentUserId());
+	}
+
+	@Override
+	@PreAuthorize("hasRole('VENDOR')")
+	public Product createMyProduct(Product product) {
+		// Gán owner = current user
+		var uid = currentUserId();
+		var me = userRepository.getReferenceById(uid);
+
+		// đảm bảo để Hibernate tự sinh id khi cần
+		if (product.getProductID() != null && product.getProductID().trim().isEmpty()) {
+			product.setProductID(null);
+		}
+
+		product.setOwnerUser(me);
+		return productRepository.save(product);
+	}
+
+	@Override
+	@PreAuthorize("hasRole('VENDOR')")
+	public Product updateMyProduct(String productId, Product data) {
+		var uid = currentUserId();
+
+		var p = productRepository.findByProductIDAndOwnerUser_UserID(productId, uid)
+				.orElseThrow(() -> new org.springframework.security.access.AccessDeniedException(
+						"Bạn không sở hữu sản phẩm này hoặc sản phẩm không tồn tại"));
+
+		// Cập nhật các field cho phép
+		p.setName(data.getName());
+		p.setPrice(data.getPrice());
+		p.setDiscount_price(data.getDiscount_price());
+		p.setThumbnail(data.getThumbnail());
+		p.setDescription(data.getDescription());
+		p.setBrand(data.getBrand());
+		p.setSubcategory(data.getSubcategory());
+		p.setStatus(data.getStatus());
+
+		return productRepository.save(p);
+	}
+
+	@Override
+	@PreAuthorize("hasRole('VENDOR')")
+	public void deleteMyProduct(String productId) {
+		var uid = currentUserId();
+		var p = productRepository.findByProductIDAndOwnerUser_UserID(productId, uid)
+				.orElseThrow(() -> new org.springframework.security.access.AccessDeniedException(
+						"Bạn không sở hữu sản phẩm này hoặc sản phẩm không tồn tại"));
+		productRepository.delete(p);
+	}
+
+	@Override
+	@PreAuthorize("hasRole('VENDOR')")
+	public long countMyProducts() {
+		return productRepository.countByOwnerUser_UserID(currentUserId());
+	}
 
 //    @Override
 //    public long countByStatus(Integer status) {
@@ -179,7 +262,7 @@ public class ProductServiceImpl implements ProductService {
 //    // BUSINESS LOGIC
 //
 //    //@Override
-////    public Product createProduct(String name, String description, BigDecimal price, 
+	////    public Product createProduct(String name, String description, BigDecimal price, 
 ////                                Brand brand, Subcategory subcategory) {
 ////        Product product = new Product(name, description, price, brand, subcategory);
 ////        return saveProduct(product);

@@ -28,7 +28,11 @@ public class Product {
 	@ManyToOne(optional = false, fetch = FetchType.LAZY)
 	@JoinColumn(name = "brandID", foreignKey = @ForeignKey(name = "fk_products_brands"))
 	private Brand brand;
-
+	
+	@ManyToOne(optional = false, fetch = FetchType.LAZY)
+    @JoinColumn(name = "owner_user_id", foreignKey = @ForeignKey(name = "fk_products_owner_user"))
+    private User ownerUser;
+	
 	private String thumbnail;
 
 	@Column(nullable = false, length = 200)

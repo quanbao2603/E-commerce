@@ -9,16 +9,16 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 public class ChatPageController {
 
-	// Trang khung chat cho user
+	
 	@GetMapping("/chat")
 	public String chatPage(@RequestParam(required = false) String chatID, Model model) {
-		model.addAttribute("chatID", chatID); // có thể null -> UI tự tạo chat mới
-		return "user/chat"; // templates/user/chat.html
+		model.addAttribute("chatID", chatID); 
+		return "user/chat"; 
 	}
 
-	// (tuỳ chọn) Trang cho agent/support xem danh sách chat
+	
 	@GetMapping("/support/chats")
 	public String supportChatsPage() {
-		return "support/chats"; // templates/support/chats.html
+		return "support/chats"; 
 	}
 }
