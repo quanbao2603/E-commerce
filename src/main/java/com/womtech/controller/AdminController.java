@@ -3,6 +3,7 @@ package com.womtech.controller;
 import com.womtech.entity.*;
 import com.womtech.service.*;
 
+import java.io.IOException;
 import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,6 +14,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 @Controller
@@ -36,6 +38,9 @@ public class AdminController {
 
 	@Autowired
 	private ProductService productService;
+
+	@Autowired
+	private CloudinaryService cloudinaryService;
 
 	// ========== DASHBOARD ==========
 	@GetMapping("/dashboard")
@@ -112,20 +117,20 @@ public class AdminController {
 		model.addAttribute("subcategories", subcategoryService.getSubcategoriesByCategoryId(categoryID));
 		return "admin/subcategories";
 	}
-	
+
 	@GetMapping("/subcategories/{subcategoryId}/products")
-    public String listProductsBySubcategory(@PathVariable String subcategoryId, Model model) {
-        Subcategory subcategory = subcategoryService.getSubcategoryById(subcategoryId)
-                .orElseThrow(() -> new RuntimeException("Subcategory not found"));
-        List<Product> products = productService.getProductsBySubcategory(subcategory);
-        
-        model.addAttribute("subcategory", subcategory);
-        model.addAttribute("category", subcategory.getCategory());
-        model.addAttribute("products", products);
-        model.addAttribute("productCount", products.size());
-        
-        return "admin/product-by-subcategory";
-    }
+	public String listProductsBySubcategory(@PathVariable String subcategoryId, Model model) {
+		Subcategory subcategory = subcategoryService.getSubcategoryById(subcategoryId)
+				.orElseThrow(() -> new RuntimeException("Subcategory not found"));
+		List<Product> products = productService.getProductsBySubcategory(subcategory);
+
+		model.addAttribute("subcategory", subcategory);
+		model.addAttribute("category", subcategory.getCategory());
+		model.addAttribute("products", products);
+		model.addAttribute("productCount", products.size());
+
+		return "admin/product-by-subcategory";
+	}
 
 	@GetMapping("/subcategories/new/{categoryID}")
 	public String newSubcategoryForm(@PathVariable String categoryID, Model model) {
@@ -259,8 +264,22 @@ public class AdminController {
 	}
 
 	@PostMapping("/products/save")
-	public String saveProduct(@ModelAttribute Product product, RedirectAttributes redirectAttributes) {
+	public String saveProduct(@ModelAttribute Product product,
+			@RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile,
+			RedirectAttributes redirectAttributes) {
 		try {
+			// Handle thumbnail upload
+			if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+				// Delete old thumbnail if exists
+				if (product.getProductID() != null && product.getThumbnail() != null) {
+					cloudinaryService.deleteImage(product.getThumbnail());
+				}
+
+				// Upload new thumbnail
+				String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
+				product.setThumbnail(thumbnailUrl);
+			}
+
 			productService.saveProduct(product);
 			redirectAttributes.addFlashAttribute("success", "Sản phẩm đã được lưu thành công!");
 		} catch (Exception e) {
@@ -272,6 +291,12 @@ public class AdminController {
 	@GetMapping("/products/delete/{id}")
 	public String deleteProduct(@PathVariable String id, RedirectAttributes redirectAttributes) {
 		try {
+			// Get product to delete thumbnail
+			Product product = productService.getProductById(id).orElse(null);
+			if (product != null && product.getThumbnail() != null) {
+				cloudinaryService.deleteImage(product.getThumbnail());
+			}
+
 			productService.deleteProduct(id);
 			redirectAttributes.addFlashAttribute("success", "Sản phẩm đã được xóa thành công!");
 		} catch (Exception e) {

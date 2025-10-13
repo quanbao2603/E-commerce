@@ -28,6 +28,7 @@ public class BrandServiceImpl implements BrandService {
 		return brandRepository.findAll();
 	}
 	
+	@Override
 	public Page<Brand> getAllBrands(Pageable pageable) {
         return brandRepository.findAll(pageable);
     }
