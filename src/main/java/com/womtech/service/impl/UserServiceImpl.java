@@ -35,6 +35,11 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 	public Optional<User> findByEmail(String email) {
 		return userRepository.findByEmail(email);
 	}
+	
+	@Override
+	public List<User> getAllUsers() {
+        return userRepository.findAll();
+    }
 
 	@Override
 	public Optional<User> findByUsername(String username) {

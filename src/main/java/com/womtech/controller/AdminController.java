@@ -41,6 +41,9 @@ public class AdminController {
 
 	@Autowired
 	private CloudinaryService cloudinaryService;
+	
+	@Autowired
+	private UserService userService;
 
 	// ========== DASHBOARD ==========
 	@GetMapping("/dashboard")
@@ -235,21 +238,94 @@ public class AdminController {
 
 	// ========== PRODUCT MANAGEMENT ==========
 	@GetMapping("/products")
-	public String listProducts(@RequestParam(defaultValue = "0") int page, @RequestParam(defaultValue = "10") int size,
-			Model model) {
-		Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
-		Page<Product> productPage = productService.getAllProducts(pageable);
-
-		model.addAttribute("products", productPage.getContent());
-		model.addAttribute("page", productPage);
-		return "admin/products";
-	}
-
+    public String listProducts(
+            @RequestParam(required = false) String search,
+            @RequestParam(required = false) String categoryId,
+            @RequestParam(required = false) String subcategoryId,
+            @RequestParam(required = false) String brandId,
+            @RequestParam(required = false) Integer status,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "10") int size,
+            Model model) {
+        
+        // Get all products first, then filter
+        List<Product> allProducts = productService.getAllProducts();
+        
+        // Apply search filter
+        if (search != null && !search.trim().isEmpty()) {
+            String searchLower = search.toLowerCase().trim();
+            allProducts = allProducts.stream()
+                    .filter(p -> p.getName().toLowerCase().contains(searchLower) ||
+                                p.getProductID().toLowerCase().contains(searchLower))
+                    .toList();
+        }
+        
+        // Apply category filter
+        if (categoryId != null && !categoryId.trim().isEmpty()) {
+            allProducts = allProducts.stream()
+                    .filter(p -> p.getSubcategory().getCategory().getCategoryID().equals(categoryId))
+                    .toList();
+        }
+        
+        // Apply subcategory filter
+        if (subcategoryId != null && !subcategoryId.trim().isEmpty()) {
+            allProducts = allProducts.stream()
+                    .filter(p -> p.getSubcategory().getSubcategoryID().equals(subcategoryId))
+                    .toList();
+        }
+        
+        // Apply brand filter
+        if (brandId != null && !brandId.trim().isEmpty()) {
+            allProducts = allProducts.stream()
+                    .filter(p -> p.getBrand().getBrandID().equals(brandId))
+                    .toList();
+        }
+        
+        // Apply status filter
+        if (status != null) {
+            allProducts = allProducts.stream()
+                    .filter(p -> p.getStatus().equals(status))
+                    .toList();
+        }
+        
+        // Sort by createAt descending
+        allProducts = allProducts.stream()
+                .sorted((p1, p2) -> p2.getCreateAt().compareTo(p1.getCreateAt()))
+                .toList();
+        
+        // Manual pagination
+        int start = Math.min(page * size, allProducts.size());
+        int end = Math.min(start + size, allProducts.size());
+        List<Product> pagedProducts = allProducts.subList(start, end);
+        
+        // Create Page object for pagination fragment
+        Pageable pageable = PageRequest.of(page, size);
+        int totalPages = (int) Math.ceil((double) allProducts.size() / size);
+        
+        // Add attributes to model
+        model.addAttribute("products", pagedProducts);
+        model.addAttribute("categories", categoryService.getActiveCategories());
+        model.addAttribute("brands", brandService.getActiveBrands());
+        
+        // If category is selected, load its subcategories
+        if (categoryId != null && !categoryId.trim().isEmpty()) {
+            model.addAttribute("subcategories", subcategoryService.getSubcategoriesByCategoryId(categoryId));
+        }
+        
+        // Create custom page object
+        org.springframework.data.domain.PageImpl<Product> pageImpl = 
+            new org.springframework.data.domain.PageImpl<>(pagedProducts, pageable, allProducts.size());
+        model.addAttribute("page", pageImpl);
+        
+        return "admin/products";
+    }
 	@GetMapping("/products/new")
 	public String newProductForm(Model model) {
 		model.addAttribute("product", new Product());
 		model.addAttribute("categories", categoryService.getAllCategories());
 		model.addAttribute("brands", brandService.getAllBrands());
+        model.addAttribute("users", userService.getAllUsers());
+
 		return "admin/product-form";
 	}
 
@@ -260,6 +336,7 @@ public class AdminController {
 		model.addAttribute("product", product);
 		model.addAttribute("categories", categoryService.getAllCategories());
 		model.addAttribute("brands", brandService.getAllBrands());
+        model.addAttribute("users", userService.getAllUsers());
 		return "admin/product-form";
 	}
 
