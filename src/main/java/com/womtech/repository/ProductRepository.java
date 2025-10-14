@@ -28,6 +28,7 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 //    List<Product> findBySubcategoryCategoryCategoryID(String categoryID);
 //    
 //    // Find by status
+
 		Page<Product> findBySubcategory_Category_CategoryIDAndStatusTrue(String categoryId, Pageable pageable);
 //    
 //    List<Product> findByStatusOrderByCreateAtDesc(Integer status);
@@ -58,12 +59,14 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 //    long countByStatus(Integer status);
 //    
     // Advanced queries
+
 //    
 //    @Query("SELECT p FROM Product p WHERE p.subcategory.category.categoryID = :categoryID AND p.status = 1")
 //    List<Product> findActiveByCategoryID(@Param("categoryID") String categoryID);
 //    
 //    @Query("SELECT p FROM Product p WHERE p.discount_price IS NOT NULL AND p.status = 1 ORDER BY p.discount_price ASC")
 //    List<Product> findProductsOnSale();
+
 
 	// ====== Giữ nguyên các method sẵn có ======
 	List<Product> findBySubcategory(Subcategory subcategory);
