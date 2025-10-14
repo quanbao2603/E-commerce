@@ -4,7 +4,9 @@ import com.womtech.service.CategoryService;
 import com.womtech.service.ProductService;
 import com.womtech.service.UserService;
 import com.womtech.util.CookieUtil;
+import com.womtech.entity.Category;
 import com.womtech.entity.Product;
+import com.womtech.entity.Review;
 import com.womtech.security.JwtService;
 import com.womtech.security.TokenRevokeService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -15,6 +17,7 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
@@ -25,6 +28,7 @@ import java.security.Principal;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Controller
 @ControllerAdvice
@@ -50,12 +54,12 @@ public class HomeController {
         Page<Product> productPage = productService.getActiveProducts(pageable);
         
         var categories = categoryService.findAll();
-        Map<String, List<Product>> productsByCategory = new LinkedHashMap<>();
+        Map<Category, List<Product>> productsByCategory = new LinkedHashMap<>();
         for (var cate : categories) {
             List<Product> cateProducts = productService
                     .getActiveProductsByCategory(cate.getCategoryID(), PageRequest.of(0, 8))
                     .getContent();
-            productsByCategory.put(cate.getName(), cateProducts);
+            productsByCategory.put(cate, cateProducts);
         }
 
         model.addAttribute("featuredProducts", productPage.getContent());
@@ -175,5 +179,68 @@ public class HomeController {
         model.addAttribute("totalElements", products.getTotalElements());
 
         return "user/search";
+    }
+    
+    @GetMapping("/products")
+    public String products(
+            @RequestParam(required = false) String category,
+            @RequestParam(required = false) String sort,
+            @RequestParam(defaultValue = "0") int page,
+            Model model
+    ) {
+        int pageSize = 20;
+
+        Sort sortOption = switch (sort != null ? sort : "") {
+            case "priceAsc" -> Sort.by("price").ascending();
+            case "priceDesc" -> Sort.by("price").descending();
+            case "latest" -> Sort.by("createAt").descending();
+            default -> Sort.by("name").ascending();
+        };
+
+        Pageable pageable = PageRequest.of(page, pageSize, sortOption);
+        Page<Product> products;
+
+        if (category != null && !category.isBlank()) {
+            // phải gọi đúng method trả Page
+            products = productService.getActiveProductsByCategory(category, pageable);
+        } else {
+            products = productService.getActiveProducts(pageable);
+        }
+
+        model.addAttribute("products", products);
+        model.addAttribute("categories", categoryService.findAll());
+        model.addAttribute("selectedCategory", category);
+        model.addAttribute("selectedSort", sort);
+        
+        System.out.println("=== DEBUG PRODUCTS PAGE ===");
+        System.out.println("Page number: " + page);
+        System.out.println("Total pages: " + products.getTotalPages());
+        System.out.println("Products in page: " + products.getContent().size());
+        System.out.println("Category: " + category + ", Sort: " + sort);
+        System.out.println("==========================");
+        
+        return "user/products";
+    }
+    
+    @GetMapping("/product/{id}")
+    public String productDetail(@PathVariable("id") String productId, Model model) {
+        Optional<Product> productOpt = productService.getProductById(productId);
+        if (productOpt.isEmpty()) {
+            return "redirect:/products";
+        }
+
+        Product product = productOpt.get();
+
+        // Tính rating trung bình
+        double avgRating = product.getReviews().stream()
+                .filter(r -> r.getStatus() != null && r.getStatus() == 1)
+                .mapToInt(Review::getRating)
+                .average()
+                .orElse(0);
+
+        model.addAttribute("product", product);
+        model.addAttribute("avgRating", (int) Math.round(avgRating)); // gửi qua model
+
+        return "user/product-detail";
     }
 }

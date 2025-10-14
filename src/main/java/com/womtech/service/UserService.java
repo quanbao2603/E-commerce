@@ -31,4 +31,6 @@ public interface UserService extends BaseService<User, String>{
                 .map(u -> getRolesByUserId(u.getUserID()))
                 .orElseGet(java.util.Collections::emptyList);
     }
+
+    List<User> getAllUsers();
 }	
