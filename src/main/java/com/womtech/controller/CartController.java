@@ -2,7 +2,6 @@ package com.womtech.controller;
 
 import java.math.BigDecimal;
 import java.security.Principal;
-import java.util.List;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
@@ -13,12 +12,10 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
 import com.womtech.entity.Cart;
-import com.womtech.entity.CartItem;
 import com.womtech.entity.Product;
 import com.womtech.entity.User;
 import com.womtech.service.CartService;
 import com.womtech.service.ProductService;
-import com.womtech.service.UserService;
 import com.womtech.util.AuthUtils;
 
 import jakarta.servlet.http.HttpSession;
@@ -77,9 +74,36 @@ public class CartController {
 		if (userOpt.isEmpty()) {
 			return "redirect:/auth/login";
 		}
-//		User user = userOpt.get();
 		
 		cartService.removeItem(cartItemID);
+		
+		return "redirect:/cart";
+	}
+	
+	@PostMapping("/clear")
+	public String clearCart(HttpSession session, Model model, Principal principal) {
+		Optional<User> userOpt = authUtils.getCurrentUser(principal);
+		if (userOpt.isEmpty()) {
+			return "redirect:/auth/login";
+		}
+		User user = userOpt.get();
+		
+		cartService.clearCart(user);
+		
+		return "redirect:/cart";
+	}
+	
+	@PostMapping("/update")
+	public String updateQuantityCartItem(HttpSession session, Model model, Principal principal,
+								 @RequestParam String cartItemID,
+								 @RequestParam int quantity
+								 ) {
+		Optional<User> userOpt = authUtils.getCurrentUser(principal);
+		if (userOpt.isEmpty()) {
+			return "redirect:/auth/login";
+		}
+		
+		cartService.updateQuantity(cartItemID, quantity);
 		
 		return "redirect:/cart";
 	}

@@ -68,7 +68,12 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
     }
     
     @Override
-	public void updateQuantity(CartItem cartItem, int quantity) {
+	public void updateQuantity(String cartItemID, int quantity) {
+    	Optional<CartItem> cartItemOpt = cartItemRepository.findById(cartItemID);
+    	if (cartItemOpt.isEmpty())
+    		return;
+    	
+    	CartItem cartItem = cartItemOpt.get();
     	if (quantity <= 0) {
     		cartItemRepository.delete(cartItem);
     	} else {
