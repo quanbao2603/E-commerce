@@ -29,151 +29,188 @@
     </style>
 </head>
 <body>
-<div layout:fragment="content" class="container py-5">
+	<div layout:fragment="content" class="container py-5">
+		<!-- Thông báo thêm giỏ hàng -->
+		<div th:if="${param.added}"
+			class="alert alert-success alert-dismissible fade show text-center"
+			role="alert">
+			<i class="fas fa-check-circle me-2"></i> Sản phẩm đã được thêm vào
+			giỏ hàng!
+			<button type="button" class="btn-close" data-bs-dismiss="alert"
+				aria-label="Close"></button>
+		</div>
+		
+		<!-- Breadcrumb -->
+		<nav aria-label="breadcrumb">
+			<ol class="breadcrumb bg-light p-2 rounded">
+				<li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
+				<li class="breadcrumb-item"><a
+					th:href="@{/products(subcategory=${product.subcategory.subcategoryID})}"
+					th:text="${product.subcategory.name}">Subcategory</a></li>
+				<li class="breadcrumb-item active" aria-current="page"
+					th:text="${product.name}">Product</li>
+			</ol>
+		</nav>
 
-    <!-- Breadcrumb -->
-    <nav aria-label="breadcrumb">
-        <ol class="breadcrumb bg-light p-2 rounded">
-            <li class="breadcrumb-item"><a th:href="@{/}">Home</a></li>
-            <li class="breadcrumb-item">
-                <a th:href="@{/products(subcategory=${product.subcategory.subcategoryID})}" th:text="${product.subcategory.name}">Subcategory</a>
-            </li>
-            <li class="breadcrumb-item active" aria-current="page" th:text="${product.name}">Product</li>
-        </ol>
-    </nav>
+		<div class="row g-5">
+			<!-- IMAGE GALLERY -->
+			<div class="col-lg-6">
+				<img th:src="@{|/images/${product.thumbnail}|}"
+					th:alt="${product.name}" class="img-fluid main-image mb-3"
+					id="mainImage">
+				<div class="d-flex gap-2 thumbnail-list">
+					<img th:each="spec : ${product.specifications}"
+						th:src="@{|/images/${spec.value}|}" th:alt="${spec.name}"
+						onclick="document.getElementById('mainImage').src=this.src">
+				</div>
+			</div>
 
-    <div class="row g-5">
-        <!-- IMAGE GALLERY -->
-        <div class="col-lg-6">
-            <img th:src="@{|/images/${product.thumbnail}|}" th:alt="${product.name}" class="img-fluid main-image mb-3" id="mainImage">
-            <div class="d-flex gap-2 thumbnail-list">
-                <img th:each="spec : ${product.specifications}" th:src="@{|/images/${spec.value}|}" th:alt="${spec.name}" onclick="document.getElementById('mainImage').src=this.src">
-            </div>
-        </div>
+			<!-- PRODUCT INFO -->
+			<div class="col-lg-6 product-info">
+				<h2 th:text="${product.name}">Product Name</h2>
+				<p class="text-muted mb-2"
+					th:text="'Brand: ' + ${product.brand.name}">Brand</p>
+				<p class="text-muted mb-2"
+					th:text="'Category: ' + ${product.subcategory.name}">Category</p>
 
-        <!-- PRODUCT INFO -->
-        <div class="col-lg-6 product-info">
-            <h2 th:text="${product.name}">Product Name</h2>
-            <p class="text-muted mb-2" th:text="'Brand: ' + ${product.brand.name}">Brand</p>
-            <p class="text-muted mb-2" th:text="'Category: ' + ${product.subcategory.name}">Category</p>
+				<!-- Rating -->
+				<div class="mb-2">
+					<span th:each="i : ${#numbers.sequence(1,5)}"> <i
+						class="fa-star"
+						th:classappend="${i <= avgRating} ? 'fas text-warning' : 'far text-muted'"></i>
+					</span> <small
+						th:text="'(' + ${#lists.size(product.reviews)} + ' reviews)'"></small>
+				</div>
 
-            <!-- Rating -->
-            <div class="mb-2">
-                <span th:each="i : ${#numbers.sequence(1,5)}">
-                    <i class="fa-star" th:classappend="${i <= avgRating} ? 'fas text-warning' : 'far text-muted'"></i>
-                </span>
-                <small th:text="'(' + ${#lists.size(product.reviews)} + ' reviews)'"></small>
-            </div>
-
-            <!-- Price -->
-            <div class="mb-3">
-                <span class="text-primary fw-bold price"
-                      th:text="${product.discount_price != null and product.discount_price.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 
+				<!-- Price -->
+				<div class="mb-3">
+					<span class="text-primary fw-bold price"
+						th:text="${product.discount_price != null and product.discount_price.compareTo(T(java.math.BigDecimal).ZERO) > 0 ? 
                                #numbers.formatDecimal(product.discount_price,0,'POINT',0,'POINT') + ' VNĐ' : 
                                #numbers.formatDecimal(product.price,0,'POINT',0,'POINT') + ' VNĐ'}"></span>
-                <del class="text-muted ms-2"
-                     th:if="${product.discount_price != null and product.discount_price.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
-                     th:text="${#numbers.formatDecimal(product.price,0,'POINT',0,'POINT') + ' VNĐ'}"></del>
-            </div>
+					<del class="text-muted ms-2"
+						th:if="${product.discount_price != null and product.discount_price.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
+						th:text="${#numbers.formatDecimal(product.price,0,'POINT',0,'POINT') + ' VNĐ'}"></del>
+				</div>
 
-            <!-- Quantity & Add to Cart -->
-            <form th:action="@{/cart/add}" method="post" class="d-flex align-items-center gap-3 mb-4 flex-wrap">
-                <input type="hidden" name="productId" th:value="${product.productID}">
-                <div class="d-flex align-items-center border rounded overflow-hidden quantity-wrapper">
-                    <button type="button" class="btn btn-outline-secondary px-3" onclick="quantityInput.stepDown()">-</button>
-                    <input type="number" name="quantity" value="1" min="1" class="form-control text-center flex-grow-1" id="quantityInput">
-                    <button type="button" class="btn btn-outline-secondary px-3" onclick="quantityInput.stepUp()">+</button>
-                </div>
-                <button type="submit" class="btn btn-primary btn-modern flex-grow-1"><i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ</button>
-            </form>
+				<!-- Quantity & Add to Cart -->
+				<form th:action="@{/cart/add}" method="post"
+					class="d-flex align-items-center gap-3 mb-4 flex-wrap">
+					<input type="hidden" name="productID"
+						th:value="${product.productID}">
+					<div
+						class="d-flex align-items-center border rounded overflow-hidden quantity-wrapper">
+						<button type="button" class="btn btn-outline-secondary px-3"
+							onclick="quantityInput.stepDown()">-</button>
+						<input type="number" name="quantity"
+							th:value="${param.quantity != null ? param.quantity : 1}" min="1"
+							class="form-control text-center flex-grow-1" id="quantityInput">
+						<button type="button" class="btn btn-outline-secondary px-3"
+							onclick="quantityInput.stepUp()">+</button>
+					</div>
+					<button type="submit"
+						class="btn btn-primary btn-modern flex-grow-1">
+						<i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+					</button>
+				</form>
 
-            <button type="button" class="btn btn-outline-danger btn-modern mb-4 favorite-btn"
-			        th:data-id="${product.productID}">
-			    <i class="far fa-heart me-2"></i>Yêu thích
-			</button>
+				<button type="button" class="btn btn-outline-danger btn-modern mb-4">
+					<i class="far fa-heart me-2"></i>Yêu thích
+				</button>
 
-            <!-- Short Description -->
-            <div class="mt-4">
-                <h5>Description</h5>
-                <p th:text="${product.description}" class="text-muted"></p>
-            </div>
-        </div>
-    </div>
+				<!-- Short Description -->
+				<div class="mt-4">
+					<h5>Description</h5>
+					<p th:text="${product.description}" class="text-muted"></p>
+				</div>
+			</div>
+		</div>
 
-    <!-- Tabs -->
-    <div class="mt-5">
-        <ul class="nav nav-tabs" id="productTab" role="tablist">
-            <li class="nav-item">
-                <button class="nav-link active" id="detail-tab" data-bs-toggle="tab" data-bs-target="#detail">Details</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="specs-tab" data-bs-toggle="tab" data-bs-target="#specs">Specifications</button>
-            </li>
-            <li class="nav-item">
-                <button class="nav-link" id="reviews-tab" data-bs-toggle="tab" data-bs-target="#reviews">Reviews</button>
-            </li>
-        </ul>
+		<!-- Tabs -->
+		<div class="mt-5">
+			<ul class="nav nav-tabs" id="productTab" role="tablist">
+				<li class="nav-item">
+					<button class="nav-link active" id="detail-tab"
+						data-bs-toggle="tab" data-bs-target="#detail">Details</button>
+				</li>
+				<li class="nav-item">
+					<button class="nav-link" id="specs-tab" data-bs-toggle="tab"
+						data-bs-target="#specs">Specifications</button>
+				</li>
+				<li class="nav-item">
+					<button class="nav-link" id="reviews-tab" data-bs-toggle="tab"
+						data-bs-target="#reviews">Reviews</button>
+				</li>
+			</ul>
 
-        <div class="tab-content p-4 border border-top-0 rounded-bottom">
-            <!-- Detail -->
-            <div class="tab-pane fade show active" id="detail">
-                <p th:text="${product.description}" class="text-muted"></p>
-            </div>
+			<div class="tab-content p-4 border border-top-0 rounded-bottom">
+				<!-- Detail -->
+				<div class="tab-pane fade show active" id="detail">
+					<p th:text="${product.description}" class="text-muted"></p>
+				</div>
 
-            <!-- Specifications -->
-            <div class="tab-pane fade" id="specs">
-                <table class="table specs-table">
-                    <thead>
-                        <tr><th>Property</th><th>Value</th></tr>
-                    </thead>
-                    <tbody>
-                        <tr th:each="spec : ${product.specifications}">
-                            <td th:text="${spec.name}">Spec Name</td>
-                            <td th:text="${spec.value}">Spec Value</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
+				<!-- Specifications -->
+				<div class="tab-pane fade" id="specs">
+					<table class="table specs-table">
+						<thead>
+							<tr>
+								<th>Property</th>
+								<th>Value</th>
+							</tr>
+						</thead>
+						<tbody>
+							<tr th:each="spec : ${product.specifications}">
+								<td th:text="${spec.name}">Spec Name</td>
+								<td th:text="${spec.value}">Spec Value</td>
+							</tr>
+						</tbody>
+					</table>
+				</div>
 
-            <!-- Reviews -->
-            <div class="tab-pane fade" id="reviews">
-                <div th:if="${#lists.isEmpty(product.reviews)}" class="text-center text-muted py-3">
-                    No reviews yet.
-                </div>
-                <div th:each="review : ${product.reviews}" class="review-box">
-                    <div class="d-flex justify-content-between align-items-center mb-2">
-                        <strong th:text="${review.user.username}">User</strong>
-                        <span>
-                            <i class="fa-star" th:each="i : ${#numbers.sequence(1,5)}" th:classappend="${i <= review.rating} ? 'fas text-warning' : 'far text-muted'"></i>
-                        </span>
-                    </div>
-                    <p th:text="${review.comment}" class="text-muted mb-0"></p>
-                    <small class="text-muted" th:text="${#temporals.format(review.createAt, 'dd/MM/yyyy HH:mm')}"></small>
-                </div>
-            </div>
-        </div>
-    </div>
+				<!-- Reviews -->
+				<div class="tab-pane fade" id="reviews">
+					<div th:if="${#lists.isEmpty(product.reviews)}"
+						class="text-center text-muted py-3">No reviews yet.</div>
+					<div th:each="review : ${product.reviews}" class="review-box">
+						<div
+							class="d-flex justify-content-between align-items-center mb-2">
+							<strong th:text="${review.user.username}">User</strong> <span>
+								<i class="fa-star" th:each="i : ${#numbers.sequence(1,5)}"
+								th:classappend="${i <= review.rating} ? 'fas text-warning' : 'far text-muted'"></i>
+							</span>
+						</div>
+						<p th:text="${review.comment}" class="text-muted mb-0"></p>
+						<small class="text-muted"
+							th:text="${#temporals.format(review.createAt, 'dd/MM/yyyy HH:mm')}"></small>
+					</div>
+				</div>
+			</div>
+		</div>
 
-    <!-- Related Products -->
-    <section class="mt-5">
-        <h4>Related Products</h4>
-        <div class="row g-3">
-            <div class="col-lg-3 col-md-4 col-sm-6" th:each="rel : ${relatedProducts}">
-                <div class="card h-100 text-center shadow-sm">
-                    <img th:src="@{|/images/${rel.thumbnail}|}" th:alt="${rel.name}" class="card-img-top">
-                    <div class="card-body">
-                        <h6 th:text="${rel.name}"></h6>
-                        <p class="text-primary fw-bold" th:text="${#numbers.formatDecimal(rel.price,0,'POINT',0,'POINT') + ' VNĐ'}"></p>
-                        <a th:href="@{/product/{id}(id=${rel.productID})}" class="btn btn-outline-primary w-100 btn-modern">View</a>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
+		<!-- Related Products -->
+		<section class="mt-5">
+			<h4>Related Products</h4>
+			<div class="row g-3">
+				<div class="col-lg-3 col-md-4 col-sm-6"
+					th:each="rel : ${relatedProducts}">
+					<div class="card h-100 text-center shadow-sm">
+						<img th:src="@{|/images/${rel.thumbnail}|}" th:alt="${rel.name}"
+							class="card-img-top">
+						<div class="card-body">
+							<h6 th:text="${rel.name}"></h6>
+							<p class="text-primary fw-bold"
+								th:text="${#numbers.formatDecimal(rel.price,0,'POINT',0,'POINT') + ' VNĐ'}"></p>
+							<a th:href="@{/product/{id}(id=${rel.productID})}"
+								class="btn btn-outline-primary w-100 btn-modern">View</a>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
 
-</div>
+	</div>
 
-<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
+	<script th:src="@{/js/bootstrap.bundle.min.js}"></script>
 <script>
     const quantityInput = document.getElementById('quantityInput');
 </script>
