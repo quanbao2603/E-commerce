@@ -191,7 +191,7 @@ public class HomeController {
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
-        int pageSize = 8;
+        int pageSize = 20;
 
         // Nếu sort là "favorite" (danh sách yêu thích)
         if ("favorite".equals(sort)) {
