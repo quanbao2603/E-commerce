@@ -64,7 +64,7 @@ public class CartController {
 		}
 		cartService.addToCart(user, productOpt.get(), quantity);
 		
-		return "redirect:/product/" + productID;
+		return "redirect:/product/" + productID + "?added=true&quantity=" + quantity;
 	}
 	
 }
