@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.womtech.entity.Cart;
+import com.womtech.entity.CartItem;
 import com.womtech.entity.Product;
 import com.womtech.entity.User;
 import com.womtech.service.CartService;
@@ -112,16 +113,19 @@ public class CartController {
 		cartService.updateQuantity(cartItemID, quantity);
 		
 		return "redirect:/cart";
+	}
 
 	@GetMapping("/count")
 	@ResponseBody
 	public Map<String, Object> getCartCount(Principal principal) {
 	    int count = 0;
+	    
 	    Optional<User> userOpt = authUtils.getCurrentUser(principal);
 	    if (userOpt.isPresent()) {
-	        List<CartItem> cartItems = cartService.findAllByUser(userOpt.get());
-	        count = cartItems.stream().mapToInt(CartItem::getQuantity).sum();
+	    	User user = userOpt.get();
+		    count = cartService.totalQuantity(cartService.findByUser(user));
 	    }
+	    
 	    Map<String, Object> response = new HashMap<>();
 	    response.put("totalItems", count);
 	    return response;
