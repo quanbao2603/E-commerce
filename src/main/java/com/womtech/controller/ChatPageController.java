@@ -17,7 +17,7 @@ public class ChatPageController {
 		String currentUserId = principal != null ? principal.getName() : null;
 		model.addAttribute("currentUserId", currentUserId);
 		model.addAttribute("chatId", chatId);
-		return "chat/user-chat"; // templates/chat/user-chat.html
+		return "user/chat"; // templates/chat/user-chat.html
 	}
 
 	// Trang chat cho VENDOR (support)

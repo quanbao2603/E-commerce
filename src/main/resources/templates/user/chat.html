@@ -163,59 +163,65 @@ body {
 		</main>
 	</div>
 
-	<!-- Inline Thymeleaf variables for JS -->
+	<!-- Thymeleaf variables for JS -->
 	<script th:inline="javascript">
     const SERVER_CURRENT_USER_ID = /*[[${currentUserId}]]*/ null;
     const PAGE_CHAT_ID = /*[[${chatId}]]*/ null; // từ query ?chatId=...
   </script>
 
+	<!-- JS – bản hoàn chỉnh đã vá -->
 	<script th:inline="javascript">
-  // ====== CSRF for fetch ======
+  // ===== CSRF & fetch helper =====
   const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
   const CSRF_HEADER = document.querySelector('meta[name="_csrf_header"]')?.content;
 
-  function fetchJSON(url, options = {}) {
+  async function fetchJSON(url, options = {}) {
     options.headers = options.headers || {};
     if (CSRF_TOKEN && CSRF_HEADER) options.headers[CSRF_HEADER] = CSRF_TOKEN;
     options.headers['Content-Type'] = 'application/json';
-    return fetch(url, options).then(r => { if (!r.ok) throw new Error('HTTP ' + r.status); return r.json(); });
+    const res = await fetch(url, options);
+    if (!res.ok) throw new Error('HTTP ' + res.status + ' ' + url);
+    const text = await res.text();
+    return text ? JSON.parse(text) : null;
   }
+  const warn = (...a)=>console.warn('[CHAT]', ...a);
+  const info = (...a)=>console.log('[CHAT]', ...a);
 
-  // ====== State ======
+  // ===== State =====
   let stompClient = null;
   let currentChatID = null;
-  let meUserId = SERVER_CURRENT_USER_ID; // xác định “Bạn”
   let currentSub = null;
+  let meUserId = SERVER_CURRENT_USER_ID;
 
-  // ====== WebSocket connect ======
+  // ===== WebSocket =====
   function connectWs() {
-    // đúng endpoint WS cho trang user:
     const sock = new SockJS('/user/chat-ws');
     stompClient = Stomp.over(sock);
+    stompClient.debug = null;
     stompClient.connect({}, () => {
-      console.log('WS connected');
+      info('WS connected');
       if (currentChatID) subscribeRoom(currentChatID);
-    });
+    }, err => warn('WS error', err));
   }
 
   function subscribeRoom(chatID) {
     if (!stompClient || !stompClient.connected) return;
     if (currentSub) currentSub.unsubscribe();
-    // ĐÚNG topic: /topic/chat/{chatId}
     currentSub = stompClient.subscribe('/topic/chat/' + chatID, frame => {
-      const m = JSON.parse(frame.body);
-      appendMessage(m, m.senderId === meUserId);
-      updatePreview(chatID, m.message, m.sendTime);
+      try {
+        const m = JSON.parse(frame.body);
+        appendMessage(m, m.senderId === meUserId);
+        updatePreview(chatID, m.message, m.sendTime);
+      } catch (e) { warn('Bad message payload', e, frame.body); }
     });
   }
 
   function sendWs(chatID, text) {
-    if (!stompClient || !stompClient.connected) return;
-    // ĐÚNG app path: /app/chat/send/{chatId}
+    if (!stompClient || !stompClient.connected) { warn('WS not connected'); return; }
     stompClient.send('/app/chat/send/' + chatID, {}, JSON.stringify({ message: text }));
   }
 
-  // ====== UI helpers ======
+  // ===== UI helpers =====
   const chatListEl   = document.getElementById('chatList');
   const messagesEl   = document.getElementById('messages');
   const roomTitleEl  = document.getElementById('roomTitle');
@@ -224,9 +230,9 @@ body {
   const btnSendEl    = document.getElementById('btnSend');
   const btnNewChat   = document.getElementById('btnNewChat');
 
-  function fmtTime(s) {
-    try { return new Date(s).toLocaleString(); } catch (_) { return s ?? ''; }
-  }
+  function fmtTime(s){ try{ return new Date(s).toLocaleString(); } catch(_){ return s ?? ''; } }
+  function escapeHtml(str){ return (str||'').replace(/[&<>"']/g, s=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s])); }
+  function clearMessages(){ messagesEl.innerHTML=''; }
 
   function renderChatItem(chat) {
     const div = document.createElement('div');
@@ -259,12 +265,6 @@ body {
     messagesEl.scrollTop = messagesEl.scrollHeight;
   }
 
-  function escapeHtml(str) {
-    return (str || '').replace(/[&<>"']/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[s]));
-  }
-
-  function clearMessages() { messagesEl.innerHTML = ''; }
-
   function updatePreview(chatID, lastMessage, lastTime) {
     const item = Array.from(chatListEl.children).find(x => x.dataset.id === chatID);
     if (item) {
@@ -275,56 +275,66 @@ body {
     }
   }
 
-  // ====== Data flows ======
+  // ===== Data flows =====
   async function loadChatList() {
-    // API của bạn: trả danh sách chat của user hiện tại
-    const data = await fetchJSON('/api/chats/me');
-    chatListEl.innerHTML = '';
-    data.forEach(c => chatListEl.appendChild(renderChatItem(c)));
+    try {
+      const data = await fetchJSON('/api/chats/me');
+      chatListEl.innerHTML = '';
+      (data || []).forEach(c => chatListEl.appendChild(renderChatItem(c)));
+    } catch (e) {
+      warn('Skip /api/chats/me:', e.message);
+    }
   }
 
   async function openChat(chatID, title) {
     currentChatID = chatID;
     markActive(chatID);
     roomTitleEl.textContent = title || ('Chat ' + chatID.substring(0,6));
-    roomMetaEl.textContent = 'Mã phòng: ' + chatID;
+    roomMetaEl.textContent  = 'Mã phòng: ' + chatID;
     msgInputEl.disabled = false; btnSendEl.disabled = false;
     clearMessages();
 
-    // Lấy lịch sử tin nhắn (DESC) rồi đảo chiều cho dễ đọc
-    const page = await fetchJSON(`/api/chats/${chatID}/messages?page=0&size=30`);
-    const items = (page.content || []).slice().reverse();
-    items.forEach(m => appendMessage(m, m.senderId === meUserId));
+    // Lịch sử: cố gắng tải; nếu lỗi vẫn tiếp tục (realtime vẫn hoạt động)
+    try {
+      const page = await fetchJSON(`/api/chats/${chatID}/messages?page=0&size=30`);
+      const items = (page?.content || []).slice().reverse();
+      items.forEach(m => appendMessage(m, m.senderId === meUserId));
+    } catch (e) {
+      warn('Skip history:', e.message);
+    }
 
-    // Subscribe WS
     subscribeRoom(chatID);
   }
 
   async function createNewChat() {
-    // POST /api/chats (tuỳ bạn implement: tạo chat mới hoặc start chat với support mặc định)
-    const c = await fetchJSON('/api/chats', { method: 'POST', body: JSON.stringify({}) });
-    chatListEl.prepend(renderChatItem(c));
-    openChat(c.chatID, c.supportName || ('Chat ' + c.chatID.substring(0,6)));
+    // Hỏi supportID nếu bạn muốn tạo chat mới từ UI
+    const supportID = prompt('Nhập supportID (vendorId) để tạo chat mới:');
+    if (!supportID) return;
+    try {
+      const c = await fetchJSON('/api/chats?supportID=' + encodeURIComponent(supportID), { method: 'POST' });
+      chatListEl.prepend(renderChatItem(c));
+      openChat(c.chatID, c.supportName || ('Chat ' + c.chatID.substring(0,6)));
+    } catch (e) {
+      warn('Create chat failed:', e.message);
+      alert('Tạo chat thất bại: ' + e.message);
+    }
   }
 
-  // ====== Events ======
+  // ===== Events & Init =====
   btnNewChat.addEventListener('click', createNewChat);
 
   btnSendEl.addEventListener('click', () => {
-    const text = msgInputEl.value.trim();
-    if (!text || !currentChatID) return;
-    sendWs(currentChatID, text);
-    // Echo nhanh phía client (server cũng sẽ push lại)
-    appendMessage({ message: text, senderName: 'Bạn', sendTime: new Date().toISOString(), senderId: meUserId }, true);
-    msgInputEl.value = '';
-  });
+	  const text = msgInputEl.value.trim();
+	  if (!text || !currentChatID) return;
+	  sendWs(currentChatID, text);
+	  msgInputEl.value = '';
+	  // KHÔNG echo ở client. Đợi server broadcast về rồi mới hiển thị.
+	});
 
-  msgInputEl.addEventListener('keydown', e => {
-    if (e.key === 'Enter') btnSendEl.click();
-  });
+  msgInputEl.addEventListener('keydown', e => { if (e.key === 'Enter') btnSendEl.click(); });
 
-  // ====== Init ======
   (async function init() {
+    if (!meUserId) info('Chưa có currentUserId từ server (vẫn test WS được).');
     connectWs();
     await loadChatList();
 
@@ -332,7 +342,17 @@ body {
     if (PAGE_CHAT_ID) {
       const item = Array.from(chatListEl.children).find(x => x.dataset.id === PAGE_CHAT_ID);
       const title = item ? item.querySelector('.name')?.textContent : null;
-      openChat(PAGE_CHAT_ID, title);
+      try {
+        await openChat(PAGE_CHAT_ID, title);
+      } catch (e) {
+        // Fallback: chỉ subscribe và cho gửi tin
+        warn('Open chat fallback (subscribe only):', e.message);
+        currentChatID = PAGE_CHAT_ID;
+        roomTitleEl.textContent = title || ('Chat ' + PAGE_CHAT_ID.substring(0,6));
+        roomMetaEl.textContent  = 'Mã phòng: ' + PAGE_CHAT_ID;
+        msgInputEl.disabled = false; btnSendEl.disabled = false;
+        subscribeRoom(PAGE_CHAT_ID);
+      }
     }
   })();
   </script>

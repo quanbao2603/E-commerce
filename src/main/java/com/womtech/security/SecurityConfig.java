@@ -45,6 +45,9 @@ public class SecurityConfig {
 						// REST tạo/lấy chatId (nếu bạn dùng API /api/chat như đã thiết kế)
 						.requestMatchers("/api/chat/**").authenticated()
 
+						// ✅ REST cho UI chat (sidebar, lịch sử, tạo chat)
+						.requestMatchers("/api/chats/**").authenticated()
+						
 						// Khu vực khác
 						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/vendor/**").hasRole("VENDOR")
 						.requestMatchers("/shipper/**").hasRole("SHIPPER")
