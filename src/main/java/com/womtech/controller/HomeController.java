@@ -20,6 +20,7 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
@@ -185,11 +186,12 @@ public class HomeController {
     public String products(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String sort,
+            @RequestParam(required = false) List<String> ids,
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
         int pageSize = 20;
-
+        
         Sort sortOption = switch (sort != null ? sort : "") {
             case "priceAsc" -> Sort.by("price").ascending();
             case "priceDesc" -> Sort.by("price").descending();
@@ -211,13 +213,6 @@ public class HomeController {
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("selectedCategory", category);
         model.addAttribute("selectedSort", sort);
-        
-        System.out.println("=== DEBUG PRODUCTS PAGE ===");
-        System.out.println("Page number: " + page);
-        System.out.println("Total pages: " + products.getTotalPages());
-        System.out.println("Products in page: " + products.getContent().size());
-        System.out.println("Category: " + category + ", Sort: " + sort);
-        System.out.println("==========================");
         
         return "user/products";
     }

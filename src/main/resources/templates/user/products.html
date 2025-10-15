@@ -9,6 +9,7 @@
     <title>Sản phẩm - WOMTech</title>
     <link rel="stylesheet" th:href="@{/css/user/products.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script th:src="@{/js/user/favorite.js}"></script>
 </head>
 
 <body>
@@ -106,7 +107,7 @@
             </div>
 
             <!-- PAGINATION -->
-            <nav class="mt-5" th:if="${products.totalPages > 1}">
+            <nav class="mt-5" th:if="${products.totalPages > 1 and selectedSort != 'favorite'}">
                 <ul class="pagination justify-content-center">
                     <!-- Previous -->
                     <li class="page-item" th:classappend="${products.first}? 'disabled'">
