@@ -1,5 +1,6 @@
 package com.womtech.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -37,11 +38,6 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
 		});
 	}
 	
-	@Override
-	public List<CartItem> findAllByUser(User user){
-		return cartItemRepository.findByCart(findByUser(user));
-	}
-	
     @Override
 	public void addToCart(User user, Product product, int quantity) {
     	Cart cart = findByUser(user);
@@ -72,12 +68,55 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
     }
     
     @Override
-	public void updateQuantity(CartItem cartItem, int quantity) {
+	public void updateQuantity(String cartItemID, int quantity) {
+    	Optional<CartItem> cartItemOpt = cartItemRepository.findById(cartItemID);
+    	if (cartItemOpt.isEmpty())
+    		return;
+    	
+    	CartItem cartItem = cartItemOpt.get();
     	if (quantity <= 0) {
     		cartItemRepository.delete(cartItem);
     	} else {
     		cartItem.setQuantity(quantity);
     		cartItemRepository.save(cartItem);
     	}
+    }
+    
+    @Override
+	public BigDecimal totalPrice(Cart cart) {
+    	BigDecimal total = BigDecimal.ZERO;
+    	List<CartItem> items = cartItemRepository.findByCart(cart);
+        if (items.isEmpty()) {
+            return total;
+        }
+        
+        for (CartItem item : items) {
+        	Product product = item.getProduct();
+
+            // Ưu tiên discountPrice nếu có và > 0
+            BigDecimal price = (product.getDiscount_price() != null && product.getDiscount_price().compareTo(BigDecimal.ZERO) > 0)
+                    ? product.getDiscount_price()
+                    : product.getPrice();
+
+            BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(item.getQuantity()));
+            item.setItemTotal(itemTotal);
+
+            total = total.add(itemTotal);
+        }
+        return total;
+    }
+    
+    @Override
+	public int totalQuantity(Cart cart) {
+    	int total = 0;
+    	List<CartItem> items = cartItemRepository.findByCart(cart);
+        if (items.isEmpty()) {
+            return total;
+        }
+        
+        for (CartItem item : items) {
+			total += item.getQuantity();
+        }
+        return total;
     }
 }

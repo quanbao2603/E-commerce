@@ -2,7 +2,7 @@ document.addEventListener("DOMContentLoaded", function () {
     const favoriteBtn = document.querySelector(".btn-outline-danger");
     if (!favoriteBtn) return; // Nếu không có button thì out
 
-    const productId = document.querySelector("input[name='productId']")?.value;
+    const productId = document.querySelector("input[name='productID']")?.value;
     if (!productId) return;
 
     let favorites = JSON.parse(localStorage.getItem("favorites")) || [];

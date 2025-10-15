@@ -1,5 +1,7 @@
 package com.womtech.entity;
 
+import java.math.BigDecimal;
+
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -32,4 +34,7 @@ public class CartItem {
 	@Builder.Default
 	@Column(nullable = false)
 	private Integer status = 1;
+	
+	@Transient
+	private BigDecimal itemTotal;
 }

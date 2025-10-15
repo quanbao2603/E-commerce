@@ -1,0 +1,12 @@
+.table th, .table td {
+    vertical-align: middle;
+}
+.btn-decrease, .btn-increase {
+    width: 32px;
+}
+.card {
+    border-radius: 12px;
+}
+.card-body h5 {
+    font-weight: 600;
+}
