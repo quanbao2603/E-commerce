@@ -7,6 +7,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title th:text="${product.name} + ' - WOMTech'">Product Detail</title>
     <link rel="stylesheet" th:href="@{/css/user/product-detail.css}">
+    <script th:src="@{/js/user/favorite-detail.js}"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
 
     <style>
@@ -86,7 +87,10 @@
                 <button type="submit" class="btn btn-primary btn-modern flex-grow-1"><i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ</button>
             </form>
 
-            <button type="button" class="btn btn-outline-danger btn-modern mb-4"><i class="far fa-heart me-2"></i>Yêu thích</button>
+            <button type="button" class="btn btn-outline-danger btn-modern mb-4 favorite-btn"
+			        th:data-id="${product.productID}">
+			    <i class="far fa-heart me-2"></i>Yêu thích
+			</button>
 
             <!-- Short Description -->
             <div class="mt-4">
