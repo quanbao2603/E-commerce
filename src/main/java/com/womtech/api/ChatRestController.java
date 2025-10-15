@@ -1,55 +1,47 @@
 package com.womtech.api;
 
-import com.womtech.dto.request.chat.CreateChatRequest;
-import com.womtech.dto.request.chat.SendMessageRequest;
-import com.womtech.dto.response.chat.ChatMessageResponse;
-import com.womtech.dto.response.chat.ChatSummaryResponse;
-import com.womtech.service.ChatService;
-import jakarta.validation.Valid;
-import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Page;
+import java.security.Principal;
+import java.util.Map;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.security.Principal;
-import java.util.List;
+import com.womtech.entity.Chat;
+import com.womtech.entity.User;
+import com.womtech.repository.ChatRepository;
+import com.womtech.repository.UserRepository;
+
+import lombok.RequiredArgsConstructor;
 
 @RestController
+@RequestMapping("/api/chat")
 @RequiredArgsConstructor
-@RequestMapping("/api/chats")
 public class ChatRestController {
 
-	private final ChatService chatService;
+	private final ChatRepository chatRepository;
+	private final UserRepository userRepository;
+	
+	/**
+	 * USER bấm từ trang sản phẩm: /api/chat/start?vendorId=... - userId lấy từ
+	 * Principal (token/cookie)
+	 */
+	@PostMapping("/start")
+	public ResponseEntity<?> startChat(@RequestParam String vendorId, Principal principal) {
+		String userId = principal != null ? principal.getName() : null;
+		if (userId == null || userId.isBlank()) {
+			return ResponseEntity.status(401).body(Map.of("error", "UNAUTHORIZED"));
+		}
 
-	// Tạo (hoặc lấy) luồng chat cho user hiện tại (supportID có thể null)
-	@PostMapping
-	public ChatSummaryResponse createOrGet(Principal principal, @RequestBody(required = false) CreateChatRequest req) {
-		String userID = principal.getName(); // bạn đã map Principal -> userID
-		return chatService.createOrGetChat(userID, req);
-	}
+		
+		Chat chat = chatRepository.findByUser_UserIDAndSupport_UserID(userId, vendorId).orElseGet(() -> {
+			User user = userRepository.findById(userId).orElseThrow();
+			User support = userRepository.findById(vendorId).orElseThrow();
+			Chat c = new Chat();
+			c.setUser(user);
+			c.setSupport(support);
+			return chatRepository.save(c);
+		});
 
-	// Danh sách chat của user hiện tại
-	@GetMapping("/me")
-	public List<ChatSummaryResponse> myChats(Principal principal) {
-		return chatService.listChatsOfUser(principal.getName());
-	}
-
-	// Danh sách chat do support hiện tại phụ trách
-	@GetMapping("/me/supporting")
-	public List<ChatSummaryResponse> myAssigned(Principal principal) {
-		return chatService.listChatsOfSupport(principal.getName());
-	}
-
-	// Lấy lịch sử tin nhắn (mặc định page=0, size=20)
-	@GetMapping("/{chatID}/messages")
-	public Page<ChatMessageResponse> messages(@PathVariable String chatID, @RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "20") int size) {
-		return chatService.getMessages(chatID, page, size);
-	}
-
-	// Gửi tin nhắn (fallback qua REST, ngoài WebSocket)
-	@PostMapping("/{chatID}/messages")
-	public ChatMessageResponse send(@PathVariable String chatID, @Valid @RequestBody SendMessageRequest body,
-			Principal principal) {
-		return chatService.sendMessage(chatID, principal.getName(), body);
+		return ResponseEntity.ok(Map.of("chatId", chat.getChatID()));
 	}
 }

@@ -30,26 +30,29 @@ public class SecurityConfig {
 								"/favicon.ico")
 						.permitAll().requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 
-						// WebSocket handshake phải mở
-						.requestMatchers("/ws-chat/**").permitAll()
-
-						// STOMP destinations cần auth
-						.requestMatchers("/app/**", "/topic/**", "/queue/**").authenticated()
-
-						// API chat cần auth
-						.requestMatchers("/api/chats/**").authenticated()
-
 						// Public pages
-						.requestMatchers("/", "/chat" ,"/auth/**", "/products/**", "/about", "/contact", "/error").permitAll()
+						.requestMatchers("/", "/auth/**", "/products/**", "/about", "/contact", "/error").permitAll()
 
-						// Khu vực cần đăng nhập / phân quyền
-						.requestMatchers("/user/**").authenticated().requestMatchers("/admin/**").hasRole("ADMIN")
-						.requestMatchers("/vendor/**").hasRole("VENDOR").requestMatchers("/shipper/**")
-						.hasRole("SHIPPER")
+						// === WebSocket handshake (SockJS tạo thêm các path con) ===
+						// User chat page + WS endpoint
+						.requestMatchers("/user/chat").authenticated().requestMatchers("/user/chat-ws/**")
+						.authenticated()
 
-						// 🚨 Đặt CUỐI CÙNG và chỉ 1 lần
+						// Vendor chat page + WS endpoint (cần role VENDOR)
+						.requestMatchers("/vendor/chat").hasRole("VENDOR").requestMatchers("/vendor/chat-ws/**")
+						.hasRole("VENDOR")
+
+						// REST tạo/lấy chatId (nếu bạn dùng API /api/chat như đã thiết kế)
+						.requestMatchers("/api/chat/**").authenticated()
+
+						// Khu vực khác
+						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/vendor/**").hasRole("VENDOR")
+						.requestMatchers("/shipper/**").hasRole("SHIPPER")
+
+						// Cuối cùng
 						.anyRequest().permitAll())
 
+				// JWT filter cho mọi request (bao gồm WS handshake)
 				.addFilterBefore(new JwtAuthFilter(jwtService, revokeService),
 						org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
 
