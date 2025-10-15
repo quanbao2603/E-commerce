@@ -55,6 +55,10 @@
 						<li th:if="${currentRole == 'ADMIN'}"><a class="dropdown-item"
 							th:href="@{/admin/dashboard}"> <i class="bi bi-gear me-2"></i>Quản trị
 						</a></li>
+						<li th:if="${currentRole == 'VENDOR'}"><a
+							class="dropdown-item" th:href="@{/vendor/dashboard}"> <i
+								class="bi bi-shop me-2"></i>Quản trị
+						</a></li>
 						<li><hr class="dropdown-divider"></li>
 						<li><a class="dropdown-item" th:href="@{/auth/manual-logout}"
 							method="post"> <i class="bi bi-box-arrow-right me-2"></i>Đăng

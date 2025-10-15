@@ -2,6 +2,9 @@ package com.womtech.controller;
 
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
@@ -10,6 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.womtech.entity.Cart;
 import com.womtech.entity.Product;
@@ -108,5 +112,18 @@ public class CartController {
 		cartService.updateQuantity(cartItemID, quantity);
 		
 		return "redirect:/cart";
+
+	@GetMapping("/count")
+	@ResponseBody
+	public Map<String, Object> getCartCount(Principal principal) {
+	    int count = 0;
+	    Optional<User> userOpt = authUtils.getCurrentUser(principal);
+	    if (userOpt.isPresent()) {
+	        List<CartItem> cartItems = cartService.findAllByUser(userOpt.get());
+	        count = cartItems.stream().mapToInt(CartItem::getQuantity).sum();
+	    }
+	    Map<String, Object> response = new HashMap<>();
+	    response.put("totalItems", count);
+	    return response;
 	}
 }

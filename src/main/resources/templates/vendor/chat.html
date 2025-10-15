@@ -1,10 +1,10 @@
 <!DOCTYPE html>
 <html lang="vi" xmlns:th="http://www.thymeleaf.org"
 	  xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{user/layout}">
+      layout:decorate="~{vendor/layout}">
 <head>
 <meta charset="UTF-8" />
-<title>WOMTech – Chat hỗ trợ</title>
+<title>WOMTech – Chat với khách hàng</title>
 
 <!-- CSRF cho AJAX -->
 <meta name="_csrf" th:content="${_csrf != null ? _csrf.token : ''}" />
@@ -148,16 +148,14 @@ body {
 </head>
 <body layout:fragment="content">
 	<div class="wrap">
-		<!-- Sidebar: danh sách cuộc chat -->
 		<aside class="sidebar">
 			<div class="sidebar-header">
-				Hộp thoại của bạn
+				Chat với khách hàng
 				<button id="btnNewChat" style="float: right;">+ Tạo chat</button>
 			</div>
 			<div id="chatList" class="chat-list"></div>
 		</aside>
 
-		<!-- Main: nội dung tin nhắn -->
 		<main class="main">
 			<div class="main-header">
 				<div class="room-title" id="roomTitle">Chưa chọn cuộc chat</div>
@@ -171,13 +169,11 @@ body {
 		</main>
 	</div>
 
-	<!-- Thymeleaf variables for JS -->
 	<script th:inline="javascript">
-    const SERVER_CURRENT_USER_ID = /*[[${currentUserId}]]*/ null;
-    const PAGE_CHAT_ID = /*[[${chatId}]]*/ null; // từ query ?chatId=...
+    const SERVER_CURRENT_USER_ID = /*[[${currentVendorId}]]*/ null;
+    const PAGE_CHAT_ID = /*[[${chatId}]]*/ null;
   </script>
 
-	<!-- JS – bản đã sửa lỗi -->
 	<script th:inline="javascript">
   // ===== CSRF & fetch helper =====
   const CSRF_TOKEN  = document.querySelector('meta[name="_csrf"]')?.content;
@@ -204,7 +200,7 @@ body {
 
   // ===== WebSocket =====
   function connectWs() {
-    const sock = new SockJS('/user/chat-ws');
+    const sock = new SockJS('/vendor/chat-ws');
     stompClient = Stomp.over(sock);
     stompClient.debug = null;
     stompClient.connect({}, () => {
@@ -266,7 +262,7 @@ body {
     const div = document.createElement('div');
     div.className = 'chat-item';
     div.dataset.id = chat.chatID;
-    const name = chat.supportName ? chat.supportName : ('Chat ' + chat.chatID.substring(0,6));
+    const name = chat.userName ? chat.userName : ('Chat ' + chat.chatID.substring(0,6));
     div.innerHTML = `
       <div class="name">${name}</div>
       <div class="preview">${chat.lastMessage ? chat.lastMessage : 'Chưa có tin nhắn'}</div>
@@ -353,12 +349,12 @@ body {
       alert('Vui lòng đăng nhập để tạo chat mới');
       return;
     }
-    const supportID = prompt('Nhập supportID (vendorId) để tạo chat mới:');
-    if (!supportID) return;
+    const userID = prompt('Nhập userID để tạo chat mới:');
+    if (!userID) return;
     try {
-      const c = await fetchJSON('/api/chats?supportID=' + encodeURIComponent(supportID), { method: 'POST' });
+      const c = await fetchJSON('/api/chats?userID=' + encodeURIComponent(userID), { method: 'POST' });
       chatListEl.prepend(renderChatItem(c));
-      openChat(c.chatID, c.supportName || ('Chat ' + c.chatID.substring(0,6)));
+      openChat(c.chatID, c.userName || ('Chat ' + c.chatID.substring(0,6)));
     } catch (e) {
       warn('Create chat failed:', e.message);
       alert('Tạo chat thất bại: ' + e.message);
