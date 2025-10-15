@@ -8,66 +8,8 @@
     <title th:text="${product.name} + ' - WOMTech'">Product Detail</title>
     <link rel="stylesheet" th:href="@{/css/user/product-detail.css}">
     <script th:src="@{/js/user/favorite-detail.js}"></script>
+    <script th:src="@{/js/user/chat.js}"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css" rel="stylesheet">
-
-    <style>
-        /* Main image */
-        .main-image {
-            border-radius: 10px;
-            transition: transform 0.3s;
-            width: 100%;
-            max-height: 500px;
-            object-fit: cover;
-        }
-        .main-image:hover { transform: scale(1.05); }
-
-        /* Thumbnail list */
-        .thumbnail-list {
-            margin-top: 10px;
-            display: flex;
-            gap: 10px;
-            flex-wrap: wrap;
-        }
-        .thumbnail-list img {
-            width: 80px;
-            height: 80px;
-            object-fit: cover;
-            border-radius: 5px;
-            cursor: pointer;
-            transition: transform 0.2s, border 0.2s;
-        }
-        .thumbnail-list img:hover {
-            transform: scale(1.1);
-            border: 2px solid #0d6efd;
-        }
-
-        /* Product info */
-        .product-info h2 { font-weight: 700; }
-        .price { font-size: 1.75rem; }
-        .price del { font-size: 1rem; margin-left: 10px; }
-        .quantity-wrapper { max-width: 150px; }
-        .quantity-wrapper input { text-align: center; font-size: 1rem; }
-        .quantity-wrapper button { padding: 0.25rem 0.5rem; }
-        .btn-modern { border-radius: 50px; padding: 0.5rem 1.5rem; }
-
-        /* Tabs */
-        .nav-tabs .nav-link { font-weight: 600; }
-
-        /* Reviews */
-        .review-box {
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            padding: 1rem;
-            margin-bottom: 1rem;
-            background: #fafafa;
-        }
-
-        /* Breadcrumb */
-        .breadcrumb-item + .breadcrumb-item::before { content: ">"; }
-
-        /* Specifications */
-        .specs-table th, .specs-table td { padding: 0.5rem 0.75rem; border-bottom: 1px solid #e0e0e0; }
-    </style>
 </head>
 <body>
 	<div layout:fragment="content" class="container py-5">
@@ -96,7 +38,7 @@
 		<div class="row g-5">
 			<!-- IMAGE GALLERY -->
 			<div class="col-lg-6">
-				<img th:src="@{|/images/${product.thumbnail}|}"
+				<img th:src="${product.thumbnail}"
 					th:alt="${product.name}" class="img-fluid main-image mb-3"
 					id="mainImage">
 				<div class="d-flex gap-2 thumbnail-list">
@@ -133,39 +75,44 @@
 						th:if="${product.discount_price != null and product.discount_price.compareTo(T(java.math.BigDecimal).ZERO) > 0}"
 						th:text="${#numbers.formatDecimal(product.price,0,'POINT',0,'POINT') + ' VNĐ'}"></del>
 				</div>
-
-				<!-- Quantity & Add to Cart -->
-				<form th:action="@{/cart/add}" method="post"
-					class="d-flex align-items-center gap-3 mb-4 flex-wrap">
-					<input type="hidden" name="productID"
-						th:value="${product.productID}">
-					<div
-						class="d-flex align-items-center border rounded overflow-hidden quantity-wrapper">
-						<button type="button" class="btn btn-outline-secondary px-3"
-							onclick="quantityInput.stepDown()">-</button>
-						<input type="number" name="quantity"
-							th:value="${param.quantity != null ? param.quantity : 1}" min="1"
-							class="form-control text-center flex-grow-1" id="quantityInput">
-						<button type="button" class="btn btn-outline-secondary px-3"
-							onclick="quantityInput.stepUp()">+</button>
-					</div>
-					<button type="submit"
-						class="btn btn-primary btn-modern flex-grow-1">
-						<i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
-					</button>
-				</form>
-
-            <button type="button" class="btn btn-outline-danger btn-modern mb-4 favorite-btn"
-			        th:data-id="${product.productID}">
-			    <i class="far fa-heart me-2"></i>Yêu thích
-			</button>
+				
+			    <div class="d-flex flex-column gap-2 buttons-row">
+			    <!-- Quantity + Add to Cart -->
+			    <form th:action="@{/cart/add}" method="post" class="d-flex gap-2 quantity-cart-row">
+			        <input type="hidden" name="productID" th:value="${product.productID}">
 			
-			<button type="button" class="btn btn-outline-primary btn-modern"
-			        th:if="${product.ownerUser != null}"
-			        th:data-vendor-id="${product.ownerUser.userID}"
-			        onclick="startChat(this)">
-			    <i class="fas fa-comments me-2"></i>Chat với shop
-			</button>
+			        <!-- Quantity -->
+			        <div class="d-flex align-items-center border rounded overflow-hidden quantity-wrapper">
+			            <button type="button" class="btn btn-outline-secondary px-3" onclick="quantityInput.stepDown()">-</button>
+			            <input type="number" name="quantity"
+			                   th:value="${param.quantity != null ? param.quantity : 1}" min="1"
+			                   class="form-control text-center flex-grow-1" id="quantityInput">
+			            <button type="button" class="btn btn-outline-secondary px-3" onclick="quantityInput.stepUp()">+</button>
+			        </div>
+			
+			        <!-- Add to Cart -->
+			        <button type="submit" class="btn btn-primary btn-modern flex-grow-1">
+			            <i class="fas fa-cart-plus me-2"></i>Thêm vào giỏ
+			        </button>
+			    </form>
+			
+			    <!-- Favorite + Chat -->
+			    <div class="d-flex gap-2 favorite-chat-row">
+			    	<input type="hidden" id="currentUserId" th:value="${#authentication?.name}">
+			        <button type="button" class="btn btn-outline-danger btn-modern flex-grow-1 favorite-btn"
+			                th:data-id="${product.productID}">
+			            <i class="far fa-heart me-2"></i>Yêu thích
+			        </button>
+			
+			        <button type="button" 
+					        class="btn btn-outline-primary btn-modern flex-grow-1"
+					        th:if="${product.ownerUser != null}"
+					        th:data-vendor-id="${product.ownerUser.userID}"
+					        onclick="startChat(this)">
+					    <i class="fas fa-comments me-2"></i>Chat với shop
+					</button>
+			    </div>
+			</div>
 
 				<!-- Short Description -->
 				<div class="mt-4">

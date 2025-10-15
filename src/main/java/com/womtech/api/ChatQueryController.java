@@ -34,20 +34,25 @@ public class ChatQueryController {
 	 */
 	@GetMapping("/me")
 	public List<ChatSummaryResponse> myChats(Principal principal) {
-		String uid = requireUid(principal);
+	    String uid = requireUid(principal);
 
-		// Lấy mọi chat có user = uid hoặc support = uid
-		var chats = chatRepo.findByUser_UserIDOrSupport_UserID(uid, uid);
+	    // Lấy mọi chat có user = uid hoặc support = uid
+	    var chats = chatRepo.findByUser_UserIDOrSupport_UserID(uid, uid);
 
-		return chats.stream().map(c -> {
-			ChatMessage last = msgRepo.findFirstByChat_ChatIDOrderBySendTimeDesc(c.getChatID());
-			return ChatSummaryResponse.builder().chatID(c.getChatID())
-					.userID(c.getUser() != null ? c.getUser().getUserID() : null)
-					.supportID(c.getSupport() != null ? c.getSupport().getUserID() : null)
-					.supportName(c.getSupport() != null ? c.getSupport().getUsername() : null).status(c.getStatus())
-					.createAt(c.getCreateAt()).lastMessage(last != null ? last.getMessage() : null)
-					.lastTime(last != null ? last.getSendTime() : null).build();
-		}).toList();
+	    // map ra DTO ChatSummaryResponse
+	    return chats.stream().map(c -> {
+	        ChatMessage last = msgRepo.findFirstByChat_ChatIDOrderBySendTimeDesc(c.getChatID());
+	        return ChatSummaryResponse.builder()
+	                .chatID(c.getChatID())
+	                .userID(c.getUser() != null ? c.getUser().getUserID() : null)
+	                .supportID(c.getSupport() != null ? c.getSupport().getUserID() : null)
+	                .supportName(c.getSupport() != null ? c.getSupport().getUsername() : null)
+	                .status(c.getStatus())
+	                .createAt(c.getCreateAt())
+	                .lastMessage(last != null ? last.getMessage() : null)
+	                .lastTime(last != null ? last.getSendTime() : null)
+	                .build();
+	    }).toList();
 	}
 
 	/** Lịch sử tin nhắn theo chatId (DESC). JS sẽ đảo chiều để hiển thị. */
