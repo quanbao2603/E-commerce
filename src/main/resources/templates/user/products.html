@@ -9,6 +9,7 @@
     <title>Sản phẩm - WOMTech</title>
     <link rel="stylesheet" th:href="@{/css/user/products.css}">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+    <script th:src="@{/js/user/favorite.js}"></script>
 </head>
 
 <body>
@@ -59,7 +60,7 @@
                     <div class="card product-card h-100 border-0 shadow-sm">
                         <div class="position-relative">
                             <a th:href="@{/product/{id}(id=${product.productID})}">
-                                <img th:src="${product.thumbnail}" alt="Product" class="card-img-top product-image">
+                                <img th:src="${product.thumbnail}" alt="Product" class="card-img-top product-image img-fluid">
                             </a>
 
                             <!-- DISCOUNT BADGE -->
@@ -109,25 +110,34 @@
             <nav class="mt-5" th:if="${products.totalPages > 1}">
                 <ul class="pagination justify-content-center">
                     <!-- Previous -->
-                    <li class="page-item" th:classappend="${products.first}? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/products(page=${products.number > 0 ? products.number - 1 : 0}, sort=${selectedSort}, category=${selectedCategory})}">Trước</a>
-                    </li>
-
-                    <!-- Page numbers -->
-                    <li th:each="pageNum : ${#numbers.sequence(0, products.totalPages - 1)}"
-                        class="page-item"
-                        th:classappend="${pageNum == products.number}? 'active'">
-                        <a class="page-link"
-                           th:text="${pageNum + 1}"
-                           th:href="@{/products(page=${pageNum}, sort=${selectedSort}, category=${selectedCategory})}"></a>
-                    </li>
-
-                    <!-- Next -->
-                    <li class="page-item" th:classappend="${products.last}? 'disabled'">
-                        <a class="page-link"
-                           th:href="@{/products(page=${products.number < products.totalPages - 1 ? products.number + 1 : products.totalPages - 1}, sort=${selectedSort}, category=${selectedCategory})}">Sau</a>
-                    </li>
+					<li class="page-item" th:classappend="${products.first}? 'disabled'">
+					    <a class="page-link"
+					       th:href="@{/products(page=${products.number > 0 ? products.number - 1 : 0},
+					                            sort=${selectedSort},
+					                            category=${selectedCategory},
+					                            ids=${param.ids})}">Trước</a>
+					</li>
+					
+					<!-- Page numbers -->
+					<li th:each="pageNum : ${#numbers.sequence(0, products.totalPages - 1)}"
+					    class="page-item"
+					    th:classappend="${pageNum == products.number}? 'active'">
+					    <a class="page-link"
+					       th:text="${pageNum + 1}"
+					       th:href="@{/products(page=${pageNum},
+					                            sort=${selectedSort},
+					                            category=${selectedCategory},
+					                            ids=${param.ids})}"></a>
+					</li>
+					
+					<!-- Next -->
+					<li class="page-item" th:classappend="${products.last}? 'disabled'">
+					    <a class="page-link"
+					       th:href="@{/products(page=${products.number < products.totalPages - 1 ? products.number + 1 : products.totalPages - 1},
+					                            sort=${selectedSort},
+					                            category=${selectedCategory},
+					                            ids=${param.ids})}">Sau</a>
+					</li>
                 </ul>
             </nav>
         </div>
