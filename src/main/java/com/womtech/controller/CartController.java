@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 
+import com.womtech.entity.Cart;
 import com.womtech.entity.CartItem;
 import com.womtech.entity.Product;
 import com.womtech.entity.User;
@@ -27,12 +28,11 @@ import lombok.RequiredArgsConstructor;
 @RequestMapping("/cart")
 @RequiredArgsConstructor
 public class CartController {
-	private final UserService userService;
 	private final CartService cartService;
 	private final ProductService productService;
 	private final AuthUtils authUtils;
 	
-	@GetMapping({"", "/"})
+	@GetMapping("")
 	public String showCart(HttpSession session, Model model, Principal principal) {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
@@ -40,16 +40,18 @@ public class CartController {
 		}
 		User user = userOpt.get();
 		
-		List<CartItem> cartItems = cartService.findAllByUser(user);
+//		List<CartItem> cartItems = cartService.findAllByUser(user);
+		
+		Cart cart = cartService.findByUser(user);
 		
 		model.addAttribute("user", user);
-		model.addAttribute("cartItems", cartItems);
+		model.addAttribute("cart", cart);
 		
 		return "/user/cart";
 	}
 	
 	@PostMapping("/add")
-	public String postMethodName(HttpSession session, Model model, Principal principal,
+	public String addCartItem(HttpSession session, Model model, Principal principal,
 								 @RequestParam String productID,
 								 @RequestParam int quantity) throws Exception {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
@@ -67,4 +69,6 @@ public class CartController {
 		return "redirect:/product/" + productID + "?added=true&quantity=" + quantity;
 	}
 	
+//	@GetMapping("/remove-all")
+//	public String removeCart
 }
