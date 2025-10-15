@@ -40,6 +40,34 @@ public class ProductServiceImpl implements ProductService {
 			return false;
 		return auth.getAuthorities().stream().anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
 	}
+	
+	public BigDecimal calculateTotalValueByOwnerId(String ownerUserId) {
+        List<Product> myProducts = productRepository.findByOwnerUser_UserID(ownerUserId);
+
+        BigDecimal totalValue = BigDecimal.ZERO;
+
+        for (Product p : myProducts) {
+            BigDecimal price = p.getPrice() != null ? p.getPrice() : BigDecimal.ZERO;
+            BigDecimal discountPrice = p.getDiscount_price();
+
+            // Nếu có giá giảm hợp lệ thì dùng discount_price, ngược lại dùng price
+            if (discountPrice != null
+                    && discountPrice.compareTo(BigDecimal.ZERO) > 0
+                    && discountPrice.compareTo(price) < 0) {
+                totalValue = totalValue.add(discountPrice);
+            } else {
+                totalValue = totalValue.add(price);
+            }
+        }
+
+        return totalValue;
+    }
+	
+	public List<Product> findByOwnerUser_UserID(String userID){
+		return productRepository.findByOwnerUser_UserID(userID);
+	}
+
+
 
 	// BASIC CRUD
 

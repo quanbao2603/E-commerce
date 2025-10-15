@@ -107,4 +107,6 @@ public interface ProductRepository extends JpaRepository<Product, String> {
 			""")
 	Page<Product> searchMyActiveProducts(@Param("ownerUserId") String ownerUserId, @Param("kw") String keyword,
 			Pageable pageable);
+	
+	
 }
