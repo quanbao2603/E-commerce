@@ -1,5 +1,6 @@
 package com.womtech.controller;
 
+import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.List;
 import java.util.Optional;
@@ -32,7 +33,7 @@ public class CartController {
 	private final ProductService productService;
 	private final AuthUtils authUtils;
 	
-	@GetMapping("")
+	@GetMapping({"", "/"})
 	public String showCart(HttpSession session, Model model, Principal principal) {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
@@ -40,20 +41,20 @@ public class CartController {
 		}
 		User user = userOpt.get();
 		
-//		List<CartItem> cartItems = cartService.findAllByUser(user);
-		
 		Cart cart = cartService.findByUser(user);
+		BigDecimal totalPrice = cartService.totalPrice(cart);
 		
 		model.addAttribute("user", user);
 		model.addAttribute("cart", cart);
+		model.addAttribute("totalPrice", totalPrice);
 		
 		return "/user/cart";
 	}
 	
 	@PostMapping("/add")
 	public String addCartItem(HttpSession session, Model model, Principal principal,
-								 @RequestParam String productID,
-								 @RequestParam int quantity) throws Exception {
+							  @RequestParam String productID,
+							  @RequestParam int quantity) throws Exception {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
 			return "redirect:/auth/login";
@@ -69,6 +70,17 @@ public class CartController {
 		return "redirect:/product/" + productID + "?added=true&quantity=" + quantity;
 	}
 	
-//	@GetMapping("/remove-all")
-//	public String removeCart
+	@PostMapping("/remove")
+	public String removeCartItem(HttpSession session, Model model, Principal principal,
+								 @RequestParam String cartItemID) {
+		Optional<User> userOpt = authUtils.getCurrentUser(principal);
+		if (userOpt.isEmpty()) {
+			return "redirect:/auth/login";
+		}
+//		User user = userOpt.get();
+		
+		cartService.removeItem(cartItemID);
+		
+		return "redirect:/cart";
+	}
 }

@@ -1,6 +1,6 @@
 package com.womtech.service;
 
-import java.util.List;
+import java.math.BigDecimal;
 
 import com.womtech.entity.Cart;
 import com.womtech.entity.CartItem;
@@ -19,6 +19,5 @@ public interface CartService extends BaseService<Cart, String> {
 
 	void removeItem(String cartItemID);
 
-	List<CartItem> findAllByUser(User user);
-
+	BigDecimal totalPrice(Cart cart);
 }

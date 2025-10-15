@@ -1,5 +1,6 @@
 package com.womtech.service.impl;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
@@ -35,11 +36,6 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
 							.build();
 			return cartRepository.save(cart);
 		});
-	}
-	
-	@Override
-	public List<CartItem> findAllByUser(User user){
-		return cartItemRepository.findByCart(findByUser(user));
 	}
 	
     @Override
@@ -79,5 +75,23 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
     		cartItem.setQuantity(quantity);
     		cartItemRepository.save(cartItem);
     	}
+    }
+    
+    @Override
+	public BigDecimal totalPrice(Cart cart) {
+    	BigDecimal total = BigDecimal.ZERO;
+    	List<CartItem> items = cartItemRepository.findByCart(cart);
+        if (items.isEmpty()) {
+            return total;
+        }
+        
+        for (CartItem item : items) {
+        	BigDecimal itemTotal = item.getProduct().getPrice()
+        							   .multiply(BigDecimal.valueOf(item.getQuantity()));
+        	item.setItemTotal(itemTotal);
+        	
+			total = total.add(itemTotal);
+        }
+        return total;
     }
 }
