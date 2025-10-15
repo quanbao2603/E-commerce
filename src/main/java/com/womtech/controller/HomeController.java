@@ -20,11 +20,13 @@ import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 
 import java.security.Principal;
+import java.util.Arrays;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
@@ -185,11 +187,47 @@ public class HomeController {
     public String products(
             @RequestParam(required = false) String category,
             @RequestParam(required = false) String sort,
+            @RequestParam(required = false) String ids,
             @RequestParam(defaultValue = "0") int page,
             Model model
     ) {
         int pageSize = 20;
 
+        // Nếu sort là "favorite" (danh sách yêu thích)
+        if ("favorite".equals(sort)) {
+            if (ids != null && !ids.isEmpty()) {
+                // Tách danh sách id từ query ?ids=1,2,3
+                List<String> idList = Arrays.asList(ids.split(","));
+
+                // Lọc sản phẩm
+                List<Product> favList = productService.getAllProducts()
+                        .stream()
+                        .filter(p -> idList.contains(p.getProductID()))
+                        .toList();
+
+                // Tính phân trang thủ công
+                int start = Math.min(page * pageSize, favList.size());
+                int end = Math.min(start + pageSize, favList.size());
+                List<Product> pageContent = favList.subList(start, end);
+
+                // Tạo đối tượng Page giả lập
+                Page<Product> favPage = new PageImpl<>(
+                    pageContent,
+                    PageRequest.of(page, pageSize),
+                    favList.size()
+                );
+
+                // Gửi sang view
+                model.addAttribute("products", favPage);
+                model.addAttribute("selectedSort", sort);
+                model.addAttribute("selectedCategory", category);
+                model.addAttribute("categories", categoryService.findAll());
+
+                return "user/products";
+            }
+        }
+
+        // Sắp xếp mặc định
         Sort sortOption = switch (sort != null ? sort : "") {
             case "priceAsc" -> Sort.by("price").ascending();
             case "priceDesc" -> Sort.by("price").descending();
@@ -201,7 +239,6 @@ public class HomeController {
         Page<Product> products;
 
         if (category != null && !category.isBlank()) {
-            // phải gọi đúng method trả Page
             products = productService.getActiveProductsByCategory(category, pageable);
         } else {
             products = productService.getActiveProducts(pageable);
@@ -211,14 +248,7 @@ public class HomeController {
         model.addAttribute("categories", categoryService.findAll());
         model.addAttribute("selectedCategory", category);
         model.addAttribute("selectedSort", sort);
-        
-        System.out.println("=== DEBUG PRODUCTS PAGE ===");
-        System.out.println("Page number: " + page);
-        System.out.println("Total pages: " + products.getTotalPages());
-        System.out.println("Products in page: " + products.getContent().size());
-        System.out.println("Category: " + category + ", Sort: " + sort);
-        System.out.println("==========================");
-        
+
         return "user/products";
     }
     
