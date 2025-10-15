@@ -2,6 +2,8 @@ package com.womtech.service;
 
 import com.womtech.entity.Product;
 import com.womtech.entity.Subcategory;
+
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 import org.springframework.data.domain.Page;
@@ -70,4 +72,7 @@ public interface ProductService {
 	void deleteMyProduct(String productId); // chỉ cho xóa nếu là owner
 
 	long countMyProducts();
+	BigDecimal calculateTotalValueByOwnerId(String ownerUserId);
+
+	List<Product> findByOwnerUser_UserID(String userID);
 }
