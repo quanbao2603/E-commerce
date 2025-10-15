@@ -99,4 +99,18 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
         }
         return total;
     }
+    
+    @Override
+	public int totalQuantity(Cart cart) {
+    	int total = 0;
+    	List<CartItem> items = cartItemRepository.findByCart(cart);
+        if (items.isEmpty()) {
+            return total;
+        }
+        
+        for (CartItem item : items) {
+			total += item.getQuantity();
+        }
+        return total;
+    }
 }

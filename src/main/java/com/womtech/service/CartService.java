@@ -19,4 +19,6 @@ public interface CartService extends BaseService<Cart, String> {
 	void removeItem(String cartItemID);
 
 	BigDecimal totalPrice(Cart cart);
+
+	int totalQuantity(Cart cart);
 }

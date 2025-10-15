@@ -40,10 +40,12 @@ public class CartController {
 		
 		Cart cart = cartService.findByUser(user);
 		BigDecimal totalPrice = cartService.totalPrice(cart);
+		int totalQuantity = cartService.totalQuantity(cart);
 		
 		model.addAttribute("user", user);
 		model.addAttribute("cart", cart);
 		model.addAttribute("totalPrice", totalPrice);
+		model.addAttribute("totalQuantity", totalQuantity);
 		
 		return "/user/cart";
 	}

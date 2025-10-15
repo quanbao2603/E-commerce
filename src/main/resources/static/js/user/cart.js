@@ -1,5 +1,6 @@
 document.addEventListener('DOMContentLoaded', function() {
     // Xử lý nút tăng giảm
+	
     document.querySelectorAll('.btn-decrease').forEach(btn => {
         btn.addEventListener('click', function() {
             const input = this.closest('.input-group').querySelector('input[name="quantity"]');
