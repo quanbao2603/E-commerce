@@ -91,11 +91,17 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
         }
         
         for (CartItem item : items) {
-        	BigDecimal itemTotal = item.getProduct().getPrice()
-        							   .multiply(BigDecimal.valueOf(item.getQuantity()));
-        	item.setItemTotal(itemTotal);
-        	
-			total = total.add(itemTotal);
+        	Product product = item.getProduct();
+
+            // Ưu tiên discountPrice nếu có và > 0
+            BigDecimal price = (product.getDiscount_price() != null && product.getDiscount_price().compareTo(BigDecimal.ZERO) > 0)
+                    ? product.getDiscount_price()
+                    : product.getPrice();
+
+            BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(item.getQuantity()));
+            item.setItemTotal(itemTotal);
+
+            total = total.add(itemTotal);
         }
         return total;
     }

@@ -3,7 +3,6 @@ package com.womtech.controller;
 import java.math.BigDecimal;
 import java.security.Principal;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -16,7 +15,6 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 
 import com.womtech.entity.Cart;
-import com.womtech.entity.CartItem;
 import com.womtech.entity.Product;
 import com.womtech.entity.User;
 import com.womtech.service.CartService;
