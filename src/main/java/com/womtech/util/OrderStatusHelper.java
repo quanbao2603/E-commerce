@@ -16,6 +16,8 @@ public class OrderStatusHelper {
     public static final Integer STATUS_RETURNED = 7;
 
     // ============ ITEM STATUS CONSTANTS ============
+    public static final Integer ITEM_STATUS_CANCELLED = 0;      // Hủy
+
     public static final Integer ITEM_STATUS_PENDING = 1;        // Chờ xác nhận
     public static final Integer ITEM_STATUS_CONFIRMED = 2;      // Đã xác nhận
     public static final Integer ITEM_STATUS_PREPARING = 3;      // Đang chuẩn bị
@@ -23,7 +25,6 @@ public class OrderStatusHelper {
     public static final Integer ITEM_STATUS_SHIPPED = 5;        // Đang giao
     public static final Integer ITEM_STATUS_DELIVERED = 6;      // Đã giao
     public static final Integer ITEM_STATUS_RETURNED = 7;       // Hoàn trả
-    public static final Integer ITEM_STATUS_CANCELLED = 0;      // Hủy
     
     // ============ PAYMENT STATUS CONSTANTS ============
     public static final Integer PAYMENT_PENDING = 0;
