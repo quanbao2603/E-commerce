@@ -3,8 +3,10 @@ package com.womtech.service.impl;
 import com.womtech.entity.Brand;
 import com.womtech.entity.Category;
 import com.womtech.entity.Product;
+import com.womtech.entity.Review;
 import com.womtech.entity.Subcategory;
 import com.womtech.repository.ProductRepository;
+import com.womtech.repository.ReviewRepository;
 import com.womtech.repository.UserRepository;
 import com.womtech.service.ProductService;
 
@@ -27,6 +29,8 @@ public class ProductServiceImpl implements ProductService {
 	@Autowired
 	private ProductRepository productRepository;
 	private final UserRepository userRepository = null;
+	@Autowired
+    private ReviewRepository reviewRepository;
 
 	private String currentUserId() {
 		var ctx = org.springframework.security.core.context.SecurityContextHolder.getContext();
@@ -325,4 +329,10 @@ public class ProductServiceImpl implements ProductService {
 //            saveProduct(product);
 //        }
 //    }
+	
+// Review
+	@Override
+	public Page<Review> getReviews(String productId, Pageable pageable) {
+	    return reviewRepository.findByProduct_ProductIDAndStatus(productId, 1, pageable);
+	}
 }
