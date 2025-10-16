@@ -40,23 +40,25 @@ public class ChatPageController {
         model.addAttribute("currentUserId", currentUserId);
 
         // Nếu chưa có chatId nhưng có vendorId => tìm hoặc tạo chat
-        if (chatId == null && vendorId != null) {
-            Optional<Chat> chatOpt = chatRepository.findByUser_UserIDAndSupport_UserID(currentUserId, vendorId);
+        if (vendorId != null) {
+            if (chatId == null) {
+                Optional<Chat> chatOpt = chatRepository.findByUser_UserIDAndSupport_UserID(currentUserId, vendorId);
 
-            if (chatOpt.isPresent()) {
-                chatId = chatOpt.get().getChatID();
-            } else {
-                User currentUser = userRepository.findById(currentUserId)
-                        .orElseThrow(() -> new RuntimeException("User not found"));
-                User vendor = userRepository.findById(vendorId)
-                        .orElseThrow(() -> new RuntimeException("Vendor not found"));
+                if (chatOpt.isPresent()) {
+                    chatId = chatOpt.get().getChatID();
+                } else {
+                    User currentUser = userRepository.findById(currentUserId)
+                            .orElseThrow(() -> new RuntimeException("User not found"));
+                    User vendor = userRepository.findById(vendorId)
+                            .orElseThrow(() -> new RuntimeException("Vendor not found"));
 
-                Chat newChat = Chat.builder()
-                        .user(currentUser)
-                        .support(vendor)
-                        .build();
-                chatRepository.save(newChat);
-                chatId = newChat.getChatID();
+                    Chat newChat = Chat.builder()
+                            .user(currentUser)
+                            .support(vendor)
+                            .build();
+                    chatRepository.save(newChat);
+                    chatId = newChat.getChatID();
+                }
             }
         }
 

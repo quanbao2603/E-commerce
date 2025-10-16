@@ -3,6 +3,9 @@ package com.womtech.service;
 import java.util.List;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import com.womtech.dto.request.auth.LoginRequest;
 import com.womtech.dto.request.auth.RegisterRequest;
 import com.womtech.dto.response.auth.LoginResponse;
@@ -35,4 +38,8 @@ public interface UserService extends BaseService<User, String>{
     List<User> getAllUsers();
     
     boolean promoteToVendor(String userId);
+
+    Page<User> searchUsers(String keyword, String role, Integer status, Pageable pageable); // tìm kiếm + phân trang
+    void lockUser(String userId);  // khoá user
+    void unlockUser(String userId); // mở khoá user
 }	

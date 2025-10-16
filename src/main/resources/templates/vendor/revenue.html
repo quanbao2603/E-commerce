@@ -1,216 +1,232 @@
 <!DOCTYPE html>
-<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{layout/vendor}">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+	xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+	layout:decorate="~{vendor/layout}">
 <head>
-    <title>Báo Cáo Doanh Thu - Vendor Panel</title>
+<title>Báo Cáo Doanh Thu - Vendor Panel</title>
 </head>
 <body>
-    <h1 layout:fragment="page-title">Báo Cáo Doanh Thu</h1>
-    
-    <div layout:fragment="content">
-        <!-- Period Selection -->
-        <div class="admin-table mb-4">
-            <div class="table-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-calendar me-2"></i>
-                    Chọn Khoảng Thời Gian
-                </h5>
-            </div>
-            <div class="p-4">
-                <div class="row g-3 align-items-end">
-                    <div class="col-md-10">
-                        <div class="btn-group mb-3" role="group">
-                            <a th:href="@{/vendor/revenue(period='today')}" 
-                               class="btn" 
-                               th:classappend="${period == 'today' ? 'btn-primary' : 'btn-outline-primary'}">
-                                Hôm Nay
-                            </a>
-                            <a th:href="@{/vendor/revenue(period='week')}" 
-                               class="btn" 
-                               th:classappend="${period == 'week' ? 'btn-primary' : 'btn-outline-primary'}">
-                                7 Ngày Qua
-                            </a>
-                            <a th:href="@{/vendor/revenue(period='month')}" 
-                               class="btn" 
-                               th:classappend="${period == 'month' ? 'btn-primary' : 'btn-outline-primary'}">
-                                30 Ngày Qua
-                            </a>
-                            <a th:href="@{/vendor/revenue(period='year')}" 
-                               class="btn" 
-                               th:classappend="${period == 'year' ? 'btn-primary' : 'btn-outline-primary'}">
-                                1 Năm Qua
-                            </a>
-                        </div>
-                        
-                        <form method="get" th:action="@{/vendor/revenue}">
-                            <input type="hidden" name="period" value="custom">
-                            <div class="row g-2">
-                                <div class="col-md-5">
-                                    <label class="form-label">Từ Ngày</label>
-                                    <input type="date" class="form-control" name="startDate" 
-                                           th:value="${startDate}" required>
-                                </div>
-                                <div class="col-md-5">
-                                    <label class="form-label">Đến Ngày</label>
-                                    <input type="date" class="form-control" name="endDate" 
-                                           th:value="${endDate}" required>
-                                </div>
-                                <div class="col-md-2">
-                                    <label class="form-label">&nbsp;</label>
-                                    <button type="submit" class="btn btn-primary w-100">
-                                        <i class="fas fa-search"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        </form>
-                    </div>
-                    <div class="col-md-2">
-                        <a href="/vendor/revenue" class="btn btn-outline-secondary w-100">
-                            <i class="fas fa-redo me-2"></i>Đặt Lại
-                        </a>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Statistics Summary -->
-        <div class="row g-4 mb-4">
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #10b981, #34d399); color: white;">
-                        <i class="fas fa-money-bill-wave"></i>
-                    </div>
-                    <div class="stat-value" th:text="${#numbers.formatDecimal(statistics.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</div>
-                    <div class="stat-label">Tổng Doanh Thu (₫)</div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white;">
-                        <i class="fas fa-shopping-cart"></i>
-                    </div>
-                    <div class="stat-value" th:text="${statistics.totalOrders}">0</div>
-                    <div class="stat-label">Tổng Đơn Hàng</div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: white;">
-                        <i class="fas fa-chart-line"></i>
-                    </div>
-                    <div class="stat-value" th:text="${statistics.totalOrders > 0 ? #numbers.formatDecimal(statistics.totalRevenue / statistics.totalOrders, 0, 'COMMA', 0, 'POINT') : 0}">0</div>
-                    <div class="stat-label">Giá Trị TB/Đơn (₫)</div>
-                </div>
-            </div>
-            
-            <div class="col-md-3">
-                <div class="stat-card">
-                    <div class="stat-icon" style="background: linear-gradient(135deg, #7c3aed, #a78bfa); color: white;">
-                        <i class="fas fa-percentage"></i>
-                    </div>
-                    <div class="stat-value" th:text="${statistics.ordersByStatus['DELIVERED']}">0</div>
-                    <div class="stat-label">Đơn Hoàn Thành</div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Orders by Status -->
-        <div class="admin-table mb-4">
-            <div class="table-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-chart-pie me-2"></i>
-                    Phân Tích Đơn Hàng Theo Trạng Thái
-                </h5>
-            </div>
-            <div class="p-4">
-                <div class="row g-4">
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-warning" th:text="${statistics.ordersByStatus['PENDING']}">0</h3>
-                            <p class="mb-0 text-muted">Chờ Xác Nhận</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-info" th:text="${statistics.ordersByStatus['CONFIRMED']}">0</h3>
-                            <p class="mb-0 text-muted">Đã Xác Nhận</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-primary" th:text="${statistics.ordersByStatus['PREPARING']}">0</h3>
-                            <p class="mb-0 text-muted">Đang Chuẩn Bị</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-secondary" th:text="${statistics.ordersByStatus['PACKED']}">0</h3>
-                            <p class="mb-0 text-muted">Đã Đóng Gói</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-primary" th:text="${statistics.ordersByStatus['SHIPPED']}">0</h3>
-                            <p class="mb-0 text-muted">Đang Giao</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-success" th:text="${statistics.ordersByStatus['DELIVERED']}">0</h3>
-                            <p class="mb-0 text-muted">Đã Giao</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-danger" th:text="${statistics.ordersByStatus['CANCELLED']}">0</h3>
-                            <p class="mb-0 text-muted">Đã Hủy</p>
-                        </div>
-                    </div>
-                    <div class="col-md-3">
-                        <div class="text-center p-3 bg-light rounded">
-                            <h3 class="mb-2 text-warning" th:text="${statistics.ordersByStatus['RETURNED']}">0</h3>
-                            <p class="mb-0 text-muted">Hoàn Trả</p>
-                        </div>
-                    </div>
-                </div>
-            </div>
-        </div>
-        
-        <!-- Period Info -->
-        <div class="admin-table">
-            <div class="table-header">
-                <h5 class="mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    Thông Tin Khoảng Thời Gian
-                </h5>
-            </div>
-            <div class="p-4">
-                <div class="row">
-                    <div class="col-md-6">
-                        <p class="mb-2">
-                            <strong>Từ Ngày:</strong> 
-                            <span th:text="${#temporals.format(statistics.startDate, 'dd/MM/yyyy HH:mm')}">Date</span>
-                        </p>
-                    </div>
-                    <div class="col-md-6">
-                        <p class="mb-2">
-                            <strong>Đến Ngày:</strong> 
-                            <span th:text="${#temporals.format(statistics.endDate, 'dd/MM/yyyy HH:mm')}">Date</span>
-                        </p>
-                    </div>
-                </div>
-                
-                <hr>
-                
-                <div class="alert alert-info mb-0">
-                    <i class="fas fa-info-circle me-2"></i>
-                    <strong>Lưu ý:</strong> Doanh thu được tính dựa trên tổng giá trị các sản phẩm của bạn trong các đơn hàng trong khoảng thời gian đã chọn. 
-                    Chỉ bao gồm các sản phẩm mà bạn là chủ sở hữu.
-                </div>
-            </div>
-        </div>
-    </div>
+	<h1 layout:fragment="page-title">Báo Cáo Doanh Thu</h1>
+
+	<div layout:fragment="content">
+		<!-- Period Selection -->
+		<div class="admin-table mb-4">
+			<div class="table-header">
+				<h5 class="mb-0">
+					<i class="fas fa-calendar me-2"></i> Chọn Khoảng Thời Gian
+				</h5>
+			</div>
+			<div class="p-4">
+				<div class="row g-3 align-items-end">
+					<div class="col-md-10">
+						<div class="btn-group mb-3" role="group">
+							<a th:href="@{/vendor/revenue(period='today')}" class="btn"
+								th:classappend="${period == 'today' ? 'btn-primary' : 'btn-outline-primary'}">
+								Hôm Nay </a> <a th:href="@{/vendor/revenue(period='week')}"
+								class="btn"
+								th:classappend="${period == 'week' ? 'btn-primary' : 'btn-outline-primary'}">
+								7 Ngày Qua </a> <a th:href="@{/vendor/revenue(period='month')}"
+								class="btn"
+								th:classappend="${period == 'month' ? 'btn-primary' : 'btn-outline-primary'}">
+								30 Ngày Qua </a> <a th:href="@{/vendor/revenue(period='year')}"
+								class="btn"
+								th:classappend="${period == 'year' ? 'btn-primary' : 'btn-outline-primary'}">
+								1 Năm Qua </a>
+						</div>
+
+						<form method="get" th:action="@{/vendor/revenue}">
+							<input type="hidden" name="period" value="custom">
+							<div class="row g-2">
+								<div class="col-md-5">
+									<label class="form-label">Từ Ngày</label> <input type="date"
+										class="form-control" name="startDate" th:value="${startDate}"
+										required>
+								</div>
+								<div class="col-md-5">
+									<label class="form-label">Đến Ngày</label> <input type="date"
+										class="form-control" name="endDate" th:value="${endDate}"
+										required>
+								</div>
+								<div class="col-md-2">
+									<label class="form-label">&nbsp;</label>
+									<button type="submit" class="btn btn-primary w-100">
+										<i class="fas fa-search"></i>
+									</button>
+								</div>
+							</div>
+						</form>
+					</div>
+					<div class="col-md-2">
+						<a href="/vendor/revenue" class="btn btn-outline-secondary w-100">
+							<i class="fas fa-redo me-2"></i>Đặt Lại
+						</a>
+					</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Statistics Summary -->
+		<div class="row g-4 mb-4">
+			<div class="col-md-3">
+				<div class="stat-card">
+					<div class="stat-icon"
+						style="background: linear-gradient(135deg, #10b981, #34d399); color: white;">
+						<i class="fas fa-money-bill-wave"></i>
+					</div>
+					<div class="stat-value"
+						th:text="${#numbers.formatDecimal(statistics.totalRevenue, 0, 'COMMA', 0, 'POINT')}">0</div>
+					<div class="stat-label">Tổng Doanh Thu (₫)</div>
+				</div>
+			</div>
+
+			<div class="col-md-3">
+				<div class="stat-card">
+					<div class="stat-icon"
+						style="background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white;">
+						<i class="fas fa-shopping-cart"></i>
+					</div>
+					<div class="stat-value" th:text="${statistics.totalOrders}">0</div>
+					<div class="stat-label">Tổng Đơn Hàng</div>
+				</div>
+			</div>
+
+			<div class="col-md-3">
+				<div class="stat-card">
+					<div class="stat-icon"
+						style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: white;">
+						<i class="fas fa-chart-line"></i>
+					</div>
+					<div class="stat-value"
+						th:text="${statistics.totalOrders > 0 ? #numbers.formatDecimal(statistics.totalRevenue / statistics.totalOrders, 0, 'COMMA', 0, 'POINT') : 0}">0</div>
+					<div class="stat-label">Giá Trị TB/Đơn (₫)</div>
+				</div>
+			</div>
+
+			<div class="col-md-3">
+				<div class="stat-card">
+					<div class="stat-icon"
+						style="background: linear-gradient(135deg, #7c3aed, #a78bfa); color: white;">
+						<i class="fas fa-percentage"></i>
+					</div>
+					<div class="stat-value"
+						th:text="${statistics.ordersByStatus['DELIVERED']}">0</div>
+					<div class="stat-label">Đơn Hoàn Thành</div>
+				</div>
+			</div>
+		</div>
+
+		<!-- Revenue Line Chart -->
+		<div class="admin-table mb-4">
+			<div class="table-header">
+				<h5 class="mb-0">
+					<i class="fas fa-chart-line me-2"></i> Biểu Đồ Doanh Thu Theo Thời
+					Gian
+				</h5>
+			</div>
+			<div class="p-4">
+				<canvas id="revenueChart" height="100"></canvas>
+			</div>
+		</div>
+
+		<!-- Period Info -->
+		<div class="admin-table">
+			<div class="table-header">
+				<h5 class="mb-0">
+					<i class="fas fa-info-circle me-2"></i> Thông Tin Khoảng Thời Gian
+				</h5>
+			</div>
+			<div class="p-4">
+				<div class="row">
+					<div class="col-md-6">
+						<p class="mb-2">
+							<strong>Từ Ngày:</strong> <span
+								th:text="${#temporals.format(statistics.startDate, 'dd/MM/yyyy HH:mm')}">Date</span>
+						</p>
+					</div>
+					<div class="col-md-6">
+						<p class="mb-2">
+							<strong>Đến Ngày:</strong> <span
+								th:text="${#temporals.format(statistics.endDate, 'dd/MM/yyyy HH:mm')}">Date</span>
+						</p>
+					</div>
+				</div>
+
+				<hr>
+
+				<div class="alert alert-info mb-0">
+					<i class="fas fa-info-circle me-2"></i> <strong>Lưu ý:</strong>
+					Doanh thu được tính dựa trên tổng giá trị các sản phẩm của bạn
+					trong các đơn hàng trong khoảng thời gian đã chọn. Chỉ bao gồm các
+					sản phẩm mà bạn là chủ sở hữu.
+				</div>
+			</div>
+		</div>
+		<!-- Chart.js library -->
+		<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+		<!-- Revenue Line Chart Script -->
+		<script th:inline="javascript">
+/*<![CDATA[*/
+    const revenueLabels = /*[[${revenueDates}]]*/ [];
+    const revenueValues = /*[[${revenueValues}]]*/ [];
+
+    const ctx = document.getElementById('revenueChart').getContext('2d');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: revenueLabels,
+            datasets: [{
+                label: 'Doanh thu (₫)',
+                data: revenueValues,
+                borderColor: '#3b82f6',
+                backgroundColor: 'rgba(59,130,246,0.1)',
+                fill: true,
+                tension: 0.3,
+                borderWidth: 2,
+                pointBackgroundColor: '#2563eb',
+                pointRadius: 4
+            }]
+        },
+        options: {
+            responsive: true,
+            plugins: {
+                legend: { display: true, position: 'top' },
+                title: {
+                    display: true,
+                    text: 'Biểu đồ doanh thu theo thời gian'
+                },
+                tooltip: {
+                    callbacks: {
+                        label: (ctx) => ' ' + ctx.formattedValue + ' ₫'
+                    }
+                }
+            },
+            scales: {
+                x: {
+                    title: {
+                        display: true,
+                        text: 'Ngày'
+                    },
+                    grid: { display: false }
+                },
+                y: {
+                    beginAtZero: true,
+                    title: {
+                        display: true,
+                        text: 'Doanh thu (₫)'
+                    },
+                    ticks: {
+                        callback: function(value) {
+                            return value.toLocaleString('vi-VN');
+                        }
+                    }
+                }
+            }
+        }
+    });
+/*]]>*/
+</script>
+	</div>
 </body>
 </html>

@@ -541,6 +541,48 @@ public class VendorController {
 		return "redirect:/vendor/orders/" + orderId;
 	}
 
+	@PostMapping("/orders/update-item-status/{orderId}/{orderItemId}")
+	public String updateItemStatus(
+	        @PathVariable String orderId,
+	        @PathVariable String orderItemId,
+	        @RequestParam Integer newStatus,
+	        Authentication authentication,
+	        RedirectAttributes redirectAttributes) {
+
+	    try {
+	        User currentUser = getCurrentUser(authentication);
+
+	        orderService.updateVendorItemStatus(orderId, orderItemId, currentUser.getUserID(), newStatus);
+
+	        redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sản phẩm thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
+	    }
+
+	    return "redirect:/vendor/orders/" + orderId;
+	}
+
+    
+    @PostMapping("/orders/cancel")
+    public String cancelOrder(
+            @RequestParam String orderId,
+            Authentication authentication,
+            RedirectAttributes redirectAttributes) {
+        
+        try {
+            User currentUser = getCurrentUser(authentication);
+            
+            // Cancel only vendor's items in the order
+            orderService.cancelVendorOrderItems(orderId, currentUser.getUserID());
+            redirectAttributes.addFlashAttribute("success", "Đã hủy sản phẩm của bạn trong đơn hàng!");
+            
+        } catch (Exception e) {
+            redirectAttributes.addFlashAttribute("error", "Lỗi khi hủy: " + e.getMessage());
+        }
+        
+        return "redirect:/vendor/orders/" + orderId;
+    }
+
 	@GetMapping("/revenue")
 	public String viewRevenue(@RequestParam(required = false) String period,
 			@RequestParam(required = false) String startDate, @RequestParam(required = false) String endDate,
