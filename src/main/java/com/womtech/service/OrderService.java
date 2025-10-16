@@ -28,4 +28,12 @@ public interface OrderService {
     Map<String, Object> getVendorOrderStatistics(String vendorId, LocalDateTime startDate, LocalDateTime endDate);
     void deleteOrder(String orderId);
 	void updateVendorItemStatus(String orderId, String orderItemId, String vendorId, Integer newItemStatus);
+	// Phương thức mới cho biểu đồ doanh thu
+    Map<String, Object> getRevenueChartData(String vendorId, LocalDateTime start, LocalDateTime end);
+    
+    // Phương thức cho biểu đồ phân loại
+    Map<String, Object> getCategoryRevenueData(String vendorId, LocalDateTime start, LocalDateTime end);
+    
+    // Phương thức cho top sản phẩm
+    Map<String, Object> getTopProductsData(String vendorId, LocalDateTime start, LocalDateTime end);
 }

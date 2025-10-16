@@ -525,56 +525,73 @@ public class VendorController {
         return "redirect:/vendor/orders/" + orderId;
     }
 
-	@GetMapping("/revenue")
-	public String viewRevenue(@RequestParam(required = false) String period,
-			@RequestParam(required = false) String startDate, @RequestParam(required = false) String endDate,
-			Authentication authentication, Model model) {
+    @GetMapping("/revenue")
+    public String viewRevenue(@RequestParam(required = false) String period,
+            @RequestParam(required = false) String startDate, @RequestParam(required = false) String endDate,
+            Authentication authentication, Model model) {
 
-		User currentUser = getCurrentUser(authentication);
+        User currentUser = getCurrentUser(authentication);
 
-		// Default to last 30 days
-		java.time.LocalDateTime start;
-		java.time.LocalDateTime end = java.time.LocalDateTime.now();
+        // Default to last 30 days
+        java.time.LocalDateTime start;
+        java.time.LocalDateTime end = java.time.LocalDateTime.now();
 
-		if (period != null) {
-			switch (period) {
-			case "today":
-				start = java.time.LocalDateTime.now().toLocalDate().atStartOfDay();
-				break;
-			case "week":
-				start = java.time.LocalDateTime.now().minusWeeks(1);
-				break;
-			case "month":
-				start = java.time.LocalDateTime.now().minusMonths(1);
-				break;
-			case "year":
-				start = java.time.LocalDateTime.now().minusYears(1);
-				break;
-			case "custom":
-				if (startDate != null && endDate != null) {
-					start = java.time.LocalDate.parse(startDate).atStartOfDay();
-					end = java.time.LocalDate.parse(endDate).atTime(23, 59, 59);
-				} else {
-					start = java.time.LocalDateTime.now().minusMonths(1);
-				}
-				break;
-			default:
-				start = java.time.LocalDateTime.now().minusMonths(1);
-			}
-		} else {
-			start = java.time.LocalDateTime.now().minusMonths(1);
-			period = "month";
-		}
+        if (period != null) {
+            switch (period) {
+            case "today":
+                start = java.time.LocalDateTime.now().toLocalDate().atStartOfDay();
+                break;
+            case "week":
+                start = java.time.LocalDateTime.now().minusWeeks(1);
+                break;
+            case "month":
+                start = java.time.LocalDateTime.now().minusMonths(1);
+                break;
+            case "year":
+                start = java.time.LocalDateTime.now().minusYears(1);
+                break;
+            case "custom":
+                if (startDate != null && endDate != null) {
+                    start = java.time.LocalDate.parse(startDate).atStartOfDay();
+                    end = java.time.LocalDate.parse(endDate).atTime(23, 59, 59);
+                } else {
+                    start = java.time.LocalDateTime.now().minusMonths(1);
+                }
+                break;
+            default:
+                start = java.time.LocalDateTime.now().minusMonths(1);
+            }
+        } else {
+            start = java.time.LocalDateTime.now().minusMonths(1);
+            period = "month";
+        }
 
-		Map<String, Object> statistics = orderService.getVendorOrderStatistics(currentUser.getUserID(), start, end);
+        Map<String, Object> statistics = orderService.getVendorOrderStatistics(currentUser.getUserID(), start, end);
+        
+        // Lấy dữ liệu cho biểu đồ doanh thu theo thời gian
+        Map<String, Object> chartData = orderService.getRevenueChartData(currentUser.getUserID(), start, end);
+        
+        // Lấy dữ liệu cho biểu đồ phân loại sản phẩm
+        Map<String, Object> categoryData = orderService.getCategoryRevenueData(currentUser.getUserID(), start, end);
+        
+        // Lấy dữ liệu top sản phẩm bán chạy
+        Map<String, Object> topProductsData = orderService.getTopProductsData(currentUser.getUserID(), start, end);
 
-		model.addAttribute("statistics", statistics);
-		model.addAttribute("period", period);
-		model.addAttribute("startDate", startDate);
-		model.addAttribute("endDate", endDate);
+        model.addAttribute("statistics", statistics);
+        model.addAttribute("period", period);
+        model.addAttribute("startDate", startDate);
+        model.addAttribute("endDate", endDate);
+        
+        // Dữ liệu biểu đồ
+        model.addAttribute("revenueDates", chartData.get("dates"));
+        model.addAttribute("revenueValues", chartData.get("revenues"));
+        model.addAttribute("categoryLabels", categoryData.get("labels"));
+        model.addAttribute("categoryValues", categoryData.get("values"));
+        model.addAttribute("topProductLabels", topProductsData.get("labels"));
+        model.addAttribute("topProductValues", topProductsData.get("values"));
 
-		return "vendor/revenue";
-	}
+        return "vendor/revenue";
+    }
 
 	// ========== API ENDPOINTS ==========
 	@GetMapping("/api/subcategories/category/{categoryID}")

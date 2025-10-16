@@ -12,7 +12,7 @@ import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, String> {
-    
+
 	List<Order> findByUserOrderByCreateAtDesc(User user);
 
 	List<Order> findByStatusOrderByCreateAtDesc(Integer status);
@@ -27,7 +27,8 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 
 	// 3️⃣ Lọc theo khoảng thời gian
 	@Query("SELECT DISTINCT o FROM Order o JOIN o.items oi WHERE oi.product.ownerUser.userID = :vendorId AND o.createAt BETWEEN :startDate AND :endDate ORDER BY o.createAt DESC")
-	List<Order> findOrdersByVendorIdAndDateRange(@Param("vendorId") String vendorId, @Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
+	List<Order> findOrdersByVendorIdAndDateRange(@Param("vendorId") String vendorId,
+			@Param("startDate") LocalDateTime startDate, @Param("endDate") LocalDateTime endDate);
 
 	// 4️⃣ Đếm tổng số đơn hàng có sản phẩm thuộc vendor
 	@Query("SELECT COUNT(DISTINCT o) FROM Order o JOIN o.items oi WHERE oi.product.ownerUser.userID = :vendorId")
@@ -37,5 +38,16 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 	@Query("SELECT COUNT(DISTINCT o) FROM Order o JOIN o.items oi WHERE oi.product.ownerUser.userID = :vendorId AND o.status = :status")
 	Long countOrdersByVendorIdAndStatus(@Param("vendorId") String vendorId, @Param("status") Integer status);
 
+	// Query cho biểu đồ doanh thu hàng ngày
+    @Query("SELECT DATE(oi.order.createAt), SUM(oi.price * oi.quantity) " +
+           "FROM OrderItem oi " +
+           "WHERE oi.product.ownerUser.userID = :vendorId " +
+           "AND oi.order.createAt BETWEEN :start AND :end " +
+           "AND oi.status = 6 " + 
+           "GROUP BY DATE(oi.order.createAt) " +
+           "ORDER BY DATE(oi.order.createAt)")
+    List<Object[]> findDailyRevenueByVendorAndPeriod(@Param("vendorId") String vendorId, 
+                                                    @Param("start") LocalDateTime start, 
+                                                    @Param("end") LocalDateTime end);
 
 }
