@@ -99,31 +99,43 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public void updateVendorOrderItemsStatus(String orderId, String vendorId, Integer newItemStatus) {
+    public void updateVendorItemStatus(String orderId, String orderItemId, String vendorId, Integer newItemStatus) {
+        // 1️⃣ Tìm order
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
 
-        boolean hasVendorItems = false;
-        for (OrderItem item : order.getItems()) {
-            if (item.getProduct().getOwnerUser() != null &&
-                item.getProduct().getOwnerUser().getUserID().equals(vendorId)) {
-                item.setStatus(newItemStatus);
-                hasVendorItems = true;
-            }
+        // 2️⃣ Tìm item thuộc vendor hiện tại
+        OrderItem item = order.getItems().stream()
+                .filter(i -> i.getOrderItemID().equals(orderItemId)
+                        && i.getProduct() != null
+                        && i.getProduct().getOwnerUser() != null
+                        && i.getProduct().getOwnerUser().getUserID().equals(vendorId))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm thuộc vendor này trong đơn hàng"));
+
+        // 3️⃣ Cập nhật trạng thái item
+        item.setStatus(newItemStatus);
+
+        // 4️⃣ Kiểm tra nếu **tất cả item** trong order đều đã hoàn thành
+        boolean allDelivered = order.getItems().stream()
+                .allMatch(i -> i.getStatus() == OrderStatusHelper.ITEM_STATUS_DELIVERED);
+
+        if (allDelivered) {
+            // Nếu tất cả item đều Delivered → cập nhật trạng thái order
+            order.setStatus(OrderStatusHelper.STATUS_DELIVERED);
+        } else {
+            // Nếu chưa thì chỉ cập nhật theo item có trạng thái thấp nhất
+            Integer minItemStatus = order.getItems().stream()
+                    .map(OrderItem::getStatus)
+                    .min(Integer::compareTo)
+                    .orElse(newItemStatus);
+
+            order.setStatus(OrderStatusHelper.itemStatusToOrderStatus(minItemStatus));
         }
 
-        if (!hasVendorItems) {
-            throw new RuntimeException("No items from this vendor in the order");
-        }
-
-        Integer maxItemStatus = order.getItems().stream()
-                .map(OrderItem::getStatus)
-                .max(Integer::compareTo)
-                .orElse(newItemStatus);
-
-        order.setStatus(OrderStatusHelper.itemStatusToOrderStatus(maxItemStatus));
         orderRepository.save(order);
     }
+
 
     @Override
     @Transactional

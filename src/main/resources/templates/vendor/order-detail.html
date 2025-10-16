@@ -4,6 +4,8 @@
 	layout:decorate="~{vendor/layout}">
 <head>
 <title>Chi Tiết Đơn Hàng - Vendor Panel</title>
+    <link rel="stylesheet" href="/css/vendor/order-detail.css">
+
 <style>
 	.item-status-form {
 		display: flex;
@@ -181,6 +183,11 @@
 									<select name="newStatus" class="form-select form-select-sm item-status-select" required>
 										<option value="">-- Chọn trạng thái --</option>
 										<option 
+											th:value="${OrderStatusHelper.ITEM_STATUS_CANCELLED}"
+											th:text="'Hủy'"
+											th:disabled="${item.status == OrderStatusHelper.ITEM_STATUS_CANCELLED}">
+										</option>
+										<option 
 											th:value="${OrderStatusHelper.ITEM_STATUS_CONFIRMED}"
 											th:text="'Xác Nhận'"
 											th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_CONFIRMED}">
@@ -205,11 +212,7 @@
 											th:text="'Đã Giao'"
 											th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_DELIVERED}">
 										</option>
-										<option 
-											th:value="${OrderStatusHelper.ITEM_STATUS_CANCELLED}"
-											th:text="'Hủy'"
-											th:disabled="${item.status == OrderStatusHelper.ITEM_STATUS_CANCELLED}">
-										</option>
+										
 									</select>
 									
 									<button type="submit" class="btn btn-sm btn-primary">

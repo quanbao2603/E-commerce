@@ -483,27 +483,27 @@ public class VendorController {
 		return "vendor/order-detail";
 	}
 
-	@PostMapping("/orders/update-status")
-    public String updateOrderStatus(
-            @RequestParam String orderId,
-            @RequestParam Integer newItemStatus,
-            Authentication authentication,
-            RedirectAttributes redirectAttributes) {
-        
-        try {
-            User currentUser = getCurrentUser(authentication);
-            
-            // Update only vendor's items status in the order
-            // newItemStatus should be ITEM_STATUS constant (ITEM_STATUS_CONFIRMED, ITEM_STATUS_SHIPPED, etc.)
-            orderService.updateVendorOrderItemsStatus(orderId, currentUser.getUserID(), newItemStatus);
-            redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sản phẩm của bạn thành công!");
-            
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
-        }
-        
-        return "redirect:/vendor/orders/" + orderId;
-    }
+	@PostMapping("/orders/update-item-status/{orderId}/{orderItemId}")
+	public String updateItemStatus(
+	        @PathVariable String orderId,
+	        @PathVariable String orderItemId,
+	        @RequestParam Integer newStatus,
+	        Authentication authentication,
+	        RedirectAttributes redirectAttributes) {
+
+	    try {
+	        User currentUser = getCurrentUser(authentication);
+
+	        orderService.updateVendorItemStatus(orderId, orderItemId, currentUser.getUserID(), newStatus);
+
+	        redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sản phẩm thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
+	    }
+
+	    return "redirect:/vendor/orders/" + orderId;
+	}
+
     
     @PostMapping("/orders/cancel")
     public String cancelOrder(

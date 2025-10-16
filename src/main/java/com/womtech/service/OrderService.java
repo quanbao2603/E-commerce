@@ -23,9 +23,9 @@ public interface OrderService {
     
     Order saveOrder(Order order);
     void updateOrderStatus(String orderId, Integer newStatus);
-    void updateVendorOrderItemsStatus(String orderId, String vendorId, Integer newItemStatus);
     void cancelOrder(String orderId);
     void cancelVendorOrderItems(String orderId, String vendorId);
     Map<String, Object> getVendorOrderStatistics(String vendorId, LocalDateTime startDate, LocalDateTime endDate);
     void deleteOrder(String orderId);
+	void updateVendorItemStatus(String orderId, String orderItemId, String vendorId, Integer newItemStatus);
 }
