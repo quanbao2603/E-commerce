@@ -22,7 +22,8 @@ public class SecurityConfig {
 	SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
 		http.csrf(csrf -> csrf.disable())
 				.sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-				.securityContext(sc -> sc.requireExplicitSave(true))
+				// ✅ stateless + JwtAuthFilter: KHÔNG yêu cầu explicit save
+				.securityContext(sc -> sc.requireExplicitSave(false))
 
 				.authorizeHttpRequests(auth -> auth
 						// 1) Static
@@ -33,7 +34,7 @@ public class SecurityConfig {
 						// 2) Public pages
 						.requestMatchers("/", "/auth/**", "/products/**", "/about", "/contact", "/error").permitAll()
 
-						// 3) ✅ Đăng ký shop (OTP) — chỉ cần authenticated
+						// 3) Đăng ký shop (OTP) — chỉ cần authenticated
 						// Bao toàn bộ biến thể & ĐẶT TRƯỚC /vendor/**
 						.requestMatchers("/vendor/register", "/vendor/register/", "/vendor/register/**",
 								"/vendor/register/resend")
@@ -48,7 +49,7 @@ public class SecurityConfig {
 
 						// 6) Khu vực role-based
 						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/vendor/**").hasRole("VENDOR") // ⬅️
-																														// ĐỂ
+																														// để
 																														// SAU
 																														// /vendor/register*
 						.requestMatchers("/shipper/**").hasRole("SHIPPER")
@@ -56,11 +57,13 @@ public class SecurityConfig {
 						// 7) Mặc định
 						.anyRequest().permitAll())
 
-				// Phân luồng lỗi: phân biệt chưa login (401) và thiếu quyền (403)
-				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> res.sendRedirect("/auth/login"))
-						.accessDeniedHandler((req, res, e) -> res.sendRedirect("/error/403")))
+				// Phân luồng lỗi: trả mã lỗi chuẩn (không redirect tới URL không có)
+				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> res.sendRedirect("/auth/login")) // chưa
+																														// login
+						.accessDeniedHandler((req, res, e) -> res.sendError(403)) // thiếu quyền
+				)
 
-				// JWT filter cho mọi request (bao gồm WS handshake)
+				// JWT filter
 				.addFilterBefore(new JwtAuthFilter(jwtService, revokeService),
 						org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter.class)
 
