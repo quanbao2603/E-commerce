@@ -25,35 +25,40 @@ public class SecurityConfig {
 				.securityContext(sc -> sc.requireExplicitSave(true))
 
 				.authorizeHttpRequests(auth -> auth
-						// Static resources
+						// 1) Static
 						.requestMatchers("/css/**", "/js/**", "/img/**", "/images/**", "/static/**", "/webjars/**",
 								"/favicon.ico")
 						.permitAll().requestMatchers(PathRequest.toStaticResources().atCommonLocations()).permitAll()
 
-						// Public pages
+						// 2) Public pages
 						.requestMatchers("/", "/auth/**", "/products/**", "/about", "/contact", "/error").permitAll()
 
-						// === WebSocket handshake (SockJS tạo thêm các path con) ===
-						// User chat page + WS endpoint
-						.requestMatchers("/user/chat").authenticated().requestMatchers("/user/chat-ws/**")
+						// 3) ✅ Đăng ký shop (OTP) — chỉ cần authenticated
+						// Bao toàn bộ biến thể & ĐẶT TRƯỚC /vendor/**
+						.requestMatchers("/vendor/register", "/vendor/register/", "/vendor/register/**",
+								"/vendor/register/resend")
 						.authenticated()
 
-						// Vendor chat page + WS endpoint (cần role VENDOR)
-						.requestMatchers("/vendor/chat").hasRole("VENDOR").requestMatchers("/vendor/chat-ws/**")
-						.hasRole("VENDOR")
+						// 4) WebSocket / chat
+						.requestMatchers("/user/chat", "/user/chat-ws/**").authenticated()
+						.requestMatchers("/vendor/chat", "/vendor/chat-ws/**").hasRole("VENDOR")
 
-						// REST tạo/lấy chatId (nếu bạn dùng API /api/chat như đã thiết kế)
-						.requestMatchers("/api/chat/**").authenticated()
+						// 5) REST cho chat
+						.requestMatchers("/api/chat/**", "/api/chats/**").authenticated()
 
-						// ✅ REST cho UI chat (sidebar, lịch sử, tạo chat)
-						.requestMatchers("/api/chats/**").authenticated()
-						
-						// Khu vực khác
-						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/vendor/**").hasRole("VENDOR")
+						// 6) Khu vực role-based
+						.requestMatchers("/admin/**").hasRole("ADMIN").requestMatchers("/vendor/**").hasRole("VENDOR") // ⬅️
+																														// ĐỂ
+																														// SAU
+																														// /vendor/register*
 						.requestMatchers("/shipper/**").hasRole("SHIPPER")
 
-						// Cuối cùng
+						// 7) Mặc định
 						.anyRequest().permitAll())
+
+				// Phân luồng lỗi: phân biệt chưa login (401) và thiếu quyền (403)
+				.exceptionHandling(ex -> ex.authenticationEntryPoint((req, res, e) -> res.sendRedirect("/auth/login"))
+						.accessDeniedHandler((req, res, e) -> res.sendRedirect("/error/403")))
 
 				// JWT filter cho mọi request (bao gồm WS handshake)
 				.addFilterBefore(new JwtAuthFilter(jwtService, revokeService),

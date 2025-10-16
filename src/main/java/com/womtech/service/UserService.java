@@ -33,4 +33,6 @@ public interface UserService extends BaseService<User, String>{
     }
 
     List<User> getAllUsers();
+    
+    boolean promoteToVendor(String userId);
 }	

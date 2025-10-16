@@ -35,11 +35,11 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 	public Optional<User> findByEmail(String email) {
 		return userRepository.findByEmail(email);
 	}
-	
+
 	@Override
 	public List<User> getAllUsers() {
-        return userRepository.findAll();
-    }
+		return userRepository.findAll();
+	}
 
 	@Override
 	public Optional<User> findByUsername(String username) {
@@ -95,7 +95,7 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 		if (!PasswordUtil.matches(request.getPassword(), user.getPassword())) {
 			return LoginResponse.builder().message("Invalid password").build();
 		}
-		
+
 		String role = (user.getRole() != null && user.getRole().getRolename() != null)
 				? user.getRole().getRolename().toUpperCase()
 				: "USER";
@@ -115,7 +115,7 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 			redirect = "/";
 			break;
 		}
-		
+
 		return LoginResponse.builder().userID(user.getUserID()).username(user.getUsername())
 				.message("Login successful!").redirectUrl(redirect).build();
 	}
@@ -131,5 +131,28 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 				return Collections.<String>emptyList();
 			return List.of(r.getRolename().toUpperCase(Locale.ROOT));
 		}).orElseGet(Collections::emptyList);
+	}
+
+	@Override
+	public boolean promoteToVendor(String userId) {
+		if (userId == null || userId.isBlank()) {
+			throw new IllegalArgumentException("userId is blank");
+		}
+
+		User user = userRepository.findById(userId)
+				.orElseThrow(() -> new IllegalArgumentException("User not found: " + userId));
+
+		// Nếu đã là VENDOR thì không cần làm gì
+		if (user.getRole() != null && user.getRole().getRolename() != null
+				&& "VENDOR".equalsIgnoreCase(user.getRole().getRolename())) {
+			return false; // không thay đổi
+		}
+
+		Role vendorRole = roleRepository.findByRolename("VENDOR")
+				.orElseThrow(() -> new IllegalStateException("Role VENDOR not found"));
+
+		user.setRole(vendorRole);
+		userRepository.save(user);
+		return true; // đã thay đổi role
 	}
 }
