@@ -1,5 +1,6 @@
 package com.womtech.security;
 
+import com.womtech.util.CookieUtil;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.Cookie;
@@ -7,6 +8,7 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import java.io.IOException;
@@ -31,7 +33,9 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 			throws ServletException, IOException {
 
 		if (getContext().getAuthentication() == null) {
-			String at = readCookie(req, "AT"); // access token trong cookie
+			Cookie atCookie = CookieUtil.get(req, "AT");
+			String at = (atCookie != null) ? atCookie.getValue() : null;
+
 			if (at != null && jwtService.isValidAccess(at) && !revokeService.isRevoked(at)) {
 				String userId = jwtService.getUserId(at);
 				List<String> roles = jwtService.getRoles(at);
@@ -45,55 +49,18 @@ public class JwtAuthFilter extends OncePerRequestFilter {
 					}
 				}
 
-				// 👉 Sử dụng UsernamePasswordAuthenticationToken: authenticated = true
 				var authentication = new UsernamePasswordAuthenticationToken(userId, null, auths);
-				authentication.setDetails(req);
+				authentication.setDetails(new WebAuthenticationDetailsSource().buildDetails(req));
 				getContext().setAuthentication(authentication);
+
 			} else if (at != null) {
-				// Có token nhưng không hợp lệ hoặc đã bị revoke -> xóa cookies
-				clearAuthCookies(req, res);
+				// Có token nhưng invalid/revoked → xoá sạch cookie theo đúng domain/SameSite
+				CookieUtil.delete(req, res, "AT");
+				CookieUtil.delete(req, res, "RT");
+				CookieUtil.delete(req, res, "WOM_REMEMBER");
 			}
 		}
 
 		chain.doFilter(req, res);
-	}
-
-	private static String readCookie(HttpServletRequest req, String name) {
-		Cookie[] cookies = req.getCookies();
-		if (cookies == null)
-			return null;
-		for (Cookie c : cookies) {
-			if (name.equals(c.getName()))
-				return c.getValue();
-		}
-		return null;
-	}
-
-	private void clearAccessTokenCookie(HttpServletResponse res) {
-		// Chỉ xóa access token cookie
-		Cookie atCookie = new Cookie("AT", "");
-		atCookie.setPath("/");
-		atCookie.setMaxAge(0);
-		res.addCookie(atCookie);
-	}
-
-	private void clearAuthCookies(HttpServletRequest req, HttpServletResponse res) {
-		// Xóa access token cookie
-		Cookie atCookie = new Cookie("AT", "");
-		atCookie.setPath("/");
-		atCookie.setMaxAge(0);
-		res.addCookie(atCookie);
-
-		// Xóa refresh token cookie
-		Cookie rtCookie = new Cookie("RT", "");
-		rtCookie.setPath("/");
-		rtCookie.setMaxAge(0);
-		res.addCookie(rtCookie);
-
-		// Xóa remember me cookie
-		Cookie rememberCookie = new Cookie("WOM_REMEMBER", "");
-		rememberCookie.setPath("/");
-		rememberCookie.setMaxAge(0);
-		res.addCookie(rememberCookie);
 	}
 }

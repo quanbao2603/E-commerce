@@ -44,6 +44,9 @@ public class AdminController {
 	
 	@Autowired
 	private UserService userService;
+	
+	@Autowired
+	private VoucherService voucherService;
 
 	// ========== DASHBOARD ==========
 	@GetMapping("/dashboard")
@@ -564,5 +567,128 @@ public class AdminController {
 			redirectAttributes.addFlashAttribute("error", "Lỗi khi nhập kho: " + e.getMessage());
 		}
 		return "redirect:/admin/inventory";
+	}
+	@GetMapping("/users")
+	public String listUsers(
+	        @RequestParam(value = "search", required = false) String search,
+	        @RequestParam(value = "role", required = false) String role,
+	        @RequestParam(value = "status", required = false) String statusStr,
+	        Pageable pageable,
+	        Model model) {
+
+	    Integer status = null;
+	    if (statusStr != null && !statusStr.isBlank()) {
+	        try {
+	            status = Integer.parseInt(statusStr);
+	        } catch (NumberFormatException e) {
+	            status = null;
+	        }
+	    }
+
+	    Page<User> page = userService.searchUsers(
+	            (search != null && !search.isBlank()) ? search : null,
+	            (role != null && !role.isBlank()) ? role : null,
+	            status,
+	            pageable
+	    );
+
+	    model.addAttribute("users", page.getContent());
+	    model.addAttribute("page", page);
+	    return "admin/users";
+	}
+	@GetMapping("/users/lock/{id}")
+	public String lockUser(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    try {
+	        userService.lockUser(id);
+	        redirectAttributes.addFlashAttribute("success", "User đã bị khóa thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi khóa user: " + e.getMessage());
+	    }
+	    return "redirect:/admin/users";
+	}
+
+	@GetMapping("/users/unlock/{id}")
+	public String unlockUser(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    try {
+	        userService.unlockUser(id);
+	        redirectAttributes.addFlashAttribute("success", "User đã được mở khóa thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi mở khóa user: " + e.getMessage());
+	    }
+	    return "redirect:/admin/users";
+	}
+	
+	@GetMapping("/vouchers")
+	public String listVouchers(
+	        @RequestParam(value = "code", required = false) String code,
+	        @RequestParam(value = "status", required = false) Integer status,
+	        @RequestParam(value = "ownerId", required = false) String ownerId,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Model model) {
+
+	    Page<Voucher> vouchers = voucherService.search(code, status, ownerId, PageRequest.of(page, size));
+	    model.addAttribute("vouchers", vouchers.getContent());
+	    model.addAttribute("page", vouchers);
+	    model.addAttribute("code", code);
+	    model.addAttribute("status", status);
+	    model.addAttribute("ownerId", ownerId);
+	    return "admin/vouchers";
+	}
+
+	@GetMapping("/vouchers/new")
+	public String newVoucherForm(Model model) {
+	    model.addAttribute("voucher", new Voucher());
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "admin/voucher-form";
+	}
+
+	@GetMapping("/vouchers/edit/{id}")
+	public String editVoucherForm(@PathVariable String id, Model model) {
+	    Voucher voucher = voucherService.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Voucher not found"));
+	    model.addAttribute("voucher", voucher);
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "admin/voucher-form";
+	}
+
+	@PostMapping("/vouchers/save")
+	public String saveVoucher(@ModelAttribute Voucher voucher, RedirectAttributes redirectAttributes) {
+	    try {
+	        if (voucher.getVoucherID() == null) {
+	            voucherService.create(voucher);
+	        } else {
+	            voucherService.update(voucher);
+	        }
+	        redirectAttributes.addFlashAttribute("success", "Voucher đã được lưu thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu voucher: " + e.getMessage());
+	    }
+	    return "redirect:/admin/vouchers";
+	}
+
+	@GetMapping("/vouchers/delete/{id}")
+	public String deleteVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    try {
+	        voucherService.delete(id);
+	        redirectAttributes.addFlashAttribute("success", "Voucher đã được xóa thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa voucher: " + e.getMessage());
+	    }
+	    return "redirect:/admin/vouchers";
+	}
+
+	@GetMapping("/vouchers/enable/{id}")
+	public String enableVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    voucherService.enableVoucher(id);
+	    redirectAttributes.addFlashAttribute("success", "Voucher đã được kích hoạt!");
+	    return "redirect:/admin/vouchers";
+	}
+
+	@GetMapping("/vouchers/disable/{id}")
+	public String disableVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    voucherService.disableVoucher(id);
+	    redirectAttributes.addFlashAttribute("success", "Voucher đã bị vô hiệu hóa!");
+	    return "redirect:/admin/vouchers";
 	}
 }
