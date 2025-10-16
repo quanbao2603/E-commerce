@@ -75,6 +75,34 @@
     flex: 1 1 50%; /* 2 nút chia đều */
 }
 
+.rating-stars {
+    direction: rtl; /* cho phép chọn sao từ phải qua trái */
+    display: inline-flex;
+    gap: 5px;
+}
+
+.rating-stars input {
+    display: none; /* ẩn radio input */
+}
+
+.rating-stars label {
+    font-size: 2rem;
+    color: #ccc;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+/* Hover effect */
+.rating-stars label:hover,
+.rating-stars label:hover ~ label {
+    color: gold;
+}
+
+/* Khi chọn */
+.rating-stars input:checked ~ label {
+    color: gold;
+}
+
 /* Responsive */
 @media (max-width: 768px) {
     .quantity-cart-row, .favorite-chat-row {

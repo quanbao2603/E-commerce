@@ -1,6 +1,7 @@
 package com.womtech.service;
 
 import com.womtech.entity.Product;
+import com.womtech.entity.Review;
 import com.womtech.entity.Subcategory;
 
 import java.math.BigDecimal;
@@ -75,4 +76,6 @@ public interface ProductService {
 	BigDecimal calculateTotalValueByOwnerId(String ownerUserId);
 
 	List<Product> findByOwnerUser_UserID(String userID);
+	
+	Page<Review> getReviews(String productId, Pageable pageable);
 }

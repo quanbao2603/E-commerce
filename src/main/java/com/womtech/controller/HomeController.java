@@ -253,7 +253,12 @@ public class HomeController {
     }
     
     @GetMapping("/product/{id}")
-    public String productDetail(@PathVariable("id") String productId, Model model) {
+    public String productDetail(
+            @PathVariable("id") String productId,
+            @RequestParam(defaultValue = "0") int page,
+            Model model,
+            Principal principal) {
+
         Optional<Product> productOpt = productService.getProductById(productId);
         if (productOpt.isEmpty()) {
             return "redirect:/products";
@@ -261,15 +266,28 @@ public class HomeController {
 
         Product product = productOpt.get();
 
-        // Tính rating trung bình
-        double avgRating = product.getReviews().stream()
-                .filter(r -> r.getStatus() != null && r.getStatus() == 1)
+        Pageable pageable = PageRequest.of(page, 10, Sort.by("createAt").descending());
+        Page<Review> reviewPage = productService.getReviews(productId, pageable);
+
+        double avgRating = reviewPage.getContent().stream()
                 .mapToInt(Review::getRating)
                 .average()
                 .orElse(0);
 
+        String currentUserId = principal != null ? principal.getName() : null;
+
         model.addAttribute("product", product);
-        model.addAttribute("avgRating", (int) Math.round(avgRating)); // gửi qua model
+        model.addAttribute("reviewPage", reviewPage);
+        model.addAttribute("avgRating", (int) Math.round(avgRating));
+        model.addAttribute("currentUserId", currentUserId);
+
+        List<Product> relatedProducts = productService.getActiveProducts().stream()
+                .filter(p -> p.getSubcategory() != null
+                        && p.getSubcategory().equals(product.getSubcategory())
+                        && !p.getProductID().equals(productId))
+                .limit(8)
+                .toList();
+        model.addAttribute("relatedProducts", relatedProducts);
 
         return "user/product-detail";
     }
