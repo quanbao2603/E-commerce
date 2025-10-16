@@ -397,13 +397,25 @@ public class VendorController {
 		} else {
 			allOrders = orderService.getOrdersByVendorId(currentUser.getUserID());
 		}
-
-		// Apply search filter by orderID
-		if (search != null && !search.trim().isEmpty()) {
-			String searchLower = search.toLowerCase().trim();
-			allOrders = allOrders.stream().filter(o -> o.getOrderID().toLowerCase().contains(searchLower))
-					.collect(Collectors.toList());
+		if (status != null) {
+		    allOrders = orderService.getOrdersByVendorIdAndStatus(currentUser.getUserID(), status);
+		    System.out.println("Số lượng đơn hàng với trạng thái " + status + ": " + allOrders.size());
+		} else {
+		    allOrders = orderService.getOrdersByVendorId(currentUser.getUserID());
+		    System.out.println("Số lượng đơn hàng tổng: " + allOrders.size());
 		}
+
+		// Apply search filter by orderID, username, or shippingPhone
+        if (search != null && !search.trim().isEmpty()) {
+            String searchLower = search.toLowerCase().trim();
+            allOrders = allOrders.stream()
+                    .filter(o -> o.getOrderID().toLowerCase().contains(searchLower) ||
+                                 (o.getUser() != null && o.getUser().getUsername() != null && 
+                                  o.getUser().getUsername().toLowerCase().contains(searchLower)) ||
+                                 (o.getAddress().getPhone() != null && o.getAddress().getPhone().toLowerCase().contains(searchLower)))
+                    .collect(Collectors.toList());
+            System.out.println("Số lượng đơn hàng sau tìm kiếm: " + allOrders.size());
+        }
 
 		// Manual pagination
 		int start = Math.min(page * size, allOrders.size());
@@ -437,7 +449,7 @@ public class VendorController {
 		model.addAttribute("orders", pagedOrders);
 		model.addAttribute("page", pageImpl);
 		model.addAttribute("statusCounts", statusCounts);
-		model.addAttribute("currentStatus", status != null ? status : -1);
+		model.addAttribute("currentStatus", status != null ? OrderStatusHelper.getOrderStatusLabel(status) : "ALL");
 		model.addAttribute("OrderStatusHelper", OrderStatusHelper.class);
 
 		return "vendor/orders";
