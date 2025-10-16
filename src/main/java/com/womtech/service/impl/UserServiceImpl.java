@@ -5,8 +5,12 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.womtech.dto.request.auth.LoginRequest;
 import com.womtech.dto.request.auth.RegisterRequest;
 import com.womtech.dto.response.auth.LoginResponse;
@@ -131,5 +135,22 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 				return Collections.<String>emptyList();
 			return List.of(r.getRolename().toUpperCase(Locale.ROOT));
 		}).orElseGet(Collections::emptyList);
+	}
+
+    @Override
+    @Transactional
+    public void lockUser(String userId) {
+        userRepository.findById(userId).ifPresent(u -> u.setStatus(0));
+    }
+
+    @Override
+    @Transactional
+    public void unlockUser(String userId) {
+        userRepository.findById(userId).ifPresent(u -> u.setStatus(1));
+    }
+
+	@Override
+	public Page<User> searchUsers(String keyword, String role, Integer status, Pageable pageable) {
+		return userRepository.searchUsers(keyword, role, status, pageable);
 	}
 }
