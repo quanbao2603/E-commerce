@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="vi" xmlns:th="http://www.thymeleaf.org" xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{vendor/layout}">
+<head>
+    <title>Quản Lý Đơn Hàng - Vendor Panel</title>
+</head>
+<body>
+    <h1 layout:fragment="page-title">Quản Lý Đơn Hàng</h1>
+    
+    <div layout:fragment="content">
+        <!-- Status Tabs -->
+        <div class="mb-4">
+            <ul class="nav nav-pills">
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'ALL' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders}">
+                        Tất Cả <span class="badge bg-light text-dark ms-1" th:text="${statusCounts['ALL']}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'PENDING' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders(status='PENDING')}">
+                        Chờ Xác Nhận <span class="badge bg-warning text-dark ms-1" th:text="${statusCounts['PENDING']}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'CONFIRMED' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders(status='CONFIRMED')}">
+                        Đã Xác Nhận <span class="badge bg-info text-white ms-1" th:text="${statusCounts['CONFIRMED']}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'PREPARING' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders(status='PREPARING')}">
+                        Đang Chuẩn Bị <span class="badge bg-primary text-white ms-1" th:text="${statusCounts['PREPARING']}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'PACKED' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders(status='PACKED')}">
+                        Đã Đóng Gói <span class="badge bg-secondary text-white ms-1" th:text="${statusCounts['PACKED']}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'SHIPPED' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders(status='SHIPPED')}">
+                        Đang Giao <span class="badge bg-primary text-white ms-1" th:text="${statusCounts['SHIPPED']}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'DELIVERED' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders(status='DELIVERED')}">
+                        Đã Giao <span class="badge bg-success text-white ms-1" th:text="${statusCounts['DELIVERED']}">0</span>
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" th:classappend="${currentStatus == 'CANCELLED' ? 'active' : ''}" 
+                       th:href="@{/vendor/orders(status='CANCELLED')}">
+                        Đã Hủy <span class="badge bg-danger text-white ms-1" th:text="${statusCounts['CANCELLED']}">0</span>
+                    </a>
+                </li>
+            </ul>
+        </div>
+        
+        <!-- Search and Filter -->
+        <div class="admin-table mb-4">
+            <div class="table-header">
+                <h5 class="mb-0">
+                    <i class="fas fa-filter me-2"></i>
+                    Tìm Kiếm & Lọc
+                </h5>
+            </div>
+            <div class="p-4">
+                <form method="get" th:action="@{/vendor/orders}">
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" name="search" 
+                                   placeholder="Tìm theo mã đơn hàng hoặc tên khách hàng..."
+                                   th:value="${param.search}">
+                        </div>
+                        <div class="col-md-4">
+                            <select class="form-select" name="status">
+                                <option value="">Tất cả trạng thái</option>
+                                <option value="PENDING" th:selected="${currentStatus == 'PENDING'}">Chờ xác nhận</option>
+                                <option value="CONFIRMED" th:selected="${currentStatus == 'CONFIRMED'}">Đã xác nhận</option>
+                                <option value="PREPARING" th:selected="${currentStatus == 'PREPARING'}">Đang chuẩn bị</option>
+                                <option value="PACKED" th:selected="${currentStatus == 'PACKED'}">Đã đóng gói</option>
+                                <option value="SHIPPED" th:selected="${currentStatus == 'SHIPPED'}">Đang giao</option>
+                                <option value="DELIVERED" th:selected="${currentStatus == 'DELIVERED'}">Đã giao</option>
+                                <option value="CANCELLED" th:selected="${currentStatus == 'CANCELLED'}">Đã hủy</option>
+                                <option value="RETURNED" th:selected="${currentStatus == 'RETURNED'}">Hoàn trả</option>
+                            </select>
+                        </div>
+                        <div class="col-md-2">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="fas fa-search me-2"></i>Tìm Kiếm
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Orders Table -->
+        <div class="admin-table">
+            <div class="table-header d-flex justify-content-between align-items-center">
+                <h5 class="mb-0">
+                    <i class="fas fa-shopping-cart me-2"></i>
+                    Danh Sách Đơn Hàng
+                </h5>
+            </div>
+            
+            <div th:if="${message != null}" class="alert alert-success alert-dismissible fade show m-3" role="alert">
+                <span th:text="${message}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            
+            <div th:if="${error != null}" class="alert alert-danger alert-dismissible fade show m-3" role="alert">
+                <span th:text="${error}"></span>
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+            
+            <div class="table-responsive">
+                <table class="table mb-0">
+                    <thead>
+                        <tr>
+                            <th>Mã Đơn</th>
+                            <th>Khách Hàng</th>
+                            <th>Số Điện Thoại</th>
+                            <th>Tổng Tiền</th>
+                            <th>Trạng Thái</th>
+                            <th>Thanh Toán</th>
+                            <th>Ngày Đặt</th>
+                            <th>Thao Tác</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr th:each="order : ${orders}">
+                            <td>
+                                <strong th:text="${order.orderCode}">ORD123</strong>
+                            </td>
+                            <td>
+                                <div th:text="${order.shippingName}">Customer Name</div>
+                            </td>
+                            <td>
+                                <small th:text="${order.shippingPhone}">Phone</small>
+                            </td>
+                            <td>
+                                <strong th:text="${#numbers.formatDecimal(order.finalAmount, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</strong>
+                            </td>
+                            <td>
+                                <span class="badge" 
+                                      th:classappend="${order.status == 'PENDING' ? 'bg-warning' : 
+                                                     (order.status == 'CONFIRMED' ? 'bg-info' : 
+                                                     (order.status == 'PREPARING' ? 'bg-primary' : 
+                                                     (order.status == 'PACKED' ? 'bg-secondary' : 
+                                                     (order.status == 'SHIPPED' ? 'bg-primary' : 
+                                                     (order.status == 'DELIVERED' ? 'bg-success' : 
+                                                     (order.status == 'CANCELLED' ? 'bg-danger' : 'bg-warning'))))))}"
+                                      th:text="${order.status == 'PENDING' ? 'Chờ xác nhận' : 
+                                               (order.status == 'CONFIRMED' ? 'Đã xác nhận' : 
+                                               (order.status == 'PREPARING' ? 'Đang chuẩn bị' : 
+                                               (order.status == 'PACKED' ? 'Đã đóng gói' : 
+                                               (order.status == 'SHIPPED' ? 'Đang giao' : 
+                                               (order.status == 'DELIVERED' ? 'Đã giao' : 
+                                               (order.status == 'CANCELLED' ? 'Đã hủy' : 'Hoàn trả'))))))}">
+                                    Status
+                                </span>
+                            </td>
+                            <td>
+                                <span class="badge" 
+                                      th:classappend="${order.paymentStatus == 'PAID' ? 'bg-success' : 
+                                                     (order.paymentStatus == 'FAILED' ? 'bg-danger' : 'bg-warning')}"
+                                      th:text="${order.paymentStatus == 'PAID' ? 'Đã thanh toán' : 
+                                               (order.paymentStatus == 'FAILED' ? 'Thất bại' : 'Chờ thanh toán')}">
+                                    Payment Status
+                                </span>
+                            </td>
+                            <td>
+                                <small th:text="${#temporals.format(order.createAt, 'dd/MM/yyyy HH:mm')}">Date</small>
+                            </td>
+                            <td>
+                                <a th:href="@{/vendor/orders/{id}(id=${order.orderId})}" 
+                                   class="btn btn-sm btn-outline-primary">
+                                    <i class="fas fa-eye"></i> Chi Tiết
+                                </a>
+                            </td>
+                        </tr>
+                        <tr th:if="${orders.empty}">
+                            <td colspan="8" class="text-center py-5">
+                                <i class="fas fa-shopping-cart fa-3x text-muted mb-3"></i>
+                                <p class="text-muted">Không tìm thấy đơn hàng nào</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination -->
+            <div th:if="${page.totalPages > 1}" class="d-flex justify-content-between align-items-center p-3 border-top">
+                <div>
+                    <small class="text-muted">
+                        Hiển thị <strong th:text="${page.number * page.size + 1}">1</strong> - 
+                        <strong th:text="${T(java.lang.Math).min((page.number + 1) * page.size, page.totalElements)}">10</strong> 
+                        trong tổng số <strong th:text="${page.totalElements}">100</strong> đơn hàng
+                    </small>
+                </div>
+                
+                <nav>
+                    <ul class="pagination pagination-sm mb-0">
+                        <li class="page-item" th:classappend="${page.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/vendor/orders(page=0, size=${page.size}, status=${currentStatus != 'ALL' ? currentStatus : null}, search=${param.search})}">
+                                Đầu
+                            </a>
+                        </li>
+                        <li class="page-item" th:classappend="${page.first ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/vendor/orders(page=${page.number - 1}, size=${page.size}, status=${currentStatus != 'ALL' ? currentStatus : null}, search=${param.search})}">
+                                Trước
+                            </a>
+                        </li>
+                        
+                        <li class="page-item" th:each="i : ${#numbers.sequence(0, page.totalPages - 1)}" 
+                            th:if="${i >= page.number - 2 && i <= page.number + 2}"
+                            th:classappend="${i == page.number ? 'active' : ''}">
+                            <a class="page-link" th:href="@{/vendor/orders(page=${i}, size=${page.size}, status=${currentStatus != 'ALL' ? currentStatus : null}, search=${param.search})}" 
+                               th:text="${i + 1}">1</a>
+                        </li>
+                        
+                        <li class="page-item" th:classappend="${page.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/vendor/orders(page=${page.number + 1}, size=${page.size}, status=${currentStatus != 'ALL' ? currentStatus : null}, search=${param.search})}">
+                                Sau
+                            </a>
+                        </li>
+                        <li class="page-item" th:classappend="${page.last ? 'disabled' : ''}">
+                            <a class="page-link" th:href="@{/vendor/orders(page=${page.totalPages - 1}, size=${page.size}, status=${currentStatus != 'ALL' ? currentStatus : null}, search=${param.search})}">
+                                Cuối
+                            </a>
+                        </li>
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+</body>
+</html>
