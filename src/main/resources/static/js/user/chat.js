@@ -60,3 +60,5 @@ document.addEventListener('DOMContentLoaded', () => {
         btn.addEventListener('click', () => startChat(btn));
     });
 });
+
+window.startChat = startChat;
