@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 
 import com.womtech.entity.Cart;
 import com.womtech.entity.Product;
@@ -56,7 +57,8 @@ public class CartController {
 	@PostMapping("/add")
 	public String addCartItem(HttpSession session, Model model, Principal principal,
 							  @RequestParam String productID,
-							  @RequestParam int quantity) throws Exception {
+							  @RequestParam int quantity,
+							  RedirectAttributes redirect) throws Exception {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
 			return "redirect:/auth/login";
@@ -69,7 +71,9 @@ public class CartController {
 		}
 		cartService.addToCart(user, productOpt.get(), quantity);
 		
-		return "redirect:/product/" + productID + "?added=true&quantity=" + quantity;
+		redirect.addAttribute("added", true);
+		redirect.addAttribute("quantity", quantity);
+		return "redirect:/product/" + productID;
 	}
 	
 	@PostMapping("/remove")
