@@ -11,7 +11,7 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
-public interface OrderService {
+public interface OrderService extends BaseService<Order, String> {
     List<Order> getAllOrders();
     Optional<Order> getOrderById(String orderId);
     List<Order> getOrdersByUser(User user);
