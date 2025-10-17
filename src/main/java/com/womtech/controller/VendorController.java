@@ -253,7 +253,7 @@ public class VendorController {
 			// Handle thumbnail upload
 			if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
 				String imageUrl = cloudinaryService.uploadImage(thumbnailFile);
-				product.setThumbnail(imageUrl);	
+				product.setThumbnail(imageUrl);
 			}
 
 			productService.saveProduct(product);
@@ -502,27 +502,7 @@ public class VendorController {
 
 		return "vendor/order-detail";
 	}
-
-	@PostMapping("/orders/update-status")
-	public String updateOrderStatus(@RequestParam String orderId, @RequestParam Integer newItemStatus,
-			Authentication authentication, RedirectAttributes redirectAttributes) {
-
-		try {
-			User currentUser = getCurrentUser(authentication);
-
-			// Update only vendor's items status in the order
-			// newItemStatus should be ITEM_STATUS constant (ITEM_STATUS_CONFIRMED,
-			// ITEM_STATUS_SHIPPED, etc.)
-			orderService.updateVendorOrderItemsStatus(orderId, currentUser.getUserID(), newItemStatus);
-			redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sản phẩm của bạn thành công!");
-
-		} catch (Exception e) {
-			redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
-		}
-
-		return "redirect:/vendor/orders/" + orderId;
-	}
-
+	
 	@PostMapping("/orders/cancel")
 	public String cancelOrder(@RequestParam String orderId, Authentication authentication,
 			RedirectAttributes redirectAttributes) {
@@ -542,257 +522,228 @@ public class VendorController {
 	}
 
 	@PostMapping("/orders/update-item-status/{orderId}/{orderItemId}")
-	public String updateItemStatus(
-	        @PathVariable String orderId,
-	        @PathVariable String orderItemId,
-	        @RequestParam Integer newStatus,
-	        Authentication authentication,
-	        RedirectAttributes redirectAttributes) {
+	public String updateItemStatus(@PathVariable String orderId, @PathVariable String orderItemId,
+			@RequestParam Integer newStatus, Authentication authentication, RedirectAttributes redirectAttributes) {
 
-	    try {
-	        User currentUser = getCurrentUser(authentication);
+		try {
+			User currentUser = getCurrentUser(authentication);
 
-	        orderService.updateVendorItemStatus(orderId, orderItemId, currentUser.getUserID(), newStatus);
+			orderService.updateVendorItemStatus(orderId, orderItemId, currentUser.getUserID(), newStatus);
 
-	        redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sản phẩm thành công!");
-	    } catch (Exception e) {
-	        redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
-	    }
+			redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sản phẩm thành công!");
+		} catch (Exception e) {
+			redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật trạng thái: " + e.getMessage());
+		}
 
-	    return "redirect:/vendor/orders/" + orderId;
+		return "redirect:/vendor/orders/" + orderId;
 	}
 
-    
-    @PostMapping("/orders/cancel")
-    public String cancelOrder(
-            @RequestParam String orderId,
-            Authentication authentication,
-            RedirectAttributes redirectAttributes) {
-        
-        try {
-            User currentUser = getCurrentUser(authentication);
-            
-            // Cancel only vendor's items in the order
-            orderService.cancelVendorOrderItems(orderId, currentUser.getUserID());
-            redirectAttributes.addFlashAttribute("success", "Đã hủy sản phẩm của bạn trong đơn hàng!");
-            
-        } catch (Exception e) {
-            redirectAttributes.addFlashAttribute("error", "Lỗi khi hủy: " + e.getMessage());
-        }
-        
-        return "redirect:/vendor/orders/" + orderId;
-    }
+	@GetMapping("/revenue")
+	public String viewRevenue(@RequestParam(required = false) String period,
+			@RequestParam(required = false) String startDate, @RequestParam(required = false) String endDate,
+			Authentication authentication, Model model) {
 
-    @GetMapping("/revenue")
-    public String viewRevenue(@RequestParam(required = false) String period,
-            @RequestParam(required = false) String startDate, @RequestParam(required = false) String endDate,
-            Authentication authentication, Model model) {
+		User currentUser = getCurrentUser(authentication);
 
-        User currentUser = getCurrentUser(authentication);
+		// Default to last 30 days
+		java.time.LocalDateTime start;
+		java.time.LocalDateTime end = java.time.LocalDateTime.now();
 
-        // Default to last 30 days
-        java.time.LocalDateTime start;
-        java.time.LocalDateTime end = java.time.LocalDateTime.now();
+		if (period != null) {
+			switch (period) {
+			case "today":
+				start = java.time.LocalDateTime.now().toLocalDate().atStartOfDay();
+				break;
+			case "week":
+				start = java.time.LocalDateTime.now().minusWeeks(1);
+				break;
+			case "month":
+				start = java.time.LocalDateTime.now().minusMonths(1);
+				break;
+			case "year":
+				start = java.time.LocalDateTime.now().minusYears(1);
+				break;
+			case "custom":
+				if (startDate != null && endDate != null) {
+					start = java.time.LocalDate.parse(startDate).atStartOfDay();
+					end = java.time.LocalDate.parse(endDate).atTime(23, 59, 59);
+				} else {
+					start = java.time.LocalDateTime.now().minusMonths(1);
+				}
+				break;
+			default:
+				start = java.time.LocalDateTime.now().minusMonths(1);
+			}
+		} else {
+			start = java.time.LocalDateTime.now().minusMonths(1);
+			period = "month";
+		}
 
-        if (period != null) {
-            switch (period) {
-            case "today":
-                start = java.time.LocalDateTime.now().toLocalDate().atStartOfDay();
-                break;
-            case "week":
-                start = java.time.LocalDateTime.now().minusWeeks(1);
-                break;
-            case "month":
-                start = java.time.LocalDateTime.now().minusMonths(1);
-                break;
-            case "year":
-                start = java.time.LocalDateTime.now().minusYears(1);
-                break;
-            case "custom":
-                if (startDate != null && endDate != null) {
-                    start = java.time.LocalDate.parse(startDate).atStartOfDay();
-                    end = java.time.LocalDate.parse(endDate).atTime(23, 59, 59);
-                } else {
-                    start = java.time.LocalDateTime.now().minusMonths(1);
-                }
-                break;
-            default:
-                start = java.time.LocalDateTime.now().minusMonths(1);
-            }
-        } else {
-            start = java.time.LocalDateTime.now().minusMonths(1);
-            period = "month";
-        }
+		Map<String, Object> statistics = orderService.getVendorOrderStatistics(currentUser.getUserID(), start, end);
 
-        Map<String, Object> statistics = orderService.getVendorOrderStatistics(currentUser.getUserID(), start, end);
-        
-        // Lấy dữ liệu cho biểu đồ doanh thu theo thời gian
-        Map<String, Object> chartData = orderService.getRevenueChartData(currentUser.getUserID(), start, end);
-        
-        // Lấy dữ liệu cho biểu đồ phân loại sản phẩm
-        Map<String, Object> categoryData = orderService.getCategoryRevenueData(currentUser.getUserID(), start, end);
-        
-        // Lấy dữ liệu top sản phẩm bán chạy
-        Map<String, Object> topProductsData = orderService.getTopProductsData(currentUser.getUserID(), start, end);
+		// Lấy dữ liệu cho biểu đồ doanh thu theo thời gian
+		Map<String, Object> chartData = orderService.getRevenueChartData(currentUser.getUserID(), start, end);
 
-        model.addAttribute("statistics", statistics);
-        model.addAttribute("period", period);
-        model.addAttribute("startDate", startDate);
-        model.addAttribute("endDate", endDate);
-        
-        // Dữ liệu biểu đồ
-        model.addAttribute("revenueDates", chartData.get("dates"));
-        model.addAttribute("revenueValues", chartData.get("revenues"));
-        model.addAttribute("categoryLabels", categoryData.get("labels"));
-        model.addAttribute("categoryValues", categoryData.get("values"));
-        model.addAttribute("topProductLabels", topProductsData.get("labels"));
-        model.addAttribute("topProductValues", topProductsData.get("values"));
+		// Lấy dữ liệu cho biểu đồ phân loại sản phẩm
+		Map<String, Object> categoryData = orderService.getCategoryRevenueData(currentUser.getUserID(), start, end);
+
+		// Lấy dữ liệu top sản phẩm bán chạy
+		Map<String, Object> topProductsData = orderService.getTopProductsData(currentUser.getUserID(), start, end);
+
+		model.addAttribute("statistics", statistics);
+		model.addAttribute("period", period);
+		model.addAttribute("startDate", startDate);
+		model.addAttribute("endDate", endDate);
+
+		// Dữ liệu biểu đồ
+		model.addAttribute("revenueDates", chartData.get("dates"));
+		model.addAttribute("revenueValues", chartData.get("revenues"));
+		model.addAttribute("categoryLabels", categoryData.get("labels"));
+		model.addAttribute("categoryValues", categoryData.get("values"));
+		model.addAttribute("topProductLabels", topProductsData.get("labels"));
+		model.addAttribute("topProductValues", topProductsData.get("values"));
 
 		return "vendor/revenue";
 	}
-	
+
 	@GetMapping("/register")
-    public String showVendorRegisterOtp(Authentication authentication, Model model, RedirectAttributes ra, HttpServletRequest req) {
-        User currentUser = getCurrentUser(authentication);
+	public String showVendorRegisterOtp(Authentication authentication, Model model, RedirectAttributes ra,
+			HttpServletRequest req) {
+		User currentUser = getCurrentUser(authentication);
 
-        
-        java.util.List<String> roles = userService.getRolesByUserId(currentUser.getUserID());
-        boolean alreadyVendor = roles.stream().anyMatch(r -> "VENDOR".equalsIgnoreCase(r));
+		java.util.List<String> roles = userService.getRolesByUserId(currentUser.getUserID());
+		boolean alreadyVendor = roles.stream().anyMatch(r -> "VENDOR".equalsIgnoreCase(r));
 
-        if (alreadyVendor) {
-            ra.addFlashAttribute("info", "Tài khoản của bạn đã là Vendor.");
-            return "redirect:/";
-        }
+		if (alreadyVendor) {
+			ra.addFlashAttribute("info", "Tài khoản của bạn đã là Vendor.");
+			return "redirect:/";
+		}
 
-        String email = currentUser.getEmail();
-        if (email == null || email.isBlank()) {
-            ra.addFlashAttribute("error", "Tài khoản chưa có email để nhận OTP. Vui lòng cập nhật email trước.");
-            return "redirect:/user/profile";
-        }
+		String email = currentUser.getEmail();
+		if (email == null || email.isBlank()) {
+			ra.addFlashAttribute("error", "Tài khoản chưa có email để nhận OTP. Vui lòng cập nhật email trước.");
+			return "redirect:/user/profile";
+		}
 
-        HttpSession session = req.getSession(true);
+		HttpSession session = req.getSession(true);
 
-        // Chống spam gửi OTP theo cooldown
-        Instant last = (Instant) session.getAttribute(SK_VR_LAST_SEND);
-        if (last != null && Duration.between(last, Instant.now()).getSeconds() < VR_RESEND_COOLDOWN) {
-            long left = VR_RESEND_COOLDOWN - Duration.between(last, Instant.now()).getSeconds();
-            ra.addFlashAttribute("error", "Vui lòng chờ " + left + " giây nữa để gửi lại OTP.");
-            return "redirect:/vendor/register";
-        }
+		// Chống spam gửi OTP theo cooldown
+		Instant last = (Instant) session.getAttribute(SK_VR_LAST_SEND);
+		if (last != null && Duration.between(last, Instant.now()).getSeconds() < VR_RESEND_COOLDOWN) {
+			long left = VR_RESEND_COOLDOWN - Duration.between(last, Instant.now()).getSeconds();
+			ra.addFlashAttribute("error", "Vui lòng chờ " + left + " giây nữa để gửi lại OTP.");
+			return "redirect:/vendor/register";
+		}
 
-        // Sinh OTP + set session
-        String otp = generateOtp();
-        Instant expire = Instant.now().plus(Duration.ofMinutes(VR_OTP_TTL_MIN));
+		// Sinh OTP + set session
+		String otp = generateOtp();
+		Instant expire = Instant.now().plus(Duration.ofMinutes(VR_OTP_TTL_MIN));
 
-        session.setAttribute(SK_VR_OTP, otp);
-        session.setAttribute(SK_VR_EXPIRE, expire);
-        session.setAttribute(SK_VR_LAST_SEND, Instant.now());
+		session.setAttribute(SK_VR_OTP, otp);
+		session.setAttribute(SK_VR_EXPIRE, expire);
+		session.setAttribute(SK_VR_LAST_SEND, Instant.now());
 
-        // Gửi email OTP – tận dụng EmailUtil bạn đã có
-        try {
-            // Có thể dùng template verify/forgot của bạn. Ví dụ dùng verify:
-            emailUtil.sendVerifyOtp(email, currentUser.getUsername(), otp, VR_OTP_TTL_MIN);
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "Không thể gửi email OTP. Vui lòng thử lại.");
-            // Xóa session OTP để an toàn
-            clearVrSession(session);
-            return "redirect:/";
-        }
+		// Gửi email OTP – tận dụng EmailUtil bạn đã có
+		try {
+			// Có thể dùng template verify/forgot của bạn. Ví dụ dùng verify:
+			emailUtil.sendVerifyOtp(email, currentUser.getUsername(), otp, VR_OTP_TTL_MIN);
+		} catch (Exception e) {
+			ra.addFlashAttribute("error", "Không thể gửi email OTP. Vui lòng thử lại.");
+			// Xóa session OTP để an toàn
+			clearVrSession(session);
+			return "redirect:/";
+		}
 
-        // Hiển thị trang nhập OTP
-        model.addAttribute("maskedEmail", maskEmail(email));
-        model.addAttribute("ttlSeconds", VR_OTP_TTL_MIN * 60);
-        model.addAttribute("cooldown", VR_RESEND_COOLDOWN);
-        return "vendor/register-otp";
-    }
+		// Hiển thị trang nhập OTP
+		model.addAttribute("maskedEmail", maskEmail(email));
+		model.addAttribute("ttlSeconds", VR_OTP_TTL_MIN * 60);
+		model.addAttribute("cooldown", VR_RESEND_COOLDOWN);
+		return "vendor/register-otp";
+	}
 
-    // ====== 2) POST /vendor/register – xác thực OTP + đổi role + ép đăng nhập lại ======
-    @PostMapping("/register")
-    public String handleVendorRegisterOtp(
-            @RequestParam("otp") String otp,
-            Authentication authentication,
-            HttpServletRequest request,
-            HttpServletResponse response,
-            RedirectAttributes ra) {
+	// ====== 2) POST /vendor/register – xác thực OTP + đổi role + ép đăng nhập lại
+	// ======
+	@PostMapping("/register")
+	public String handleVendorRegisterOtp(@RequestParam("otp") String otp, Authentication authentication,
+			HttpServletRequest request, HttpServletResponse response, RedirectAttributes ra) {
 
-        User currentUser = getCurrentUser(authentication);
-        HttpSession session = request.getSession(false);
+		User currentUser = getCurrentUser(authentication);
+		HttpSession session = request.getSession(false);
 
-        if (session == null) {
-            ra.addFlashAttribute("error", "Phiên OTP không hợp lệ. Vui lòng thử lại.");
-            return "redirect:/vendor/register";
-        }
+		if (session == null) {
+			ra.addFlashAttribute("error", "Phiên OTP không hợp lệ. Vui lòng thử lại.");
+			return "redirect:/vendor/register";
+		}
 
-        String saved = (String) session.getAttribute(SK_VR_OTP);
-        Instant expireAt = (Instant) session.getAttribute(SK_VR_EXPIRE);
+		String saved = (String) session.getAttribute(SK_VR_OTP);
+		Instant expireAt = (Instant) session.getAttribute(SK_VR_EXPIRE);
 
-        if (saved == null || expireAt == null) {
-            ra.addFlashAttribute("error", "OTP không tồn tại hoặc phiên đã hết hạn.");
-            clearVrSession(session);
-            return "redirect:/vendor/register";
-        }
-        if (Instant.now().isAfter(expireAt)) {
-            ra.addFlashAttribute("error", "OTP đã hết hạn. Vui lòng gửi lại.");
-            clearVrSession(session);
-            return "redirect:/vendor/register";
-        }
-        if (otp == null || !otp.trim().equals(saved)) {
-            ra.addFlashAttribute("error", "OTP không đúng. Vui lòng kiểm tra lại.");
-            return "redirect:/vendor/register";
-        }
+		if (saved == null || expireAt == null) {
+			ra.addFlashAttribute("error", "OTP không tồn tại hoặc phiên đã hết hạn.");
+			clearVrSession(session);
+			return "redirect:/vendor/register";
+		}
+		if (Instant.now().isAfter(expireAt)) {
+			ra.addFlashAttribute("error", "OTP đã hết hạn. Vui lòng gửi lại.");
+			clearVrSession(session);
+			return "redirect:/vendor/register";
+		}
+		if (otp == null || !otp.trim().equals(saved)) {
+			ra.addFlashAttribute("error", "OTP không đúng. Vui lòng kiểm tra lại.");
+			return "redirect:/vendor/register";
+		}
 
-        // OTP hợp lệ → đổi role sang VENDOR
-        try {
-            // Nếu muốn "chỉ còn" VENDOR thì triển khai như promoteToVendor(...) xóa role cũ
-            // Nếu muốn "giữ cả USER + VENDOR" thì chỉ add role VENDOR nếu chưa có:
-        	userService.promoteToVendor(currentUser.getUserID());
-        } catch (Exception e) {
-            ra.addFlashAttribute("error", "Không thể cập nhật quyền Vendor: " + e.getMessage());
-            return "redirect:/vendor/register";
-        } finally {
-            clearVrSession(session);
-        }
+		// OTP hợp lệ → đổi role sang VENDOR
+		try {
+			// Nếu muốn "chỉ còn" VENDOR thì triển khai như promoteToVendor(...) xóa role cũ
+			// Nếu muốn "giữ cả USER + VENDOR" thì chỉ add role VENDOR nếu chưa có:
+			userService.promoteToVendor(currentUser.getUserID());
+		} catch (Exception e) {
+			ra.addFlashAttribute("error", "Không thể cập nhật quyền Vendor: " + e.getMessage());
+			return "redirect:/vendor/register";
+		} finally {
+			clearVrSession(session);
+		}
 
-        // Ép đăng nhập lại: revoke/clear cookies + session → chuyển tới /auth/login
-        clearAuthCookies(request, response);
-        session.invalidate();
-        org.springframework.security.core.context.SecurityContextHolder.clearContext();
+		// Ép đăng nhập lại: revoke/clear cookies + session → chuyển tới /auth/login
+		clearAuthCookies(request, response);
+		session.invalidate();
+		org.springframework.security.core.context.SecurityContextHolder.clearContext();
 
-        ra.addFlashAttribute("success", "Đăng ký shop thành công! Vui lòng đăng nhập lại để áp dụng quyền Vendor.");
-        return "redirect:/auth/login";
-    }
+		ra.addFlashAttribute("success", "Đăng ký shop thành công! Vui lòng đăng nhập lại để áp dụng quyền Vendor.");
+		return "redirect:/auth/login";
+	}
 
-    // ====== 3) POST /vendor/register/resend – gửi lại OTP ======
-    @PostMapping("/register/resend")
-    public String resendVendorOtp(Authentication authentication, HttpServletRequest req, RedirectAttributes ra) {
-        User currentUser = getCurrentUser(authentication);
-        HttpSession session = req.getSession(true);
+	// ====== 3) POST /vendor/register/resend – gửi lại OTP ======
+	@PostMapping("/register/resend")
+	public String resendVendorOtp(Authentication authentication, HttpServletRequest req, RedirectAttributes ra) {
+		User currentUser = getCurrentUser(authentication);
+		HttpSession session = req.getSession(true);
 
-        Instant last = (Instant) session.getAttribute(SK_VR_LAST_SEND);
-        if (last != null && Duration.between(last, Instant.now()).getSeconds() < VR_RESEND_COOLDOWN) {
-            long left = VR_RESEND_COOLDOWN - Duration.between(last, Instant.now()).getSeconds();
-            ra.addFlashAttribute("error", "Vui lòng chờ " + left + " giây nữa để gửi lại OTP.");
-            return "redirect:/vendor/register";
-        }
+		Instant last = (Instant) session.getAttribute(SK_VR_LAST_SEND);
+		if (last != null && Duration.between(last, Instant.now()).getSeconds() < VR_RESEND_COOLDOWN) {
+			long left = VR_RESEND_COOLDOWN - Duration.between(last, Instant.now()).getSeconds();
+			ra.addFlashAttribute("error", "Vui lòng chờ " + left + " giây nữa để gửi lại OTP.");
+			return "redirect:/vendor/register";
+		}
 
-        String otp = generateOtp();
-        Instant expire = Instant.now().plus(Duration.ofMinutes(VR_OTP_TTL_MIN));
-        session.setAttribute(SK_VR_OTP, otp);
-        session.setAttribute(SK_VR_EXPIRE, expire);
-        session.setAttribute(SK_VR_LAST_SEND, Instant.now());
+		String otp = generateOtp();
+		Instant expire = Instant.now().plus(Duration.ofMinutes(VR_OTP_TTL_MIN));
+		session.setAttribute(SK_VR_OTP, otp);
+		session.setAttribute(SK_VR_EXPIRE, expire);
+		session.setAttribute(SK_VR_LAST_SEND, Instant.now());
 
-        try {
-            emailUtil.sendVerifyOtp(currentUser.getEmail(), currentUser.getUsername(), otp, VR_OTP_TTL_MIN);
-        } catch (Exception ex) {
-            ra.addFlashAttribute("error", "Không thể gửi lại OTP lúc này. Vui lòng thử lại.");
-            return "redirect:/vendor/register";
-        }
+		try {
+			emailUtil.sendVerifyOtp(currentUser.getEmail(), currentUser.getUsername(), otp, VR_OTP_TTL_MIN);
+		} catch (Exception ex) {
+			ra.addFlashAttribute("error", "Không thể gửi lại OTP lúc này. Vui lòng thử lại.");
+			return "redirect:/vendor/register";
+		}
 
-        ra.addFlashAttribute("success", "Đã gửi lại OTP đến email của bạn.");
-        return "redirect:/vendor/register";
-    }
+		ra.addFlashAttribute("success", "Đã gửi lại OTP đến email của bạn.");
+		return "redirect:/vendor/register";
+	}
 
-	
 	// ========== API ENDPOINTS ==========
 	@GetMapping("/api/subcategories/category/{categoryID}")
 	@ResponseBody

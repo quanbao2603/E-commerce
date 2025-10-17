@@ -1,13 +1,10 @@
 package com.womtech.service.impl;
 
-<<<<<<< HEAD
-=======
 import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
 import com.womtech.entity.User;
 import com.womtech.repository.OrderItemRepository;
 import com.womtech.repository.OrderRepository;
->>>>>>> 541b11368e32055a4e5934bf8191703674cff62b
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
@@ -18,35 +15,22 @@ import org.springframework.stereotype.Service;
 
 import com.womtech.entity.Address;
 import com.womtech.entity.Cart;
-import com.womtech.entity.Order;
-import com.womtech.entity.User;
-import com.womtech.repository.OrderRepository;
 import com.womtech.service.AddressService;
 import com.womtech.service.CartItemService;
 import com.womtech.service.CartService;
 import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
 import com.womtech.util.OrderStatusHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
-<<<<<<< HEAD
 public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements OrderService {
-	@Autowired
-=======
-public class OrderServiceImpl implements OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
@@ -55,7 +39,6 @@ public class OrderServiceImpl implements OrderService {
     private OrderItemRepository orderItemRepository;
     
     @Autowired
->>>>>>> 541b11368e32055a4e5934bf8191703674cff62b
 	CartService cartService;
 	@Autowired
     CartItemService cartItemService;
@@ -63,37 +46,11 @@ public class OrderServiceImpl implements OrderService {
     AddressService addressService;
 	@Autowired
 	OrderItemService orderItemService;
-<<<<<<< HEAD
-	@Autowired
-    OrderRepository orderRepository;
-
-=======
 	
->>>>>>> 541b11368e32055a4e5934bf8191703674cff62b
 	public OrderServiceImpl(JpaRepository<Order, String> repo) {
 		super(repo);
 	}
 
-<<<<<<< HEAD
-    @Override
-	public Order createOrder(User user, Address address, String payment_method) {
-        Cart cart = cartService.findByUser(user);
-        // Chưa thêm voucher
-        BigDecimal total = cartService.totalPrice(cart);
-        
-        Order order = Order.builder()
-                .user(user)
-                .address(address)
-                .totalPrice(total)
-                .paymentMethod(payment_method)
-                .totalPrice(total)
-                .createAt(LocalDateTime.now())
-                .updateAt(LocalDateTime.now())
-                .build();
-
-        orderItemService.createItemsFromCart(order, cart);
-        
-=======
 
     @Override
     public List<Order> getAllOrders() {
@@ -247,7 +204,6 @@ public class OrderServiceImpl implements OrderService {
             order.setStatus(OrderStatusHelper.STATUS_CANCELLED);
         }
 
->>>>>>> 541b11368e32055a4e5934bf8191703674cff62b
         orderRepository.save(order);
     }
 
@@ -385,9 +341,6 @@ public class OrderServiceImpl implements OrderService {
         
         return statistics;
     }
-<<<<<<< HEAD
-}
-=======
     
     @Override
 	public Order createOrder(User user, Address address, String payment_method) {
@@ -419,4 +372,3 @@ public class OrderServiceImpl implements OrderService {
 		return orderRepository.findByUser(user);
 	}
 }
->>>>>>> 541b11368e32055a4e5934bf8191703674cff62b
