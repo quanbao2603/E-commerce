@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -602,6 +603,28 @@ public class VendorController {
 		model.addAttribute("categoryValues", categoryData.get("values"));
 		model.addAttribute("topProductLabels", topProductsData.get("labels"));
 		model.addAttribute("topProductValues", topProductsData.get("values"));
+		
+		// Tạo danh sách màu sắc
+		String[] categoryColorsArray = {
+		    "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
+		    "#06b6d4", "#84cc16", "#f97316", "#ec4899", "#6366f1"
+		};
+
+		List<String> categoryColors = new ArrayList<>();
+		List<?> categoryLabels = (List<?>) categoryData.get("labels");
+		for (int i = 0; i < categoryLabels.size(); i++) {
+		    categoryColors.add(categoryColorsArray[i % categoryColorsArray.length]);
+		}
+
+		List<String> productColors = new ArrayList<>();
+		List<?> topProductLabels = (List<?>) topProductsData.get("labels");
+		for (int i = 0; i < topProductLabels.size(); i++) {
+		    productColors.add(categoryColorsArray[i % categoryColorsArray.length]);
+		}
+
+		// Thêm vào model
+		model.addAttribute("categoryColors", categoryColors);
+		model.addAttribute("productColors", productColors);
 
 		return "vendor/revenue";
 	}

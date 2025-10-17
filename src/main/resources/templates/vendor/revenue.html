@@ -4,76 +4,8 @@
 	layout:decorate="~{vendor/layout}">
 <head>
 <title>Báo Cáo Doanh Thu - Vendor Panel</title>
-<style>
-    .chart-tabs .nav-link {
-        border: none;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        color: #6b7280;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    .chart-tabs .nav-link.active {
-        background-color: #fff;
-        color: #3b82f6;
-        border-bottom: 3px solid #3b82f6;
-    }
-    
-    .chart-tabs .nav-link:hover {
-        color: #3b82f6;
-    }
-    
-    .chart-container {
-        position: relative;
-        height: 400px;
-        width: 100%;
-    }
-    
-    .chart-tab-content {
-        background: white;
-        border-radius: 0 0 8px 8px;
-        padding: 1.5rem;
-        min-height: 500px;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-        height: 100%;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
-    
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 0.25rem;
-    }
-    
-    .stat-label {
-        color: #6b7280;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-</style>
+<!-- Link to external CSS -->
+<link rel="stylesheet" th:href="@{/css/vendor/revenue.css}">
 </head>
 <body>
 	<h1 layout:fragment="page-title">Báo Cáo Doanh Thu</h1>
@@ -179,7 +111,7 @@
 						<i class="fas fa-percentage"></i>
 					</div>
 					<div class="stat-value"
-						th:text="${statistics.ordersByStatus['DELIVERED']}">0</div>
+						th:text="${statistics.deliveredOrders}">0</div>
 					<div class="stat-label">Đơn Hoàn Thành</div>
 				</div>
 			</div>
@@ -238,11 +170,11 @@
 						</div>
 						<div class="col-md-4">
 							<h6 class="mb-3">Chi Tiết Doanh Thu Theo Danh Mục</h6>
-							<div class="category-list" style="max-height: 300px; overflow-y: auto;">
+							<div class="category-list">
 								<div th:each="category, iter : ${categoryLabels}" class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
 									<div class="d-flex align-items-center">
-										<span class="category-color me-2" 
-											th:style="'background-color: ' + ${@chartService.getCategoryColor(iter.index)} + '; width: 12px; height: 12px; border-radius: 50%; display: inline-block;'"></span>
+										<span class="category-color" 
+											th:classappend="'cat-color-' + ${iter.index % 10}"></span>
 										<span th:text="${category}">Category</span>
 									</div>
 									<strong th:text="${#numbers.formatDecimal(categoryValues[iter.index], 0, 'COMMA', 0, 'POINT')} + ' ₫'">0 ₫</strong>
@@ -266,7 +198,7 @@
 						</div>
 						<div class="col-md-4">
 							<h6 class="mb-3">Top Sản Phẩm Bán Chạy</h6>
-							<div class="products-list" style="max-height: 300px; overflow-y: auto;">
+							<div class="products-list">
 								<div th:each="product, iter : ${topProductLabels}" class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
 									<div class="product-info">
 										<div class="fw-medium" th:text="${product}">Product</div>
@@ -327,20 +259,20 @@
 		<!-- Bootstrap JS for tabs -->
 		<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
 
-		<!-- Revenue Line Chart Script -->
+		<!-- Revenue Charts Script -->
 		<script th:inline="javascript">
 /*<![CDATA[*/
-    // Revenue Chart Data
+    // Data from Thymeleaf
     const revenueLabels = /*[[${revenueDates}]]*/ [];
     const revenueValues = /*[[${revenueValues}]]*/ [];
     
-    // Category Data
     const categoryLabels = /*[[${categoryLabels}]]*/ [];
     const categoryValues = /*[[${categoryValues}]]*/ [];
+    const categoryColors = /*[[${categoryColors}]]*/ [];
     
-    // Top Products Data
     const topProductLabels = /*[[${topProductLabels}]]*/ [];
     const topProductValues = /*[[${topProductValues}]]*/ [];
+    const productColors = /*[[${productColors}]]*/ [];
     
     // Chart instances
     let revenueChartInstance = null;
@@ -349,36 +281,62 @@
 
     // Initialize Charts when page loads
     document.addEventListener('DOMContentLoaded', function() {
-        initializeRevenueChart();
-        if (categoryLabels.length > 0) {
-            initializeCategoryChart();
+        try {
+            initializeRevenueChart();
+            
+            if (categoryLabels && categoryLabels.length > 0) {
+                initializeCategoryChart();
+            }
+            
+            if (topProductLabels && topProductLabels.length > 0) {
+                initializeTopProductsChart();
+            }
+            
+            setupTabListeners();
+            
+        } catch (error) {
+            console.error('Error initializing charts:', error);
         }
-        if (topProductLabels.length > 0) {
-            initializeTopProductsChart();
-        }
-        
-        // Re-initialize charts when tab changes
-        document.getElementById('revenue-tab').addEventListener('shown.bs.tab', function() {
-            if (revenueChartInstance) {
-                revenueChartInstance.update();
-            }
-        });
-        
-        document.getElementById('category-tab').addEventListener('shown.bs.tab', function() {
-            if (categoryChartInstance) {
-                categoryChartInstance.update();
-            }
-        });
-        
-        document.getElementById('products-tab').addEventListener('shown.bs.tab', function() {
-            if (topProductsChartInstance) {
-                topProductsChartInstance.update();
-            }
-        });
     });
 
+    function setupTabListeners() {
+        const revenueTab = document.getElementById('revenue-tab');
+        const categoryTab = document.getElementById('category-tab');
+        const productsTab = document.getElementById('products-tab');
+
+        if (revenueTab) {
+            revenueTab.addEventListener('shown.bs.tab', function() {
+                if (revenueChartInstance) {
+                    revenueChartInstance.resize();
+                    revenueChartInstance.update();
+                }
+            });
+        }
+
+        if (categoryTab) {
+            categoryTab.addEventListener('shown.bs.tab', function() {
+                if (categoryChartInstance) {
+                    categoryChartInstance.resize();
+                    categoryChartInstance.update();
+                }
+            });
+        }
+
+        if (productsTab) {
+            productsTab.addEventListener('shown.bs.tab', function() {
+                if (topProductsChartInstance) {
+                    topProductsChartInstance.resize();
+                    topProductsChartInstance.update();
+                }
+            });
+        }
+    }
+
     function initializeRevenueChart() {
-        const ctx = document.getElementById('revenueChart').getContext('2d');
+        const canvas = document.getElementById('revenueChart');
+        if (!canvas) return;
+
+        const ctx = canvas.getContext('2d');
         revenueChartInstance = new Chart(ctx, {
             type: 'line',
             data: {
@@ -410,26 +368,21 @@
                     },
                     tooltip: {
                         callbacks: {
-                            label: (ctx) => ' Doanh thu: ' + ctx.formattedValue + ' ₫'
+                            label: (ctx) => {
+                                const value = ctx.parsed.y.toLocaleString('vi-VN');
+                                return ' Doanh thu: ' + value + ' ₫';
+                            }
                         }
                     }
                 },
                 scales: {
                     x: {
-                        title: {
-                            display: true,
-                            text: 'Ngày'
-                        },
-                        grid: { 
-                            display: false 
-                        }
+                        title: { display: true, text: 'Ngày' },
+                        grid: { display: false }
                     },
                     y: {
                         beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Doanh thu (₫)'
-                        },
+                        title: { display: true, text: 'Doanh thu (₫)' },
                         ticks: {
                             callback: function(value) {
                                 return value.toLocaleString('vi-VN') + ' ₫';
@@ -437,21 +390,16 @@
                         }
                     }
                 },
-                interaction: {
-                    intersect: false,
-                    mode: 'index'
-                }
+                interaction: { intersect: false, mode: 'index' }
             }
         });
     }
 
     function initializeCategoryChart() {
-        const ctx = document.getElementById('categoryChart').getContext('2d');
-        const categoryColors = [
-            '#3b82f6', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6',
-            '#06b6d4', '#84cc16', '#f97316', '#ec4899', '#6366f1'
-        ];
-        
+        const canvas = document.getElementById('categoryChart');
+        if (!canvas || !categoryColors || categoryColors.length === 0) return;
+
+        const ctx = canvas.getContext('2d');
         categoryChartInstance = new Chart(ctx, {
             type: 'doughnut',
             data: {
@@ -480,7 +428,8 @@
                             label: (ctx) => {
                                 const total = ctx.dataset.data.reduce((a, b) => a + b, 0);
                                 const percentage = ((ctx.parsed / total) * 100).toFixed(1);
-                                return ` ${ctx.label}: ${ctx.formattedValue} ₫ (${percentage}%)`;
+                                const value = ctx.formattedValue.toLocaleString('vi-VN');
+                                return ` ${ctx.label}: ${value} ₫ (${percentage}%)`;
                             }
                         }
                     }
@@ -491,7 +440,10 @@
     }
 
     function initializeTopProductsChart() {
-        const ctx = document.getElementById('topProductsChart').getContext('2d');
+        const canvas = document.getElementById('topProductsChart');
+        if (!canvas || !productColors || productColors.length === 0) return;
+
+        const ctx = canvas.getContext('2d');
         topProductsChartInstance = new Chart(ctx, {
             type: 'bar',
             data: {
@@ -499,20 +451,18 @@
                 datasets: [{
                     label: 'Số lượng bán',
                     data: topProductValues,
-                    backgroundColor: '#10b981',
+                    backgroundColor: productColors[0],
                     borderColor: '#059669',
                     borderWidth: 1,
                     borderRadius: 4,
-                    borderSkipped: false,
+                    borderSkipped: false
                 }]
             },
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
                 plugins: {
-                    legend: {
-                        display: false
-                    },
+                    legend: { display: false },
                     tooltip: {
                         callbacks: {
                             label: (ctx) => ` Số lượng: ${ctx.formattedValue}`
@@ -520,26 +470,24 @@
                     }
                 },
                 scales: {
-                    x: {
-                        grid: {
-                            display: false
-                        }
-                    },
+                    x: { grid: { display: false } },
                     y: {
                         beginAtZero: true,
-                        title: {
-                            display: true,
-                            text: 'Số lượng bán'
-                        },
-                        ticks: {
-                            stepSize: 1
-                        }
+                        title: { display: true, text: 'Số lượng bán' },
+                        ticks: { stepSize: 1 }
                     }
-                },
-                indexAxis: 'x'
+                }
             }
         });
     }
+
+    // Cleanup when leaving page
+    window.addEventListener('beforeunload', function() {
+        if (revenueChartInstance) revenueChartInstance.destroy();
+        if (categoryChartInstance) categoryChartInstance.destroy();
+        if (topProductsChartInstance) topProductsChartInstance.destroy();
+    });
+
 /*]]>*/
 </script>
 	</div>
