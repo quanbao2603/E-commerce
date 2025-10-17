@@ -1,22 +1,24 @@
 package com.womtech.repository;
 
-import com.womtech.entity.Order;
-import com.womtech.entity.OrderItem;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
-import java.util.List;
+import com.womtech.entity.Order;
+import com.womtech.entity.OrderItem;
 
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
-    
-    List<OrderItem> findByOrder(Order order);
-    
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.product.ownerUser.userID = :vendorId")
-    List<OrderItem> findOrderItemsByVendorId(@Param("vendorId") String vendorId);
-    
-    @Query("SELECT oi FROM OrderItem oi WHERE oi.order.orderID = :orderId AND oi.product.ownerUser.userID = :vendorId")
-    List<OrderItem> findOrderItemsByOrderIdAndVendorId(@Param("orderId") String orderId, @Param("vendorId") String vendorId);
+	@Query("""
+			    SELECT COUNT(oi) > 0 FROM OrderItem oi
+			    WHERE oi.product.productID = :productId
+			      AND oi.order.user.userID = :userId
+			      AND oi.order.status = 1
+			""")
+	boolean hasUserPurchasedProduct(@Param("userId") String userId, @Param("productId") String productId);
+	
+	List<OrderItem> findByOrder(Order order);
 }

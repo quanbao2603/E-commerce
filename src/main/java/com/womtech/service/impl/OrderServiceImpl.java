@@ -1,10 +1,22 @@
 package com.womtech.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.stereotype.Service;
+
+import com.womtech.entity.Address;
+import com.womtech.entity.Cart;
 import com.womtech.entity.Order;
-import com.womtech.entity.OrderItem;
 import com.womtech.entity.User;
-import com.womtech.repository.OrderItemRepository;
 import com.womtech.repository.OrderRepository;
+import com.womtech.service.AddressService;
+import com.womtech.service.CartItemService;
+import com.womtech.service.CartService;
+import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
 import com.womtech.util.OrderStatusHelper;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,212 +29,49 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Service
-public class OrderServiceImpl implements OrderService {
+public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements OrderService {
+	@Autowired
+	CartService cartService;
+	@Autowired
+    CartItemService cartItemService;
+	@Autowired
+    AddressService addressService;
+	@Autowired
+	OrderItemService orderItemService;
+	@Autowired
+    OrderRepository orderRepository;
 
-    @Autowired
-    private OrderRepository orderRepository;
-
-    @Autowired
-    private OrderItemRepository orderItemRepository;
-
-    @Override
-    public List<Order> getAllOrders() {
-        return orderRepository.findAll();
-    }
-
-    @Override
-    public Optional<Order> getOrderById(String orderId) {
-        return orderRepository.findById(orderId);
-    }
+	public OrderServiceImpl(JpaRepository<Order, String> repo) {
+		super(repo);
+	}
 
     @Override
-    public List<Order> getOrdersByUser(User user) {
-        return orderRepository.findByUserOrderByCreateAtDesc(user);
-    }
+	public Order createOrder(User user, Address address, String payment_method) {
+        Cart cart = cartService.findByUser(user);
+        // Chưa thêm voucher
+        BigDecimal total = cartService.totalPrice(cart);
+        
+        Order order = Order.builder()
+                .user(user)
+                .address(address)
+                .totalPrice(total)
+                .paymentMethod(payment_method)
+                .totalPrice(total)
+                .createAt(LocalDateTime.now())
+                .updateAt(LocalDateTime.now())
+                .build();
 
-    @Override
-    public List<Order> getOrdersByStatus(Integer status) {
-        return orderRepository.findByStatusOrderByCreateAtDesc(status);
-    }
-
-    @Override
-    public List<Order> getOrdersByVendorId(String vendorId) {
-        return orderRepository.findOrdersByVendorId(vendorId);
-    }
-
-    @Override
-    public List<Order> getOrdersByVendorIdAndStatus(String vendorId, Integer status) {
-        return orderRepository.findOrdersByVendorIdAndStatus(vendorId, status);
-    }
-
-    @Override
-    public List<Order> getOrdersByVendorIdAndDateRange(String vendorId, LocalDateTime startDate, LocalDateTime endDate) {
-        return orderRepository.findOrdersByVendorIdAndDateRange(vendorId, startDate, endDate);
-    }
-
-    @Override
-    public Long countOrdersByVendorId(String vendorId) {
-        return orderRepository.countOrdersByVendorId(vendorId);
-    }
-
-    @Override
-    public Long countOrdersByVendorIdAndStatus(String vendorId, Integer status) {
-        return orderRepository.countOrdersByVendorIdAndStatus(vendorId, status);
-    }
-
-    @Override
-    public List<OrderItem> getOrderItemsByOrderIdAndVendorId(String orderId, String vendorId) {
-        return orderItemRepository.findOrderItemsByOrderIdAndVendorId(orderId, vendorId);
-    }
-
-    @Override
-    @Transactional
-    public Order saveOrder(Order order) {
-        return orderRepository.save(order);
-    }
-
-    @Override
-    @Transactional
-    public void updateOrderStatus(String orderId, Integer newStatus) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        order.setStatus(newStatus);
-
-        Integer itemStatus = OrderStatusHelper.orderStatusToItemStatus(newStatus);
-        for (OrderItem item : order.getItems()) {
-            item.setStatus(itemStatus);
-        }
-
+        orderItemService.createItemsFromCart(order, cart);
+        
         orderRepository.save(order);
+        
+        cartService.clearCart(user);
+
+        return order;
     }
 
-    @Override
-    @Transactional
-    public void updateVendorItemStatus(String orderId, String orderItemId, String vendorId, Integer newItemStatus) {
-        // 1️⃣ Tìm order
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
-
-        // 2️⃣ Tìm item thuộc vendor hiện tại
-        OrderItem item = order.getItems().stream()
-                .filter(i -> i.getOrderItemID().equals(orderItemId)
-                        && i.getProduct() != null
-                        && i.getProduct().getOwnerUser() != null
-                        && i.getProduct().getOwnerUser().getUserID().equals(vendorId))
-                .findFirst()
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy sản phẩm thuộc vendor này trong đơn hàng"));
-
-        // 3️⃣ Cập nhật trạng thái item
-        item.setStatus(newItemStatus);
-
-        // 4️⃣ Kiểm tra nếu **tất cả item** trong order đều đã hoàn thành
-        boolean allDelivered = order.getItems().stream()
-                .allMatch(i -> i.getStatus() == OrderStatusHelper.ITEM_STATUS_DELIVERED);
-
-        if (allDelivered) {
-            // Nếu tất cả item đều Delivered → cập nhật trạng thái order
-            order.setStatus(OrderStatusHelper.STATUS_DELIVERED);
-        } else {
-            // Nếu chưa thì chỉ cập nhật theo item có trạng thái thấp nhất
-            Integer minItemStatus = order.getItems().stream()
-                    .map(OrderItem::getStatus)
-                    .min(Integer::compareTo)
-                    .orElse(newItemStatus);
-
-            order.setStatus(OrderStatusHelper.itemStatusToOrderStatus(minItemStatus));
-        }
-
-        orderRepository.save(order);
-    }
-
-
-    @Override
-    @Transactional
-    public void cancelOrder(String orderId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        order.setStatus(OrderStatusHelper.STATUS_CANCELLED);
-        for (OrderItem item : order.getItems()) {
-            item.setStatus(OrderStatusHelper.ITEM_STATUS_CANCELLED);
-        }
-
-        orderRepository.save(order);
-    }
-
-    @Override
-    @Transactional
-    public void cancelVendorOrderItems(String orderId, String vendorId) {
-        Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Order not found"));
-
-        boolean hasVendorItems = false;
-        for (OrderItem item : order.getItems()) {
-            if (item.getProduct().getOwnerUser() != null &&
-                item.getProduct().getOwnerUser().getUserID().equals(vendorId)) {
-                item.setStatus(OrderStatusHelper.ITEM_STATUS_CANCELLED);
-                hasVendorItems = true;
-            }
-        }
-
-        if (!hasVendorItems) {
-            throw new RuntimeException("No items from this vendor in the order");
-        }
-
-        boolean allCancelled = order.getItems().stream()
-                .allMatch(item -> item.getStatus().equals(OrderStatusHelper.ITEM_STATUS_CANCELLED));
-
-        if (allCancelled) {
-            order.setStatus(OrderStatusHelper.STATUS_CANCELLED);
-        }
-
-        orderRepository.save(order);
-    }
-
-    @Override
-    public Map<String, Object> getVendorOrderStatistics(String vendorId, LocalDateTime startDate, LocalDateTime endDate) {
-        Map<String, Object> stats = new HashMap<>();
-
-        List<Order> orders = getOrdersByVendorIdAndDateRange(vendorId, startDate, endDate);
-        List<Order> relevantOrders = orders.stream()
-                .filter(order -> order.getItems().stream()
-                        .anyMatch(item -> item.getProduct().getOwnerUser() != null
-                                && item.getProduct().getOwnerUser().getUserID().equals(vendorId)))
-                .collect(Collectors.toList());
-
-        BigDecimal totalRevenue = BigDecimal.ZERO;
-        for (Order order : relevantOrders) {
-            BigDecimal orderRevenue = order.getItems().stream()
-                    .filter(item -> item.getProduct().getOwnerUser() != null
-                            && item.getProduct().getOwnerUser().getUserID().equals(vendorId))
-                    .map(item -> item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity())))
-                    .reduce(BigDecimal.ZERO, BigDecimal::add);
-            totalRevenue = totalRevenue.add(orderRevenue);
-        }
-
-        Map<String, Long> ordersByStatus = new HashMap<>();
-        ordersByStatus.put("PENDING", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_PENDING));
-        ordersByStatus.put("CONFIRMED", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_CONFIRMED));
-        ordersByStatus.put("PREPARING", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_PREPARING));
-        ordersByStatus.put("PACKED", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_PACKED));
-        ordersByStatus.put("SHIPPED", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_SHIPPED));
-        ordersByStatus.put("DELIVERED", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_DELIVERED));
-        ordersByStatus.put("CANCELLED", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_CANCELLED));
-        ordersByStatus.put("RETURNED", countOrdersByVendorIdAndStatus(vendorId, OrderStatusHelper.STATUS_RETURNED));
-
-        stats.put("totalRevenue", totalRevenue);
-        stats.put("totalOrders", relevantOrders.size());
-        stats.put("ordersByStatus", ordersByStatus);
-        stats.put("startDate", startDate);
-        stats.put("endDate", endDate);
-
-        return stats;
-    }
-
-    @Override
-    @Transactional
-    public void deleteOrder(String orderId) {
-        orderRepository.deleteById(orderId);
-    }
+	@Override
+	public List<Order> findByUser(User user) {
+		return orderRepository.findByUser(user);
+	}
 }
