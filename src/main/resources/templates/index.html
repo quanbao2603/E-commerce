@@ -10,6 +10,7 @@
     <link th:href="@{/css/user/products.css}" rel="stylesheet">
     <script th:src="@{/js/index.js}"></script>
     <script th:src="@{/js/user/favorite.js}"></script>
+    <script th:src="@{/js/user/chat.js}"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
 </head>
 
@@ -128,7 +129,17 @@
             </div>
         </div>
     </section>
+    <input type="hidden" id="currentUserId" th:value="${#authentication.name}">
 
+	<div id="chat-button" class="chat-btn" onclick="startChat()">
+	    <i class="fas fa-comment-dots fa-lg"></i>
+	</div>
+	
+	<script>
+	function startChat() {
+	    window.location.href = '/user/chat';
+	}
+	</script>
 </div>
 </body>
 </html>
