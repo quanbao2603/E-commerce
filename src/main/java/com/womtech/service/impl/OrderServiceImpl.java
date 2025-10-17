@@ -359,10 +359,9 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
                 .createAt(LocalDateTime.now())
                 .updateAt(LocalDateTime.now())
                 .build();
+        orderRepository.save(order);
 
         orderItemService.createItemsFromCart(order, cart);
-        
-        orderRepository.save(order);
         
         cartService.clearCart(user);
 
