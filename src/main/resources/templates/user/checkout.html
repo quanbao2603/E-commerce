@@ -1,143 +1,110 @@
 <!DOCTYPE html>
-<html lang="vi">
+<html lang="vi" xmlns:th="http://www.thymeleaf.org"
+      xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
+      layout:decorate="~{user/layout}">
+
 <head>
     <meta charset="UTF-8">
     <title>Thanh toán</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
-    <!-- Bootstrap JS -->
-	<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
-	<!-- Bootstrap Icons -->
-	<link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.css" rel="stylesheet">
-    <style>
-        body {
-            background-color: #f8f9fa;
-        }
-        .checkout-container {
-            max-width: 1100px;
-            margin: 40px auto;
-        }
-        .order-summary {
-            max-height: 500px;
-            overflow-y: auto;
-        }
-        .order-item {
-            border-bottom: 1px solid #dee2e6;
-            padding: 10px 0;
-            display: flex;
-            align-items: center;
-        }
-        .order-item img {
-            width: 60px;
-            height: 60px;
-            object-fit: cover;
-            border-radius: 8px;
-            margin-right: 12px;
-        }
-        .order-total {
-            font-size: 1.2rem;
-            font-weight: 600;
-        }
-        .btn-checkout {
-            width: 100%;
-            font-size: 1.1rem;
-            padding: 10px;
-        }
-        .form-section {
-            background: white;
-            border-radius: 10px;
-            padding: 20px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-        }
-    </style>
+    <th:block layout:fragment="css">
+        <link th:href="@{/css/user/checkout.css}" rel="stylesheet">
+    </th:block>
 </head>
+
 <body>
-<div class="container checkout-container">
+<main layout:fragment="content" class="container py-4">
+
+    <h3 class="mb-4 text-primary fw-bold">Thanh toán</h3>
+
     <div class="row g-4">
+        <!-- Phần trái: Địa chỉ + phương thức thanh toán -->
+        <div class="col-md-7">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3 text-secondary">Thông tin nhận hàng</h5>
 
-        <!-- LEFT: Address & Payment -->
-        <div class="col-lg-7">
-            <div class="form-section">
-                <h5 class="mb-3"><i class="bi bi-geo-alt-fill me-2 text-primary"></i>Địa chỉ nhận hàng</h5>
-                <form action="#" method="post">
-                    <!-- <form th:action="@{/checkout}" method="post" th:object="${checkoutForm}"> -->
-                    
-                    <div>
-                        <div class="mb-3">
-                            <label class="form-label">Chọn địa chỉ có sẵn:</label>
-                            <select class="form-select">
-                                <!-- <option th:each="addr : ${addresses}" 
-                                        th:value="${addr.addressID}" 
-                                        th:text="${addr.fullAddress + ' - ' + addr.phoneNumber}"
-                                        th:selected="${addr.isDefault}"></option> -->
-                                <option selected>123 Đường Lê Lợi, Quận 1, TP.HCM - 0909123456</option>
-                                <option>45 Trần Hưng Đạo, Quận 5, TP.HCM - 0987123456</option>
-                            </select>
-                        </div>
+                    <div th:if="${defaultAddress != null}">
+                        <p class="mb-1"><strong>Người nhận:</strong> <span th:text="${defaultAddress.fullname}"></span></p>
+                        <p class="mb-1"><strong>Số điện thoại:</strong> <span th:text="${defaultAddress.phone}"></span></p>
+                        <p class="mb-3"><strong>Địa chỉ:</strong> 
+                            <span th:text="${defaultAddress.street} + ', ' + ${defaultAddress.ward} + ', ' + ${defaultAddress.district} + ', ' + ${defaultAddress.city}"></span>
+                        </p>
+                        <a th:href="@{/user/address}" class="text-decoration-none small text-primary">Thay đổi địa chỉ</a>
                     </div>
 
-                    <div class="mb-3">
-                        <label class="form-label">Phương thức thanh toán</label>
-                        <div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment" value="CASH" checked>
-                                <!-- <input class="form-check-input" type="radio" th:field="*{paymentMethod}" value="CASH" checked> -->
-                                <label class="form-check-label">Thanh toán khi nhận hàng (COD)</label>
-                            </div>
-                            <div class="form-check">
-                                <input class="form-check-input" type="radio" name="payment" value="VNPAY">
-                                <!-- <input class="form-check-input" type="radio" th:field="*{paymentMethod}" value="VNPAY"> -->
-                                <label class="form-check-label">Thanh toán qua VNPay</label>
-                            </div>
-                        </div>
+                    <div th:if="${defaultAddress == null}">
+                        <p class="text-muted">Chưa có địa chỉ mặc định.</p>
+                        <a th:href="@{/user/address}" class="btn btn-outline-primary btn-sm">Thêm địa chỉ</a>
                     </div>
-                </form>
+
+                    <hr class="my-4">
+
+                    <h5 class="card-title mb-3 text-secondary">Phương thức thanh toán</h5>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="cod" value="COD" checked>
+                        <label class="form-check-label" for="cod">Thanh toán khi nhận hàng (COD)</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="bank" value="BANK">
+                        <label class="form-check-label" for="bank">Chuyển khoản ngân hàng</label>
+                    </div>
+                    <div class="form-check mb-2">
+                        <input class="form-check-input" type="radio" name="paymentMethod" id="momo" value="MOMO">
+                        <label class="form-check-label" for="momo">Ví MoMo</label>
+                    </div>
+                </div>
             </div>
         </div>
 
-        <!-- RIGHT: Order Summary -->
-        <div class="col-lg-5">
-            <div class="form-section">
-                <h5 class="mb-3"><i class="bi bi-cart-fill me-2 text-primary"></i>Đơn hàng của bạn</h5>
-                <div class="order-summary mb-3">
+        <!-- Phần phải: Đơn hàng -->
+        <div class="col-md-5">
+            <div class="card shadow-sm border-0 rounded-3">
+                <div class="card-body">
+                    <h5 class="card-title mb-3 text-secondary">Đơn hàng của bạn</h5>
 
-                    <!-- <div th:each="item : ${cartItems}" class="order-item"> -->
-                    <div class="order-item">
-                        <img src="https://via.placeholder.com/60x60.png?text=Laptop" alt="product">
-                        <div class="flex-grow-1">
-                            <p class="mb-1 fw-semibold">Laptop ASUS Vivobook</p>
-                            <!-- <p class="mb-1 fw-semibold" th:text="${item.product.name}"></p> -->
-                            <small class="text-muted">Số lượng: <span>1</span></small>
-                            <!-- <small class="text-muted">Số lượng: <span th:text="${item.quantity}"></span></small> -->
-                        </div>
-                        <div class="text-end">
-                            <span>15,000,000 ₫</span>
-                            <!-- <span th:text="${#numbers.formatDecimal(item.itemTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span> -->
+                    <div class="cart-items-container" style="max-height: 300px; overflow-y: auto;">
+                        <div th:each="item : ${cart.items}" class="d-flex align-items-center mb-3 border-bottom pb-2">
+                            <img th:src="@{${item.product.thumbnail}}" class="rounded" alt="Sản phẩm"
+                                 style="width: 60px; height: 60px; object-fit: cover;">
+                            <div class="ms-3 flex-grow-1">
+                                <p class="mb-0 fw-semibold" th:text="${item.product.name}"></p>
+                                <small class="text-muted">Số lượng: <span th:text="${item.quantity}"></span></small>
+                            </div>
+                            <div class="text-end">
+                                <p class="mb-0 fw-bold text-primary"
+                                   th:text="${#numbers.formatDecimal(item.itemTotal, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></p>
+                            </div>
                         </div>
                     </div>
 
-                    <div class="order-item">
-                        <img src="https://via.placeholder.com/60x60.png?text=Chuột" alt="product">
-                        <div class="flex-grow-1">
-                            <p class="mb-1 fw-semibold">Chuột Logitech M331</p>
-                            <small class="text-muted">Số lượng: <span>2</span></small>
-                        </div>
-                        <div class="text-end">
-                            <span>600,000 ₫</span>
-                        </div>
+                    <hr class="my-3">
+
+                    <div class="d-flex justify-content-between fw-semibold">
+                        <span>Tổng cộng:</span>
+                        <span class="text-danger fs-5"
+                              th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span>
                     </div>
 
+                    <form th:action="@{/checkout/confirm}" method="post" class="mt-4">
+                        <input type="hidden" name="paymentMethod" id="selectedPayment">
+                        <button type="submit" class="btn btn-primary w-100 rounded-pill py-2 fw-bold">
+                            Đặt hàng
+                        </button>
+                    </form>
                 </div>
-                <div class="d-flex justify-content-between border-top pt-2">
-                    <span class="fw-bold">Tổng cộng:</span>
-                    <span class="order-total text-primary">15,600,000 ₫</span>
-                    <!-- <span class="order-total text-primary" th:text="${#numbers.formatDecimal(totalPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></span> -->
-                </div>
-                <button type="submit" class="btn btn-primary mt-3 btn-checkout">Đặt hàng</button>
             </div>
         </div>
-
     </div>
-</div>
+
+</main>
+
+<script>
+    // Gửi phương thức thanh toán được chọn vào form
+    document.querySelector("form").addEventListener("submit", function (e) {
+        const selected = document.querySelector("input[name='paymentMethod']:checked");
+        document.getElementById("selectedPayment").value = selected.value;
+    });
+</script>
 
 </body>
 </html>
