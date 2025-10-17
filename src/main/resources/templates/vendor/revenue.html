@@ -4,96 +4,8 @@
 	layout:decorate="~{vendor/layout}">
 <head>
 <title>Báo Cáo Doanh Thu - Vendor Panel</title>
-<style>
-    .chart-tabs .nav-link {
-        border: none;
-        padding: 0.75rem 1.5rem;
-        font-weight: 500;
-        color: #6b7280;
-        border-radius: 8px 8px 0 0;
-    }
-    
-    .chart-tabs .nav-link.active {
-        background-color: #fff;
-        color: #3b82f6;
-        border-bottom: 3px solid #3b82f6;
-    }
-    
-    .chart-tabs .nav-link:hover {
-        color: #3b82f6;
-    }
-    
-    .chart-container {
-        position: relative;
-        height: 400px;
-        width: 100%;
-    }
-    
-    .chart-tab-content {
-        background: white;
-        border-radius: 0 0 8px 8px;
-        padding: 1.5rem;
-        min-height: 500px;
-    }
-    
-    .stat-card {
-        background: white;
-        border-radius: 12px;
-        padding: 1.5rem;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-        transition: transform 0.2s, box-shadow 0.2s;
-        height: 100%;
-    }
-    
-    .stat-card:hover {
-        transform: translateY(-2px);
-        box-shadow: 0 4px 16px rgba(0,0,0,0.15);
-    }
-    
-    .stat-icon {
-        width: 60px;
-        height: 60px;
-        border-radius: 12px;
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        margin-bottom: 1rem;
-        font-size: 1.5rem;
-    }
-    
-    .stat-value {
-        font-size: 1.8rem;
-        font-weight: 700;
-        color: #1f2937;
-        margin-bottom: 0.25rem;
-    }
-    
-    .stat-label {
-        color: #6b7280;
-        font-size: 0.9rem;
-        font-weight: 500;
-    }
-
-    /* Category Colors - CSS Classes */
-    .category-color {
-        width: 12px;
-        height: 12px;
-        border-radius: 50%;
-        display: inline-block;
-        margin-right: 0.5rem;
-    }
-
-    .cat-color-0 { background-color: #3b82f6; }
-    .cat-color-1 { background-color: #10b981; }
-    .cat-color-2 { background-color: #f59e0b; }
-    .cat-color-3 { background-color: #ef4444; }
-    .cat-color-4 { background-color: #8b5cf6; }
-    .cat-color-5 { background-color: #06b6d4; }
-    .cat-color-6 { background-color: #84cc16; }
-    .cat-color-7 { background-color: #f97316; }
-    .cat-color-8 { background-color: #ec4899; }
-    .cat-color-9 { background-color: #6366f1; }
-</style>
+<!-- Link to external CSS -->
+<link rel="stylesheet" th:href="@{/css/vendor/revenue.css}">
 </head>
 <body>
 	<h1 layout:fragment="page-title">Báo Cáo Doanh Thu</h1>
@@ -199,7 +111,7 @@
 						<i class="fas fa-percentage"></i>
 					</div>
 					<div class="stat-value"
-						th:text="${statistics.ordersByStatus['DELIVERED']}">0</div>
+						th:text="${statistics.deliveredOrders}">0</div>
 					<div class="stat-label">Đơn Hoàn Thành</div>
 				</div>
 			</div>
@@ -258,7 +170,7 @@
 						</div>
 						<div class="col-md-4">
 							<h6 class="mb-3">Chi Tiết Doanh Thu Theo Danh Mục</h6>
-							<div class="category-list" style="max-height: 300px; overflow-y: auto;">
+							<div class="category-list">
 								<div th:each="category, iter : ${categoryLabels}" class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
 									<div class="d-flex align-items-center">
 										<span class="category-color" 
@@ -286,7 +198,7 @@
 						</div>
 						<div class="col-md-4">
 							<h6 class="mb-3">Top Sản Phẩm Bán Chạy</h6>
-							<div class="products-list" style="max-height: 300px; overflow-y: auto;">
+							<div class="products-list">
 								<div th:each="product, iter : ${topProductLabels}" class="d-flex justify-content-between align-items-center mb-2 p-2 border rounded">
 									<div class="product-info">
 										<div class="fw-medium" th:text="${product}">Product</div>

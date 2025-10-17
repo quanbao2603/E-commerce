@@ -323,6 +323,7 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
         BigDecimal totalRevenue = orderItemRepository.calculateTotalRevenueByVendor(vendorId, start, end);
         
         Long totalOrders = orderItemRepository.countDistinctOrdersByVendor(vendorId, start, end);
+        Long deliveredOrders = orderRepository.countOrdersByVendorIdAndStatus(vendorId,OrderStatusHelper.STATUS_DELIVERED);
 
         List<Object[]> ordersByStatus = orderItemRepository.countOrdersByStatus(vendorId, start, end);
         
@@ -338,7 +339,8 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
         statistics.put("ordersByStatus", statusMap);
         statistics.put("startDate", start);
         statistics.put("endDate", end);
-        
+        statistics.put("deliveredOrders", deliveredOrders);
+
         return statistics;
     }
     

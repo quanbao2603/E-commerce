@@ -36,7 +36,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 	Long countOrdersByVendorId(@Param("vendorId") String vendorId);
 
 	// 5️⃣ Đếm số đơn hàng theo trạng thái cho vendor
-	@Query("SELECT COUNT(DISTINCT o) FROM Order o JOIN o.items oi WHERE oi.product.ownerUser.userID = :vendorId AND o.status = :status")
+	@Query("SELECT COUNT(DISTINCT o) FROM Order o JOIN o.items oi WHERE oi.product.ownerUser.userID = :vendorId AND oi.status = :status")
 	Long countOrdersByVendorIdAndStatus(@Param("vendorId") String vendorId, @Param("status") Integer status);
 
 	// Query cho biểu đồ doanh thu hàng ngày
