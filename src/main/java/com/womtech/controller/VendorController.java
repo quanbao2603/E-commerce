@@ -513,7 +513,9 @@ public class VendorController {
 			// Update only vendor's items status in the order
 			// newItemStatus should be ITEM_STATUS constant (ITEM_STATUS_CONFIRMED,
 			// ITEM_STATUS_SHIPPED, etc.)
-			orderService.updateVendorOrderItemsStatus(orderId, currentUser.getUserID(), newItemStatus);
+			orderService.updateOrderStatus(orderId, newItemStatus);
+//			orderService.updateVendorOrderItemsStatus(orderId, currentUser.getUserID(), newItemStatus);
+			
 			redirectAttributes.addFlashAttribute("success", "Cập nhật trạng thái sản phẩm của bạn thành công!");
 
 		} catch (Exception e) {
