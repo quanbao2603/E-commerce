@@ -15,31 +15,22 @@ import org.springframework.stereotype.Service;
 
 import com.womtech.entity.Address;
 import com.womtech.entity.Cart;
-import com.womtech.entity.Order;
-import com.womtech.entity.User;
-import com.womtech.repository.OrderRepository;
 import com.womtech.service.AddressService;
 import com.womtech.service.CartItemService;
 import com.womtech.service.CartService;
 import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
 import com.womtech.util.OrderStatusHelper;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
-public class OrderServiceImpl implements OrderService {
+public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements OrderService {
 
     @Autowired
     private OrderRepository orderRepository;
