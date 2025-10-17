@@ -374,8 +374,7 @@
 
 													<!-- Nút đặt làm mặc định -->
 													<form th:if="${!addr.isDefault}"
-														th:action="@{/user/setdefault-address}" method="post"
-														onsubmit="return confirm('Bạn có chắc muốn đặt địa chỉ này làm mặc định không?')">
+														th:action="@{/user/setdefault-address}" method="post">
 														<input type="hidden" name="addressID"
 															th:value="${addr.addressID}">
 														<button type="submit"

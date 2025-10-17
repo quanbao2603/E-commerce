@@ -1,11 +1,13 @@
 package com.womtech.service;
 
+import java.util.List;
+
+import com.womtech.entity.Address;
 import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
 import com.womtech.entity.User;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -36,4 +38,7 @@ public interface OrderService {
     
     // Phương thức cho top sản phẩm
     Map<String, Object> getTopProductsData(String vendorId, LocalDateTime start, LocalDateTime end);
+    
+    Order createOrder(User user, Address address, String payment_method);
+	List<Order> findByUser(User user);
 }

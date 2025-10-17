@@ -4,6 +4,8 @@ import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
 
 import org.springframework.data.domain.Pageable;
+import java.util.List;
+
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,7 +13,6 @@ import org.springframework.stereotype.Repository;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.List;
 
 @Repository
 public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
@@ -81,4 +82,12 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
     List<Object[]> countOrdersByStatus(@Param("vendorId") String vendorId, 
                                      @Param("start") LocalDateTime start, 
                                      @Param("end") LocalDateTime end);
+    
+    @Query("""
+		    SELECT COUNT(oi) > 0 FROM OrderItem oi
+		    WHERE oi.product.productID = :productId
+		      AND oi.order.user.userID = :userId
+		      AND oi.order.status = 1
+		""")
+    boolean hasUserPurchasedProduct(@Param("userId") String userId, @Param("productId") String productId);
 }
