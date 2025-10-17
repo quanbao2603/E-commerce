@@ -25,7 +25,6 @@ public class OrderItemServiceImpl extends BaseServiceImpl<OrderItem, String> imp
 
 	public OrderItemServiceImpl(JpaRepository<OrderItem, String> repo) {
 		super(repo);
-		this.orderItemRepository = (OrderItemRepository) repo;
 	}
 
 	@Override
@@ -34,7 +33,7 @@ public class OrderItemServiceImpl extends BaseServiceImpl<OrderItem, String> imp
 		return false;
 	}
 	
-    @Override
+	@Override
 	public void createItemsFromCart(Order order, Cart cart) {
     	List<CartItem> cartItems = cartItemService.findByCart(cart);
     	

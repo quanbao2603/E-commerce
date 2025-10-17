@@ -4,10 +4,13 @@ import java.util.List;
 
 import com.womtech.entity.Address;
 import com.womtech.entity.Order;
+<<<<<<< HEAD
+=======
+import com.womtech.entity.OrderItem;
+>>>>>>> 541b11368e32055a4e5934bf8191703674cff62b
 import com.womtech.entity.User;
 
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -38,4 +41,7 @@ public interface OrderService {
     
     // Phương thức cho top sản phẩm
     Map<String, Object> getTopProductsData(String vendorId, LocalDateTime start, LocalDateTime end);
+    
+    Order createOrder(User user, Address address, String payment_method);
+	List<Order> findByUser(User user);
 }
