@@ -54,7 +54,7 @@ public class CheckOutController {
 								  @RequestParam String addressID,
 								  @RequestParam String payment_method) {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
-		if (userOpt.isEmpty()) {
+		if (userOpt.isEmpty())
 			return "redirect:/auth/login";
 		}
 		User user = userOpt.get();
