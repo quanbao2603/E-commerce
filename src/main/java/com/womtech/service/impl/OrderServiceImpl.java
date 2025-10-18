@@ -2,7 +2,9 @@ package com.womtech.service.impl;
 
 import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
+import com.womtech.entity.Product;
 import com.womtech.entity.User;
+import com.womtech.entity.Voucher;
 import com.womtech.repository.OrderItemRepository;
 import com.womtech.repository.OrderRepository;
 import java.math.BigDecimal;
@@ -15,11 +17,13 @@ import org.springframework.stereotype.Service;
 
 import com.womtech.entity.Address;
 import com.womtech.entity.Cart;
+import com.womtech.entity.CartItem;
 import com.womtech.service.AddressService;
 import com.womtech.service.CartItemService;
 import com.womtech.service.CartService;
 import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
+import com.womtech.service.VoucherService;
 import com.womtech.util.OrderStatusHelper;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
@@ -46,6 +50,8 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
     AddressService addressService;
 	@Autowired
 	OrderItemService orderItemService;
+	@Autowired
+	VoucherService voucherService;
 	
 	public OrderServiceImpl(JpaRepository<Order, String> repo) {
 		super(repo);
@@ -345,10 +351,10 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
     }
     
     @Override
-	public Order createOrder(User user, Address address, String payment_method) {
+	public Order createOrder(User user, Address address, String payment_method, String voucherCode) {
         Cart cart = cartService.findByUser(user);
         // Chưa thêm voucher
-        BigDecimal total = cartService.totalPrice(cart);
+        BigDecimal total = totalPrice(cart, voucherCode);
         
         Order order = Order.builder()
                 .user(user)
@@ -367,9 +373,55 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 
         return order;
     }
+    
+    @Override
+	public BigDecimal totalPrice(Cart cart, String voucherCode) {
+    	BigDecimal total = cartService.totalPrice(cart);
+    	
+//    	Optional<Voucher> voucherOpt = voucherService.findByCode(voucherCode);
+//    	if (voucherOpt.isEmpty())
+//    		return total;
+//    	
+//    	Voucher voucher = voucherOpt.get();
+//    	if (voucherService.valid(voucher, total))
+//    		total = voucherService.discountPrice;
+    	
+        return total;
+    }
+    
+    @Override
+	public BigDecimal totalPrice(Order order) {
+    	BigDecimal total = BigDecimal.ZERO;
+    	List<OrderItem> items = orderItemService.findByOrder(order);
+        if (items.isEmpty()) {
+            return total;
+        }
+        
+        for (OrderItem item : items) {
+            BigDecimal itemTotal = item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()));
+            item.setItemTotal(itemTotal);
+
+            total = total.add(itemTotal);
+        }
+        return total;
+    }
 
 	@Override
 	public List<Order> findByUser(User user) {
 		return orderRepository.findByUser(user);
 	}
+	
+	@Override
+	public int totalQuantity(Order order) {
+    	int total = 0;
+    	List<OrderItem> items = orderItemRepository.findByOrder(order);
+        if (items.isEmpty()) {
+            return total;
+        }
+        
+        for (OrderItem item : items) {
+			total += item.getQuantity();
+        }
+        return total;
+    }
 }

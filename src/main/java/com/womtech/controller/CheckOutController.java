@@ -95,11 +95,8 @@ public class CheckOutController {
 		}
 		User user = userOpt.get();
 		
-		if (cartService.findByUser(user).getItems().isEmpty())
-			return "redirect:/cart";
-		
 		Address address = addressService.findById(addressID).orElse(null);
-		Order order = orderService.createOrder(user, address, payment_method);
+		Order order = orderService.createOrder(user, address, payment_method, voucherCode);
 		
 		return "redirect:/order/" + order.getOrderID();
 	}
