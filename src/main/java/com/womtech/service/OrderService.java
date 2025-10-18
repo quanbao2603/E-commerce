@@ -3,10 +3,12 @@ package com.womtech.service;
 import java.util.List;
 
 import com.womtech.entity.Address;
+import com.womtech.entity.Cart;
 import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
 import com.womtech.entity.User;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
@@ -39,6 +41,9 @@ public interface OrderService extends BaseService<Order, String> {
     // Phương thức cho top sản phẩm
     Map<String, Object> getTopProductsData(String vendorId, LocalDateTime start, LocalDateTime end);
     
-    Order createOrder(User user, Address address, String payment_method);
+    Order createOrder(User user, Address address, String payment_method, String voucherCode);
 	List<Order> findByUser(User user);
+	int totalQuantity(Order order);
+	BigDecimal totalPrice(Order order);
+	BigDecimal totalPrice(Cart cart, String voucherCode);
 }
