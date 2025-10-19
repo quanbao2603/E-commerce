@@ -1,18 +1,14 @@
 package com.womtech.repository;
 
-<<<<<<< HEAD
-import java.util.List;
-
-=======
 import com.womtech.entity.Order;
 import com.womtech.entity.User;
->>>>>>> 541b11368e32055a4e5934bf8191703674cff62b
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
-import com.womtech.entity.Order;
-import com.womtech.entity.User;
+
+import java.time.LocalDateTime;
+import java.util.List;
 
 @Repository
 public interface OrderRepository extends JpaRepository<Order, String> {
