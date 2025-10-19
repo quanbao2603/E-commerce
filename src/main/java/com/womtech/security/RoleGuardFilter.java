@@ -15,7 +15,7 @@ import java.io.IOException;
 import java.util.*;
 
 @Component
-@Order(10) // chạy sau các filter khác nếu có
+@Order(10) // chạy sau JwtAuthFilter (thường Jwt đặt trước trong SecurityConfig)
 public class RoleGuardFilter extends OncePerRequestFilter {
 
 	private static final String CK_AT = "AT";
@@ -29,21 +29,22 @@ public class RoleGuardFilter extends OncePerRequestFilter {
 	}
 
 	@Override
-	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain filterChain)
+	protected void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain)
 			throws ServletException, IOException {
 
 		String path = request.getRequestURI();
 
-		// Bỏ qua các path công khai
+		// ✅ Bỏ qua các path công khai + các path có handler riêng cho lỗi
 		if (isPublic(path)) {
-			filterChain.doFilter(request, response);
+			chain.doFilter(request, response);
 			return;
 		}
 
-		// Nếu yêu cầu role đặc biệt thì kiểm tra
+		// ✅ Xác định role yêu cầu — CHỈ áp cho /vendor/** (có dấu '/'), tránh ăn vào
+		// /vendor-register
 		String requiredRole = requiredRoleFor(path);
 		if (requiredRole == null) {
-			filterChain.doFilter(request, response);
+			chain.doFilter(request, response);
 			return;
 		}
 
@@ -51,34 +52,36 @@ public class RoleGuardFilter extends OncePerRequestFilter {
 		Set<String> roles = extractRoles(request);
 
 		if (roles.contains(requiredRole)) {
-			filterChain.doFilter(request, response);
+			chain.doFilter(request, response);
 		} else {
-			// Nếu chưa đăng nhập → chuyển về login, nếu đã đăng nhập nhưng thiếu quyền →
-			// 403
+			// Nếu chưa đăng nhập → về login; nếu đã đăng nhập nhưng thiếu quyền → access
+			// denied
 			if (roles.isEmpty()) {
-				// chưa auth
 				response.sendRedirect("/auth/login");
 			} else {
-				// có auth nhưng thiếu quyền
-				response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-				response.sendRedirect("/error/403");
+				// Đừng redirect /error/403 (không có controller); dùng trang access-denied bạn
+				// đã map
+				response.sendRedirect("/auth/access-denied");
 			}
 		}
 	}
 
 	private boolean isPublic(String path) {
-		// Nơi bạn cho phép truy cập tự do
-		return path.startsWith("/auth") || path.startsWith("/assets") || path.startsWith("/css")
-				|| path.startsWith("/js") || path.equals("/") || path.startsWith("/product")
-				|| path.startsWith("/category");
+		// Public + cho phép explicitly các route sau
+		return path.equals("/") || path.startsWith("/auth") || path.startsWith("/assets") || path.startsWith("/css")
+				|| path.startsWith("/js") || path.startsWith("/images") || path.startsWith("/webjars")
+				|| path.startsWith("/products") || path.startsWith("/product") || path.startsWith("/category")
+				|| path.equals("/error") || path.startsWith("/error/") || path.equals("/auth/access-denied")
+				// ✅ Quan trọng: bỏ qua flow đăng ký shop mới
+				|| path.equals("/vendor-register") || path.startsWith("/vendor-register/");
 	}
 
 	private String requiredRoleFor(String path) {
-		if (path.startsWith("/admin"))
+		if (path.startsWith("/admin/") || path.equals("/admin"))
 			return "ADMIN";
-		if (path.startsWith("/vendor"))
-			return "VENDOR";
-		if (path.startsWith("/shipper"))
+		if (path.startsWith("/vendor/") || path.equals("/vendor"))
+			return "VENDOR"; // chỉ /vendor/... mới cần VENDOR
+		if (path.startsWith("/shipper/") || path.equals("/shipper"))
 			return "SHIPPER";
 		return null; // không yêu cầu role cụ thể
 	}
@@ -88,7 +91,7 @@ public class RoleGuardFilter extends OncePerRequestFilter {
 		// 1) JWT trong cookie AT
 		Cookie at = CookieUtil.get(request, CK_AT);
 		if (at != null && jwtService.isValidAccess(at.getValue()) && !tokenRevokeService.isRevoked(at.getValue())) {
-			List<String> r = jwtService.getRoles(at.getValue()); // <--- cần method này
+			List<String> r = jwtService.getRoles(at.getValue());
 			if (r != null)
 				return toUpperSet(r);
 		}
@@ -97,10 +100,10 @@ public class RoleGuardFilter extends OncePerRequestFilter {
 		HttpSession session = request.getSession(false);
 		if (session != null) {
 			Object obj = session.getAttribute("CURRENT_ROLES");
-			if (obj instanceof List<?>) {
+			if (obj instanceof List<?>)
 				return toUpperSet((List<String>) obj);
-			}
 		}
+
 		return Collections.emptySet();
 	}
 

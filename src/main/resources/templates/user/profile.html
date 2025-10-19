@@ -5,7 +5,10 @@
 
 <head>
 <meta charset="UTF-8">
+<title>Thông tin cá nhân - WOMTech</title>
+
 <th:block layout:fragment="css">
+	<!-- Custom CSS -->
 	<link th:href="@{/css/user/profile.css}" rel="stylesheet">
 	<!-- Bootstrap Icons -->
 	<link
@@ -111,7 +114,8 @@
 								</a> <a href="#profile-orders"
 									class="list-group-item list-group-item-action profile-nav-item"
 									data-tab="orders"> <i class="bi bi-bag me-3"></i>Lịch Sử
-									Đơn Hàng <span class="badge bg-secondary ms-auto">0</span>
+									Đơn Hàng <span class="badge bg-secondary ms-auto" th:text="${listOrder.size()}">0
+									</span>
 								</a> <a href="#profile-address"
 									class="list-group-item list-group-item-action profile-nav-item"
 									data-tab="address"> <i class="bi bi-geo-alt me-3"></i>Địa
@@ -281,17 +285,91 @@
 										<i class="bi bi-bag-check me-2"></i>Lịch Sử Đơn Hàng
 									</h5>
 								</div>
-								<div class="card-body text-center py-5">
-									<i class="bi bi-cart4 display-4 text-muted mb-3"></i>
-									<h5 class="text-muted">Chưa Có Đơn Hàng Nào</h5>
-									<p class="text-muted mb-4">Bạn chưa thực hiện đơn hàng nào.
-										Hãy khám phá sản phẩm của chúng tôi!</p>
-									<a href="/products" class="btn btn-primary"> <i
-										class="bi bi-bag me-2"></i>Mua Sắm Ngay
-									</a>
+
+								<div class="card-body">
+									<!-- Nếu không có đơn hàng -->
+									<div th:if="${#lists.isEmpty(listOrder)}"
+										class="text-center py-5">
+										<i class="bi bi-cart4 display-4 text-muted mb-3"></i>
+										<h5 class="text-muted">Chưa Có Đơn Hàng Nào</h5>
+										<p class="text-muted mb-4">Bạn chưa thực hiện đơn hàng
+											nào. Hãy khám phá sản phẩm của chúng tôi!</p>
+										<a th:href="@{/products}" class="btn btn-primary"> <i
+											class="bi bi-bag me-2"></i>Mua Sắm Ngay
+										</a>
+									</div>
+
+									<!-- Nếu có đơn hàng -->
+									<div th:if="${!#lists.isEmpty(listOrder)}">
+										<div class="mb-3">
+											<small class="text-muted">Tổng <span
+												th:text="${listOrder.size()}"></span> đơn hàng
+											</small>
+										</div>
+
+										<div class="list-group">
+											<div th:each="order : ${listOrder}"
+												class="list-group-item list-group-item-action mb-3">
+												<div class="row align-items-center">
+													<div class="col-md-8">
+														<div class="d-flex flex-column">
+															<div class="d-flex align-items-center mb-1">
+																<h6 class="me-3 mb-0">
+																	Mã đơn: <span class="fw-bold"
+																		th:text="${order.orderID}">ORDER001</span>
+																</h6>
+																<small class="text-muted ms-2"
+																	th:text="${#temporals.format(order.createAt, 'dd/MM/yyyy HH:mm')}">01/01/2025</small>
+															</div>
+
+															<div class="text-muted small">
+																<span
+																	th:text="${order.items != null ? order.items.size() : 0}">0</span>
+																sản phẩm &nbsp;•&nbsp; Phương thức: <span
+																	th:text="${order.paymentMethod}">COD</span>
+															</div>
+														</div>
+													</div>
+
+													<div class="col-md-2 text-end">
+														<div class="fw-semibold"
+															th:text="${#numbers.formatDecimal(order.totalPrice, 0, 'COMMA', 0, 'POINT')} + ' ₫'">0
+															₫</div>
+														<div class="small text-muted">Tổng tiền</div>
+													</div>
+
+													<div class="col-md-2 text-end">
+														<!-- Trạng thái hiển thị bằng badge -->
+														<div th:switch="${order.status}">
+															<span th:case="1" class="badge bg-warning text-dark">Đang
+																xử lý</span> <span th:case="2" class="badge bg-info text-dark">Đã
+																thanh toán</span> <span th:case="3" class="badge bg-primary">Đang
+																giao</span> <span th:case="4" class="badge bg-success">Hoàn
+																tất</span> <span th:case="5" class="badge bg-danger">Đã
+																hủy</span> <span th:case="*" class="badge bg-secondary">Trạng
+																thái: <span th:text="${order.status}">?</span>
+															</span>
+														</div>
+
+														<div class="mt-2">
+															<a th:href="@{/order/{id}(id=${order.orderID})}"
+																class="btn btn-sm btn-outline-primary">Xem chi tiết</a>
+														</div>
+													</div>
+												</div>
+											</div>
+											<!-- end order item -->
+										</div>
+										<!-- end list-group -->
+									</div>
+									<!-- end if listOrder not empty -->
 								</div>
+								<!-- card-body -->
 							</div>
+							<!-- card -->
 						</div>
+						<!-- orders-tab -->
+
 
 						<!-- Address Tab -->
 						<div class="profile-tab-content" id="address-tab">
@@ -302,7 +380,7 @@
 									</h5>
 								</div>
 								<div class="card-body">
-								
+
 									<!-- Nút thêm địa chỉ -->
 									<div class="d-flex justify-content-end mb-3">
 										<button class="btn btn-success btn-sm" type="button"
@@ -314,7 +392,8 @@
 									<!-- Form ẩn thêm địa chỉ mới -->
 									<div id="add-address-form" class="card p-4 mb-4 d-none">
 										<h6 class="mb-3">
-											<i class="bi bi-geo-alt me-2 text-primary"></i>Thêm Địa Chỉ	Mới
+											<i class="bi bi-geo-alt me-2 text-primary"></i>Thêm Địa Chỉ
+											Mới
 										</h6>
 										<form th:action="@{/user/add-address}" method="post">
 											<div class="row">
@@ -358,7 +437,7 @@
 											</div>
 										</form>
 									</div>
-									
+
 									<!-- Lặp qua danh sách địa chỉ -->
 									<div class="mb-4" th:each="addr : ${listAddress}">
 										<div class="row">

@@ -29,15 +29,24 @@ public class OrderController {
 							@PathVariable String id) {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
-			return "/error/403";
+			return "redirect:/auth/login";
 		}
 		User user = userOpt.get();
 		
-		Order order = orderService.findById(id).orElse(null);
-		if (order == null || !order.getUser().equals(user))
-			return "/error/403";
+		Optional<Order> orderOpt = orderService.findById(id);
+		if (orderOpt.isEmpty()){
+			model.addAttribute("error", "Không tìm thấy đơn hàng.");
+            return "user/order-detail";
+		}
+		
+		Order order = orderOpt.get();
+		if (!order.getUser().equals(user)) {
+			return "error/403";
+		}
+		
+		orderService.totalPrice(order);
 		
 		model.addAttribute("order", order);
-		return "/user/order";
+		return "/user/order-detail";
 	}
 }

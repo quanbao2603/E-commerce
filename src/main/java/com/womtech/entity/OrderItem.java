@@ -34,4 +34,7 @@ public class OrderItem {
 	@Builder.Default
 	@Column(nullable = false)
 	private Integer status = 1;
+	
+	@Transient
+	private BigDecimal itemTotal;
 }

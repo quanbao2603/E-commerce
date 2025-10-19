@@ -11,8 +11,10 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 
 import com.womtech.entity.Address;
+import com.womtech.entity.Order;
 import com.womtech.entity.User;
 import com.womtech.service.AddressService;
+import com.womtech.service.OrderService;
 import com.womtech.service.UserService;
 
 import jakarta.servlet.http.HttpSession;
@@ -26,6 +28,7 @@ public class ProfileController {
 
 	private final UserService userService;
 	private final AddressService addressService;
+	private final OrderService orderService;
 
 	@GetMapping("/profile")
 	public String showProfilePage(HttpSession session, Model model, Principal principal) {
@@ -46,11 +49,14 @@ public class ProfileController {
 
 		boolean isAdmin = user.getRole() != null && user.getRole().getRolename() != null
 				&& user.getRole().getRolename().equalsIgnoreCase("ADMIN");
+		
+		List<Order> listOrder = orderService.findByUser(user);
 
 		model.addAttribute("user", user);
 		model.addAttribute("defaultAddress", defaultAddress);
 		model.addAttribute("listAddress", listAddress);
 		model.addAttribute("isAdmin", isAdmin);
+		model.addAttribute("listOrder", listOrder);
 
 		return "user/profile";
 	}
