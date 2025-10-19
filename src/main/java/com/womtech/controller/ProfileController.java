@@ -2,9 +2,14 @@ package com.womtech.controller;
 
 import java.security.Principal;
 import java.time.LocalDateTime;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -31,7 +36,10 @@ public class ProfileController {
 	private final OrderService orderService;
 
 	@GetMapping("/profile")
-	public String showProfilePage(HttpSession session, Model model, Principal principal) {
+	public String showProfilePage(HttpSession session, Model model, Principal principal,
+								  @RequestParam(defaultValue = "0") int page,
+								  @RequestParam(defaultValue = "5") int size,
+								  @RequestParam(required = false) Integer status) {
 		// Chỉ dựa vào JWT authentication (Principal), không fallback về session
 		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
 			return "redirect:/auth/login";
@@ -50,13 +58,35 @@ public class ProfileController {
 		boolean isAdmin = user.getRole() != null && user.getRole().getRolename() != null
 				&& user.getRole().getRolename().equalsIgnoreCase("ADMIN");
 		
-		List<Order> listOrder = orderService.findByUser(user);
+		Map<Integer, String> statuses = new LinkedHashMap<>();
+	    statuses.put(-1, "Tất cả");
+	    statuses.put(0, "Đã hủy");
+	    statuses.put(1, "Chờ xác nhận");
+	    statuses.put(2, "Đã xác nhận");
+	    statuses.put(3, "Đang chuẩn bị");
+	    statuses.put(4, "Đã đóng gói");
+	    statuses.put(5, "Đang giao");
+	    statuses.put(6, "Đã giao");
+	    statuses.put(7, "Hoàn trả");
+		
+		Page<Order> orderPage;
+		
+	    if (status == null || status == -1) {
+	        orderPage = orderService.findByUser(user, PageRequest.of(page, size, Sort.by("createAt").descending()));
+	    } else {
+	        orderPage = orderService.findByUserAndStatus(user, status, PageRequest.of(page, size, Sort.by("createAt").descending()));
+	    }
 
 		model.addAttribute("user", user);
 		model.addAttribute("defaultAddress", defaultAddress);
 		model.addAttribute("listAddress", listAddress);
 		model.addAttribute("isAdmin", isAdmin);
-		model.addAttribute("listOrder", listOrder);
+	    model.addAttribute("listOrder", orderPage.getContent());
+	    model.addAttribute("orderCount", orderService.findByUser(user).size());
+	    model.addAttribute("currentPage", page);
+	    model.addAttribute("totalPages", orderPage.getTotalPages());
+	    model.addAttribute("selectedStatus", status == null ? -1 : status);
+	    model.addAttribute("statuses", statuses);
 
 		return "user/profile";
 	}

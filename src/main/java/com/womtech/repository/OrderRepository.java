@@ -2,6 +2,9 @@ package com.womtech.repository;
 
 import com.womtech.entity.Order;
 import com.womtech.entity.User;
+
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -13,6 +16,10 @@ import java.util.List;
 @Repository
 public interface OrderRepository extends JpaRepository<Order, String> {
 	List<Order> findByUser(User user);
+	
+	Page<Order> findByUser(User user, Pageable pageable);
+	
+	Page<Order> findByUserAndStatus(User user, int status, Pageable pageable);
 	
 	List<Order> findByUserOrderByCreateAtDesc(User user);
 

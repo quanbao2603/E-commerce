@@ -115,7 +115,7 @@
 									class="list-group-item list-group-item-action profile-nav-item"
 									data-tab="orders"> <i class="bi bi-bag me-3"></i>Lịch Sử
 									Đơn Hàng <span class="badge bg-secondary ms-auto"
-									th:text="${listOrder.size()}">0 </span>
+									th:text="${orderCount}">0 </span>
 								</a> <a href="#profile-address"
 									class="list-group-item list-group-item-action profile-nav-item"
 									data-tab="address"> <i class="bi bi-geo-alt me-3"></i>Địa
@@ -288,7 +288,7 @@
 
 								<div class="card-body">
 									<!-- Nếu không có đơn hàng -->
-									<div th:if="${#lists.isEmpty(listOrder)}"
+									<div th:if="${orderCount==0}"
 										class="text-center py-5">
 										<i class="bi bi-cart4 display-4 text-muted mb-3"></i>
 										<h5 class="text-muted">Chưa Có Đơn Hàng Nào</h5>
@@ -300,11 +300,24 @@
 									</div>
 
 									<!-- Nếu có đơn hàng -->
-									<div th:if="${!#lists.isEmpty(listOrder)}">
+									<div th:if="${orderCount!=0}">
 										<div class="mb-3">
 											<small class="text-muted">Tổng <span
-												th:text="${listOrder.size()}"></span> đơn hàng
+												th:text="${orderCount}"></span> đơn hàng
 											</small>
+											<!-- Bộ lọc trạng thái -->
+											<form th:action="@{/user/profile}" method="get"
+												class="d-flex align-items-center gap-2 mb-3">
+												<input type="hidden" name="tab" value="orders" /> <label
+													class="text-muted small me-2 mb-0">Lọc theo trạng
+													thái:</label> <select name="status"
+													class="form-select form-select-sm w-auto"
+													onchange="this.form.submit()">
+													<option th:each="entry : ${statuses.entrySet()}"
+														th:value="${entry.key}" th:text="${entry.value}"
+														th:selected="${entry.key == selectedStatus}"></option>
+												</select> <input type="hidden" name="page" th:value="${currentPage}" />
+											</form>
 										</div>
 
 										<div class="list-group">
@@ -353,12 +366,40 @@
 														</div>
 													</div>
 												</div>
+
 											</div>
 											<!-- end order item -->
 										</div>
 										<!-- end list-group -->
 									</div>
 									<!-- end if listOrder not empty -->
+									<!-- Pagination -->
+									<div th:if="${totalPages > 1}"
+										class="d-flex justify-content-center mt-4">
+										<nav>
+											<ul class="pagination">
+												<li class="page-item"
+													th:classappend="${currentPage == 0} ? 'disabled'"><a
+													class="page-link"
+													th:href="@{/user/profile(tab='orders', page=${currentPage - 1}, status=${selectedStatus})}">«</a>
+												</li>
+
+												<li th:each="i : ${#numbers.sequence(0, totalPages - 1)}"
+													class="page-item"
+													th:classappend="${i == currentPage} ? 'active'"><a
+													class="page-link"
+													th:href="@{/user/profile(tab='orders', page=${i}, status=${selectedStatus})}"
+													th:text="${i + 1}"> </a></li>
+
+												<li class="page-item"
+													th:classappend="${currentPage + 1 >= totalPages} ? 'disabled'">
+													<a class="page-link"
+													th:href="@{/user/profile(tab='orders', page=${currentPage - 1}, status=${selectedStatus})}">»</a>
+												</li>
+											</ul>
+										</nav>
+									</div>
+
 								</div>
 								<!-- card-body -->
 							</div>
