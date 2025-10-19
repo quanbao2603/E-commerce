@@ -14,6 +14,7 @@ import com.womtech.repository.VoucherRepository;
 import com.womtech.service.VoucherService;
 
 @Service
+@Transactional
 public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> implements VoucherService {
 
     private final VoucherRepository voucherRepository;
@@ -26,31 +27,40 @@ public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> impleme
     @Override
     public Voucher create(Voucher voucher) {
         if (voucher.getCode() == null || voucher.getCode().isBlank()) {
-            throw new RuntimeException("Voucher code không được để trống");
+            throw new IllegalArgumentException("Mã voucher không được để trống");
         }
+
         if (voucherRepository.findByCode(voucher.getCode()).isPresent()) {
-            throw new RuntimeException("Voucher code đã tồn tại");
+            throw new IllegalStateException("Mã voucher đã tồn tại");
         }
-        if (voucher.getStatus() == null) voucher.setStatus(1);
+
+        if (voucher.getStatus() == null) {
+            voucher.setStatus(1);
+        }
+
         return voucherRepository.save(voucher);
     }
 
     @Override
     public Voucher update(Voucher voucher) {
-        Voucher exist = voucherRepository.findById(voucher.getVoucherID())
-                .orElseThrow(() -> new RuntimeException("Voucher không tồn tại"));
-        exist.setCode(voucher.getCode());
-        exist.setDiscount(voucher.getDiscount());
-        exist.setMin_price(voucher.getMin_price());
-        exist.setExpire_date(voucher.getExpire_date());
-        exist.setOwner(voucher.getOwner());
-        exist.setStatus(voucher.getStatus());
-        return voucherRepository.save(exist);
+        Voucher existing = voucherRepository.findById(voucher.getVoucherID())
+                .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
+
+        existing.setCode(voucher.getCode());
+        existing.setDiscount(voucher.getDiscount());
+        existing.setMin_price(voucher.getMin_price());
+        existing.setExpire_date(voucher.getExpire_date());
+        existing.setOwner(voucher.getOwner());
+        existing.setStatus(voucher.getStatus());
+
+        return voucherRepository.save(existing);
     }
 
     @Override
-    @Transactional
     public void delete(String voucherId) {
+        if (!voucherRepository.existsById(voucherId)) {
+            throw new IllegalArgumentException("Voucher không tồn tại");
+        }
         voucherRepository.deleteById(voucherId);
     }
 
@@ -70,14 +80,18 @@ public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> impleme
     }
 
     @Override
-    @Transactional
     public void enableVoucher(String voucherId) {
-        voucherRepository.findById(voucherId).ifPresent(v -> v.setStatus(1));
+        voucherRepository.findById(voucherId).ifPresent(v -> {
+            v.setStatus(1);
+            voucherRepository.save(v);
+        });
     }
 
     @Override
-    @Transactional
     public void disableVoucher(String voucherId) {
-        voucherRepository.findById(voucherId).ifPresent(v -> v.setStatus(0));
+        voucherRepository.findById(voucherId).ifPresent(v -> {
+            v.setStatus(0);
+            voucherRepository.save(v);
+        });
     }
 }

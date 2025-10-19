@@ -4,7 +4,9 @@ import com.womtech.entity.*;
 import com.womtech.service.*;
 
 import java.io.IOException;
+import java.security.Principal;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -622,17 +624,31 @@ public class AdminController {
 	public String listVouchers(
 	        @RequestParam(value = "code", required = false) String code,
 	        @RequestParam(value = "status", required = false) Integer status,
-	        @RequestParam(value = "ownerId", required = false) String ownerId,
 	        @RequestParam(defaultValue = "0") int page,
 	        @RequestParam(defaultValue = "10") int size,
-	        Model model) {
+	        Model model,
+	        Principal principal) {
+
+	    // Lấy vendor đang đăng nhập
+		Optional<User> optUser = userService.findById(principal.getName());
+		if (optUser.isEmpty()) {
+		    throw new RuntimeException("User not found for id: " + principal.getName());
+		}
+		User currentUser = optUser.get();
+	    String ownerId = null;
+
+	    // Nếu là vendor thì chỉ xem voucher của chính mình
+	    if (currentUser.getRole().getRolename().equals("VENDOR")) {
+	        ownerId = currentUser.getUserID();
+	    }
 
 	    Page<Voucher> vouchers = voucherService.search(code, status, ownerId, PageRequest.of(page, size));
+
 	    model.addAttribute("vouchers", vouchers.getContent());
 	    model.addAttribute("page", vouchers);
 	    model.addAttribute("code", code);
 	    model.addAttribute("status", status);
-	    model.addAttribute("ownerId", ownerId);
+
 	    return "admin/vouchers";
 	}
 

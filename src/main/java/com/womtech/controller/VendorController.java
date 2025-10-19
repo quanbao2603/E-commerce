@@ -4,6 +4,7 @@ import com.womtech.entity.*;
 import com.womtech.service.*;
 import com.womtech.util.OrderStatusHelper;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.core.Authentication;
@@ -13,9 +14,11 @@ import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
+import java.security.Principal;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
@@ -45,6 +48,9 @@ public class VendorController {
 
 	@Autowired
 	private OrderService orderService;
+	
+	@Autowired
+	private VoucherService voucherService;
 
 	// Helper method to get current user
 	private User getCurrentUser(Authentication authentication) {
@@ -610,5 +616,93 @@ public class VendorController {
 	@ResponseBody
 	public List<Subcategory> getSubcategoriesByCategory(@PathVariable String categoryID) {
 		return subcategoryService.getSubcategoriesByCategoryId(categoryID);
+	}
+	
+	@GetMapping("/vouchers")
+	public String listVouchers(
+	        @RequestParam(value = "code", required = false) String code,
+	        @RequestParam(value = "status", required = false) Integer status,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Model model,
+	        Principal principal) {
+
+	    // Lấy vendor đang đăng nhập
+		Optional<User> optUser = userService.findById(principal.getName());
+		if (optUser.isEmpty()) {
+		    throw new RuntimeException("User not found for id: " + principal.getName());
+		}
+		User currentUser = optUser.get();
+	    String ownerId = null;
+
+	    // Nếu là vendor thì chỉ xem voucher của chính mình
+	    if (currentUser.getRole().getRolename().equals("VENDOR")) {
+	        ownerId = currentUser.getUserID();
+	    }
+
+	    Page<Voucher> vouchers = voucherService.search(code, status, ownerId, PageRequest.of(page, size));
+
+	    model.addAttribute("vouchers", vouchers.getContent());
+	    model.addAttribute("page", vouchers);
+	    model.addAttribute("code", code);
+	    model.addAttribute("status", status);
+
+	    return "vendor/vouchers";
+	}
+	
+	@GetMapping("/vouchers/new")
+	public String newVoucherForm(Model model) {
+	    model.addAttribute("voucher", new Voucher());
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "vendor/voucher-form";
+	}
+
+	@GetMapping("/vouchers/edit/{id}")
+	public String editVoucherForm(@PathVariable String id, Model model) {
+	    Voucher voucher = voucherService.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Voucher not found"));
+	    model.addAttribute("voucher", voucher);
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "vendor/voucher-form";
+	}
+
+	@PostMapping("/vouchers/save")
+	public String saveVoucher(@ModelAttribute Voucher voucher, RedirectAttributes redirectAttributes) {
+	    try {
+	        if (voucher.getVoucherID() == null) {
+	            voucherService.create(voucher);
+	        } else {
+	            voucherService.update(voucher);
+	        }
+	        redirectAttributes.addFlashAttribute("success", "Voucher đã được lưu thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu voucher: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/vouchers";
+	}
+
+	@GetMapping("/vouchers/delete/{id}")
+	public String deleteVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    try {
+	        voucherService.delete(id);
+	        redirectAttributes.addFlashAttribute("success", "Voucher đã được xóa thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa voucher: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/vouchers";
+	}
+
+	@GetMapping("/vouchers/enable/{id}")
+	public String enableVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    voucherService.enableVoucher(id);
+	    redirectAttributes.addFlashAttribute("success", "Voucher đã được kích hoạt!");
+	    return "redirect:/vendor/vouchers";
+	}
+
+	@GetMapping("/vouchers/disable/{id}")
+	public String disableVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    voucherService.disableVoucher(id);
+	    redirectAttributes.addFlashAttribute("success", "Voucher đã bị vô hiệu hóa!");
+	    return "redirect:/vendor/vouchers";
 	}
 }
