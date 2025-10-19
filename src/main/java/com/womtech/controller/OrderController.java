@@ -61,7 +61,8 @@ public class OrderController {
 	    model.addAttribute("orderStatusBadge", orderStatusBadge);
 	    model.addAttribute("paymentStatusLabel", paymentStatusLabel);
 	    model.addAttribute("paymentStatusBadge", paymentStatusBadge);
-		return "/user/order-detail";
+		return "user/order-detail";
+
 	}
 	
 	@PostMapping("/cancel")
