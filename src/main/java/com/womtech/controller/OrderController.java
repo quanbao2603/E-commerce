@@ -15,6 +15,7 @@ import com.womtech.entity.Order;
 import com.womtech.entity.User;
 import com.womtech.service.OrderService;
 import com.womtech.util.AuthUtils;
+import com.womtech.util.OrderStatusHelper;
 
 import jakarta.servlet.http.HttpSession;
 import lombok.RequiredArgsConstructor;
@@ -49,8 +50,17 @@ public class OrderController {
 		orderService.totalPrice(order);
 		int totalQuantity = orderService.totalQuantity(order);
 		
+	    String orderStatusLabel = OrderStatusHelper.getOrderStatusLabel(order.getStatus());
+	    String orderStatusBadge = OrderStatusHelper.getOrderStatusBadgeClass(order.getStatus());
+	    String paymentStatusLabel = OrderStatusHelper.getPaymentStatusLabel(order.getPaymentStatus());
+	    String paymentStatusBadge = OrderStatusHelper.getPaymentBadgeClass(order.getPaymentStatus());
+		
 		model.addAttribute("order", order);
 		model.addAttribute("totalQuantity", totalQuantity);
+	    model.addAttribute("orderStatusLabel", orderStatusLabel);
+	    model.addAttribute("orderStatusBadge", orderStatusBadge);
+	    model.addAttribute("paymentStatusLabel", paymentStatusLabel);
+	    model.addAttribute("paymentStatusBadge", paymentStatusBadge);
 		return "/user/order-detail";
 	}
 	
@@ -85,7 +95,7 @@ public class OrderController {
 		if (userOpt.isEmpty()) {
 			return "redirect:/auth/login";
 		}
-		User user = userOpt.get();
+//		User user = userOpt.get();
 		return "error/403";
 	}
 }

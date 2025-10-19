@@ -2,9 +2,7 @@ package com.womtech.service.impl;
 
 import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
-import com.womtech.entity.Product;
 import com.womtech.entity.User;
-import com.womtech.entity.Voucher;
 import com.womtech.repository.OrderItemRepository;
 import com.womtech.repository.OrderRepository;
 import java.math.BigDecimal;
@@ -17,7 +15,6 @@ import org.springframework.stereotype.Service;
 
 import com.womtech.entity.Address;
 import com.womtech.entity.Cart;
-import com.womtech.entity.CartItem;
 import com.womtech.service.AddressService;
 import com.womtech.service.CartItemService;
 import com.womtech.service.CartService;

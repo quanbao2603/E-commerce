@@ -24,15 +24,7 @@
 				</div>
 				<div class="text-end">
 					<div>
-						<span th:switch="${order.status}"> <span th:case="1"
-							class="badge bg-warning text-dark">Đang xử lý</span> <span
-							th:case="2" class="badge bg-info text-dark">Đã thanh toán</span>
-							<span th:case="3" class="badge bg-primary">Đang giao</span> <span
-							th:case="4" class="badge bg-success">Hoàn tất</span> <span
-							th:case="5" class="badge bg-danger">Đã hủy</span> <span
-							th:case="*" class="badge bg-secondary">Trạng thái: <span
-								th:text="${order.status}">?</span></span>
-						</span>
+						<span class="badge" th:classappend="${orderStatusBadge}" th:text="${orderStatusLabel}">Trạng thái</span>
 					</div>
 					<small class="text-muted"
 						th:text="${#temporals.format(order.createAt, 'dd/MM/yyyy HH:mm')}">01/01/2025</small>
@@ -104,8 +96,6 @@
 					<div class="d-grid gap-2">
 						<a th:href="@{/user/profile?tab=orders}"
 							class="btn btn-outline-secondary">Quay về danh sách đơn</a>
-						<button class="btn btn-outline-primary" onclick="window.print()">In
-							đơn hàng</button>
 					</div>
 				</div>
 
@@ -173,7 +163,7 @@
 								</div>
 
 								<div
-									th:if="${order.status != 5 and order.status < 3 and order.paymentStatus != 1}"
+									th:if="${order.status == 1 or order.status == 2}"
 									class="d-flex justify-content-end align-items-center gap-2 mt-3">
 
 									<form th:action="@{/order/cancel}" method="post"
