@@ -180,7 +180,8 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
         for (OrderItem item : order.getItems()) {
             item.setStatus(OrderStatusHelper.ITEM_STATUS_CANCELLED);
         }
-
+        
+        order.setUpdateAt(LocalDateTime.now());
         orderRepository.save(order);
     }
 
