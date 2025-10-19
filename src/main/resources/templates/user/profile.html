@@ -114,8 +114,8 @@
 								</a> <a href="#profile-orders"
 									class="list-group-item list-group-item-action profile-nav-item"
 									data-tab="orders"> <i class="bi bi-bag me-3"></i>Lịch Sử
-									Đơn Hàng <span class="badge bg-secondary ms-auto" th:text="${listOrder.size()}">0
-									</span>
+									Đơn Hàng <span class="badge bg-secondary ms-auto"
+									th:text="${listOrder.size()}">0 </span>
 								</a> <a href="#profile-address"
 									class="list-group-item list-group-item-action profile-nav-item"
 									data-tab="address"> <i class="bi bi-geo-alt me-3"></i>Địa
@@ -339,16 +339,12 @@
 													</div>
 
 													<div class="col-md-2 text-end">
-														<!-- Trạng thái hiển thị bằng badge -->
-														<div th:switch="${order.status}">
-															<span th:case="1" class="badge bg-warning text-dark">Đang
-																xử lý</span> <span th:case="2" class="badge bg-info text-dark">Đã
-																thanh toán</span> <span th:case="3" class="badge bg-primary">Đang
-																giao</span> <span th:case="4" class="badge bg-success">Hoàn
-																tất</span> <span th:case="5" class="badge bg-danger">Đã
-																hủy</span> <span th:case="*" class="badge bg-secondary">Trạng
-																thái: <span th:text="${order.status}">?</span>
-															</span>
+														<!-- badge trạng thái -->
+														<div class="d-inline-block">
+															<span class="badge px-3 py-2"
+																th:classappend="${T(com.womtech.util.OrderStatusHelper).getOrderStatusBadgeClass(order.status)}"
+																th:text="${T(com.womtech.util.OrderStatusHelper).getOrderStatusLabel(order.status)}">
+																Trạng thái </span>
 														</div>
 
 														<div class="mt-2">
