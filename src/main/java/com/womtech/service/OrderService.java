@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.Optional;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 public interface OrderService extends BaseService<Order, String> {
     List<Order> getAllOrders();
     Optional<Order> getOrderById(String orderId);
@@ -46,4 +49,6 @@ public interface OrderService extends BaseService<Order, String> {
 	int totalQuantity(Order order);
 	BigDecimal totalPrice(Order order);
 	BigDecimal totalPrice(Cart cart, String voucherCode);
+	Page<Order> findByUser(User user, Pageable pageable);
+	Page<Order> findByUserAndStatus(User user, int status, Pageable pageable);
 }

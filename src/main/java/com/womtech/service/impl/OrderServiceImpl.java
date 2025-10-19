@@ -22,6 +22,8 @@ import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
 import com.womtech.service.VoucherService;
 import com.womtech.util.OrderStatusHelper;
+
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.transaction.annotation.Transactional;
@@ -53,7 +55,6 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 	public OrderServiceImpl(JpaRepository<Order, String> repo) {
 		super(repo);
 	}
-
 
     @Override
     public List<Order> getAllOrders() {
@@ -422,4 +423,14 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
         }
         return total;
     }
+
+	@Override
+	public Page<Order> findByUser(User user, Pageable pageable) {
+		return orderRepository.findByUser(user, pageable);
+	}
+
+	@Override
+	public Page<Order> findByUserAndStatus(User user, int status, Pageable pageable) {
+		return orderRepository.findByUserAndStatus(user, status, pageable);
+	}
 }
