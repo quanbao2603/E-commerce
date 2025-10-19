@@ -24,7 +24,8 @@
 				</div>
 				<div class="text-end">
 					<div>
-						<span class="badge" th:classappend="${orderStatusBadge}" th:text="${orderStatusLabel}">Trạng thái</span>
+						<span class="badge" th:classappend="${orderStatusBadge}"
+							th:text="${orderStatusLabel}">Trạng thái</span>
 					</div>
 					<small class="text-muted"
 						th:text="${#temporals.format(order.createAt, 'dd/MM/yyyy HH:mm')}">01/01/2025</small>
@@ -49,7 +50,7 @@
 					</div>
 
 					<div class="card mb-3">
-						<div class="card-header fw-semibold">Phương thức & thanh
+						<div class="card-header fw-semibold">Phương thức và thanh
 							toán</div>
 						<div class="card-body">
 							<p class="mb-2">
@@ -58,7 +59,8 @@
 							</p>
 							<p class="mb-0">
 								<strong>Trạng thái thanh toán:</strong> <span
-									th:text="${order.paymentStatus == 1 ? 'Đã thanh toán' : 'Chưa thanh toán'}">Chưa</span>
+									th:text="${order.paymentStatus == 0 ? 'Chưa thanh toán' : (order.paymentStatus == 1 ? 'Đã thanh toán' : 'Thanh toán thất bại')}">
+									Chưa thanh toán </span>
 							</p>
 							<div
 								th:if="${order.paymentMethod != 'COD' and order.paymentStatus != 1}">
@@ -162,8 +164,7 @@
 										0 ₫</div>
 								</div>
 
-								<div
-									th:if="${order.status == 1 or order.status == 2}"
+								<div th:if="${order.status == 1 or order.status == 2}"
 									class="d-flex justify-content-end align-items-center gap-2 mt-3">
 
 									<form th:action="@{/order/cancel}" method="post"
