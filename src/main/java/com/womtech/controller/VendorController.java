@@ -7,6 +7,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
@@ -51,6 +52,9 @@ public class VendorController {
 	
 	@Autowired
 	private VoucherService voucherService;
+	
+	@Autowired
+    private PostService postService;
 
 	// Helper method to get current user
 	private User getCurrentUser(Authentication authentication) {
@@ -704,5 +708,113 @@ public class VendorController {
 	    voucherService.disableVoucher(id);
 	    redirectAttributes.addFlashAttribute("success", "Voucher đã bị vô hiệu hóa!");
 	    return "redirect:/vendor/vouchers";
+	}
+	// ========== POST MANAGEMENT ==========
+	@GetMapping("/posts")
+	public String listPosts(
+	        @RequestParam(value = "title", required = false) String title,
+	        @RequestParam(value = "status", required = false) Integer status,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Authentication authentication,
+	        Model model) {
+
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
+
+	    User currentUser = getCurrentUser(authentication);
+	    String role = currentUser.getRole().getRolename();
+
+	    Page<Post> posts = postService.search(currentUser.getUserID(), role, title, status, pageable);
+
+	    model.addAttribute("posts", posts.getContent());
+	    model.addAttribute("page", posts);
+	    model.addAttribute("title", title);
+	    model.addAttribute("status", status);
+
+	    return "vendor/posts";
+	}
+
+	@GetMapping("/posts/new")
+	public String newPostForm(Model model, Principal principal) {
+	    Post post = new Post();
+	    post.setUser(userService.findById(principal.getName()).orElse(null)); // Gán vendor hiện tại
+	    model.addAttribute("post", post);
+	    return "vendor/post-form";
+	}
+
+	@GetMapping("/posts/edit/{id}")
+	public String editPostForm(@PathVariable String id, Principal principal, Model model) {
+	    Post post = postService.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Post not found"));
+
+	    // Kiểm tra quyền: vendor chỉ được edit bài của mình
+	    if (!post.getUser().getUserID().equals(principal.getName())) {
+	        throw new RuntimeException("Không có quyền chỉnh sửa bài viết này");
+	    }
+
+	    model.addAttribute("post", post);
+	    return "vendor/post-form";
+	}
+
+	@PostMapping("/posts/save")
+	public String savePost(
+	        @ModelAttribute Post post,
+	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile,
+	        Principal principal,
+	        RedirectAttributes redirectAttributes) {
+	    try {
+	        // Gán vendor hiện tại
+	        post.setUser(userService.findById(principal.getName()).orElse(null));
+
+	        // Xử lý upload thumbnail
+	        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+	            if (post.getPostID() != null && post.getThumbnail() != null) {
+	                cloudinaryService.deleteImage(post.getThumbnail());
+	            }
+	            String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
+	            post.setThumbnail(thumbnailUrl);
+	        }
+
+	        if (post.getPostID() == null) {
+	            postService.create(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được tạo thành công!");
+	        } else {
+	            // Kiểm tra quyền: chỉ update bài của mình
+	            Post existingPost = postService.findById(post.getPostID())
+	                    .orElseThrow(() -> new RuntimeException("Post not found"));
+	            if (!existingPost.getUser().getUserID().equals(principal.getName())) {
+	                throw new RuntimeException("Không có quyền cập nhật bài viết này");
+	            }
+	            postService.update(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được cập nhật!");
+	        }
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu bài viết: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/posts";
+	}
+
+	@GetMapping("/posts/delete/{id}")
+	public String deletePost(@PathVariable String id, Principal principal, RedirectAttributes redirectAttributes) {
+	    try {
+	        Post post = postService.findById(id)
+	                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+	        // Kiểm tra quyền: chỉ xóa bài của mình
+	        if (!post.getUser().getUserID().equals(principal.getName())) {
+	            throw new RuntimeException("Không có quyền xóa bài viết này");
+	        }
+
+	        // Xóa thumbnail nếu có
+	        if (post.getThumbnail() != null) {
+	            cloudinaryService.deleteImage(post.getThumbnail());
+	        }
+
+	        postService.delete(id);
+	        redirectAttributes.addFlashAttribute("success", "Bài viết đã được xóa!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa bài viết: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/posts";
 	}
 }

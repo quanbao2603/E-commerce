@@ -13,6 +13,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -49,6 +50,9 @@ public class AdminController {
 	
 	@Autowired
 	private VoucherService voucherService;
+	
+	@Autowired
+    private PostService postService;
 
 	// ========== DASHBOARD ==========
 	@GetMapping("/dashboard")
@@ -706,5 +710,92 @@ public class AdminController {
 	    voucherService.disableVoucher(id);
 	    redirectAttributes.addFlashAttribute("success", "Voucher đã bị vô hiệu hóa!");
 	    return "redirect:/admin/vouchers";
+	}
+	
+	// ========== POST MANAGEMENT ==========
+	@GetMapping("/posts")
+	public String listPosts(
+	        @RequestParam(value = "title", required = false) String title,
+	        @RequestParam(value = "status", required = false) Integer status,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Principal principal,   // <-- thay Authentication bằng Principal
+	        Model model) {
+
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
+
+	    User currentUser = userService.findById(principal.getName())
+	            .orElseThrow(() -> new RuntimeException("User not found: " + principal.getName()));
+
+	    String role = currentUser.getRole().getRolename();
+
+	    Page<Post> posts = postService.search(currentUser.getUserID(), role, title, status, pageable);
+
+	    model.addAttribute("posts", posts.getContent());
+	    model.addAttribute("page", posts);
+	    model.addAttribute("title", title);
+	    model.addAttribute("status", status);
+
+	    return role.equalsIgnoreCase("ADMIN") ? "admin/posts" : "vendor/posts";
+	}
+
+	@GetMapping("/posts/new")
+	public String newPostForm(Model model) {
+	    model.addAttribute("post", new Post());
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "admin/post-form";
+	}
+
+	@GetMapping("/posts/edit/{id}")
+	public String editPostForm(@PathVariable String id, Model model) {
+	    Post post = postService.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Post not found"));
+	    model.addAttribute("post", post);
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "admin/post-form";
+	}
+
+	@PostMapping("/posts/save")
+	public String savePost(
+	        @ModelAttribute Post post,
+	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile,
+	        RedirectAttributes redirectAttributes) {
+	    try {
+	        // Xử lý upload thumbnail
+	        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+	            // Xóa thumbnail cũ nếu đã có
+	            if (post.getPostID() != null && post.getThumbnail() != null) {
+	                cloudinaryService.deleteImage(post.getThumbnail());
+	            }
+
+	            // Upload thumbnail mới lên Cloudinary
+	            String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
+	            post.setThumbnail(thumbnailUrl);
+	        }
+
+	        // Lưu bài viết
+	        if (post.getPostID() == null) {
+	            postService.create(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được tạo thành công!");
+	        } else {
+	            postService.update(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được cập nhật!");
+	        }
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu bài viết: " + e.getMessage());
+	    }
+
+	    return "redirect:/admin/posts";
+	}
+
+	@GetMapping("/posts/delete/{id}")
+	public String deletePost(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    try {
+	        postService.delete(id);
+	        redirectAttributes.addFlashAttribute("success", "Bài viết đã được xóa!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa bài viết: " + e.getMessage());
+	    }
+	    return "redirect:/admin/posts";
 	}
 }
