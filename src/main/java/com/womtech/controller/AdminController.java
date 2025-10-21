@@ -5,6 +5,7 @@ import com.womtech.service.*;
 
 import java.io.IOException;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -14,6 +15,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -607,12 +609,21 @@ public class AdminController {
 	}
 	@GetMapping("/users/lock/{id}")
 	public String lockUser(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+	    Optional<User> currentUserOpt = userService.findById(currentUserId);
+	    
+	    if (currentUserOpt.isPresent() && currentUserOpt.get().getUserID().equals(id)) {
+	        redirectAttributes.addFlashAttribute("error", "Không thể tự khóa chính mình!");
+	        return "redirect:/admin/users";
+	    }
+
 	    try {
 	        userService.lockUser(id);
 	        redirectAttributes.addFlashAttribute("success", "User đã bị khóa thành công!");
 	    } catch (Exception e) {
 	        redirectAttributes.addFlashAttribute("error", "Lỗi khi khóa user: " + e.getMessage());
 	    }
+
 	    return "redirect:/admin/users";
 	}
 
@@ -711,6 +722,17 @@ public class AdminController {
 	@PostMapping("/vouchers/save")
 	public String saveVoucher(@ModelAttribute Voucher voucher, RedirectAttributes redirectAttributes) {
 	    try {
+	    	String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+	        User owner = userService.findById(userId)
+	                .orElseThrow(() -> new IllegalStateException("Không tìm thấy vendor đăng nhập"));
+	        voucher.setOwner(owner);
+	        if (voucher.getExpire_date() != null) {
+	            LocalDateTime today = LocalDateTime.now();
+	            if (voucher.getExpire_date().isBefore(today)) {
+	                redirectAttributes.addFlashAttribute("error", "Ngày hết hạn phải sau ngày hiện tại!");
+	                return "redirect:/vendor/vouchers";
+	            }
+	        }
 	        if (voucher.getVoucherID() == null) {
 	            voucherService.create(voucher);
 	        } else {
