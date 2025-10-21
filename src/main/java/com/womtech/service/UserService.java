@@ -42,4 +42,5 @@ public interface UserService extends BaseService<User, String>{
     Page<User> searchUsers(String keyword, String role, Integer status, Pageable pageable); // tìm kiếm + phân trang
     void lockUser(String userId);  // khoá user
     void unlockUser(String userId); // mở khoá user
+    void deleteUserById(String userId);
 }	

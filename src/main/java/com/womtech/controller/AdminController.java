@@ -19,6 +19,9 @@ import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin")
@@ -620,6 +623,39 @@ public class AdminController {
 	        redirectAttributes.addFlashAttribute("success", "User đã được mở khóa thành công!");
 	    } catch (Exception e) {
 	        redirectAttributes.addFlashAttribute("error", "Lỗi khi mở khóa user: " + e.getMessage());
+	    }
+	    return "redirect:/admin/users";
+	}
+	
+	@GetMapping("/users/delete/{id}")
+	public String deleteUser(
+	        @PathVariable("id") String userId,
+	        Principal principal,
+	        RedirectAttributes redirectAttributes
+	) {
+	    try {
+	        // Không cho tự xoá chính mình
+	        if (principal != null && userId.equals(principal.getName())) {
+	            redirectAttributes.addFlashAttribute("error", "Bạn không thể tự xoá chính tài khoản của mình.");
+	            return "redirect:/admin/users";
+	        }
+
+	        userService.deleteUserById(userId);
+	        redirectAttributes.addFlashAttribute("success", "Xoá tài khoản thành công!");
+
+	    } catch (EmptyResultDataAccessException e) {
+	        // deleteById() ném ra nếu không tồn tại
+	        redirectAttributes.addFlashAttribute("error", "Không tìm thấy user với ID: " + userId);
+	    } catch (DataIntegrityViolationException e) {
+	        // Lỗi ràng buộc khoá ngoại: user còn dữ liệu liên quan
+	        redirectAttributes.addFlashAttribute("error",
+	                "Không thể xoá do tài khoản còn dữ liệu liên quan (đơn hàng/sản phẩm/bài viết...). " +
+	                "Hãy xoá/đổi chủ sở hữu dữ liệu liên quan trước.");
+	    } catch (RuntimeException e) {
+	        // Nếu bạn ném RuntimeException("User not found ...") trong service
+	        redirectAttributes.addFlashAttribute("error", e.getMessage());
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Đã xảy ra lỗi khi xoá user: " + e.getMessage());
 	    }
 	    return "redirect:/admin/users";
 	}
