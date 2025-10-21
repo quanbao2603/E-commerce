@@ -9,6 +9,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
@@ -16,6 +17,7 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -673,6 +675,19 @@ public class VendorController {
 	@PostMapping("/vouchers/save")
 	public String saveVoucher(@ModelAttribute Voucher voucher, RedirectAttributes redirectAttributes) {
 	    try {
+	    	String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+	        User owner = userService.findById(userId)
+	                .orElseThrow(() -> new IllegalStateException("Không tìm thấy vendor đăng nhập"));
+	        voucher.setOwner(owner);
+	        
+	        if (voucher.getExpire_date() != null) {
+	            LocalDateTime today = LocalDateTime.now();
+	            if (voucher.getExpire_date().isBefore(today)) {
+	                redirectAttributes.addFlashAttribute("error", "Ngày hết hạn phải sau ngày hiện tại!");
+	                return "redirect:/vendor/vouchers";
+	            }
+	        }
+	        
 	        if (voucher.getVoucherID() == null) {
 	            voucherService.create(voucher);
 	        } else {

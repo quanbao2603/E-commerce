@@ -1,5 +1,7 @@
 package com.womtech.service.impl;
 
+import java.math.BigDecimal;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -38,6 +40,18 @@ public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> impleme
             voucher.setStatus(1);
         }
 
+        if (voucher.getDiscount() == null || voucher.getDiscount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Giá trị giảm phải lớn hơn 0%");
+        }
+        
+        if (voucher.getExpire_date() == null) {
+            throw new IllegalArgumentException("Vui lòng nhập ngày và giờ hết hạn voucher");
+        }
+
+        if (!voucher.getExpire_date().isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Thời gian hết hạn phải sau thời điểm hiện tại");
+        }
+        
         return voucherRepository.save(voucher);
     }
 
@@ -45,7 +59,19 @@ public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> impleme
     public Voucher update(Voucher voucher) {
         Voucher existing = voucherRepository.findById(voucher.getVoucherID())
                 .orElseThrow(() -> new IllegalArgumentException("Voucher không tồn tại"));
+        
+        if (voucher.getDiscount() == null || voucher.getDiscount().compareTo(BigDecimal.ZERO) <= 0) {
+            throw new IllegalArgumentException("Giá trị giảm phải lớn hơn 0%");
+        }
+        
+        if (voucher.getExpire_date() == null) {
+            throw new IllegalArgumentException("Vui lòng nhập ngày và giờ hết hạn voucher");
+        }
 
+        if (!voucher.getExpire_date().isAfter(LocalDateTime.now())) {
+            throw new IllegalArgumentException("Thời gian hết hạn phải sau thời điểm hiện tại");
+        }
+        
         existing.setCode(voucher.getCode());
         existing.setDiscount(voucher.getDiscount());
         existing.setMin_price(voucher.getMin_price());
