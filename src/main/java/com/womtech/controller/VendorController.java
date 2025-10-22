@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
@@ -17,7 +18,9 @@ import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
 import java.security.Principal;
+import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -393,77 +396,106 @@ public class VendorController {
 
 	// ========== ORDER MANAGEMENT ==========
 	@GetMapping("/orders")
-	public String listOrders(@RequestParam(required = false) Integer status,
-			@RequestParam(required = false) String search, @RequestParam(defaultValue = "0") int page,
-			@RequestParam(defaultValue = "10") int size, Authentication authentication, Model model) {
+	public String listOrders(
+	        @RequestParam(required = false) Integer status,
+	        @RequestParam(required = false) String search,
+	        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate startDate,
+	        @RequestParam(required = false) @DateTimeFormat(pattern = "yyyy-MM-dd") LocalDate endDate,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Authentication authentication,
+	        Model model) {
 
-		User currentUser = getCurrentUser(authentication);
+	    User currentUser = getCurrentUser(authentication);
 
-		// Get orders that contain vendor's products
-		List<Order> allOrders;
-		if (status != null) {
-			allOrders = orderService.getOrdersByVendorIdAndStatus(currentUser.getUserID(), status);
-		} else {
-			allOrders = orderService.getOrdersByVendorId(currentUser.getUserID());
-		}
-		if (status != null) {
-			allOrders = orderService.getOrdersByVendorIdAndStatus(currentUser.getUserID(), status);
-			System.out.println("Số lượng đơn hàng với trạng thái " + status + ": " + allOrders.size());
-		} else {
-			allOrders = orderService.getOrdersByVendorId(currentUser.getUserID());
-			System.out.println("Số lượng đơn hàng tổng: " + allOrders.size());
-		}
+	    // Get orders that contain vendor's products
+	    List<Order> allOrders;
+	    if (status != null) {
+	        allOrders = orderService.getOrdersByVendorIdAndStatus(currentUser.getUserID(), status);
+	        System.out.println("Số lượng đơn hàng với trạng thái " + status + ": " + allOrders.size());
+	    } else {
+	        allOrders = orderService.getOrdersByVendorId(currentUser.getUserID());
+	        System.out.println("Số lượng đơn hàng tổng: " + allOrders.size());
+	    }
 
-		// Apply search filter by orderID, username, or shippingPhone
-		if (search != null && !search.trim().isEmpty()) {
-			String searchLower = search.toLowerCase().trim();
-			allOrders = allOrders.stream()
-					.filter(o -> o.getOrderID().toLowerCase().contains(searchLower)
-							|| (o.getUser() != null && o.getUser().getUsername() != null
-									&& o.getUser().getUsername().toLowerCase().contains(searchLower))
-							|| (o.getAddress().getPhone() != null
-									&& o.getAddress().getPhone().toLowerCase().contains(searchLower)))
-					.collect(Collectors.toList());
-			System.out.println("Số lượng đơn hàng sau tìm kiếm: " + allOrders.size());
-		}
+	    // Apply search filter by orderID, username, or shippingPhone
+	    if (search != null && !search.trim().isEmpty()) {
+	        String searchLower = search.toLowerCase().trim();
+	        allOrders = allOrders.stream()
+	                .filter(o -> o.getOrderID().toLowerCase().contains(searchLower)
+	                        || (o.getUser() != null && o.getUser().getUsername() != null
+	                                && o.getUser().getUsername().toLowerCase().contains(searchLower))
+	                        || (o.getAddress().getPhone() != null
+	                                && o.getAddress().getPhone().toLowerCase().contains(searchLower)))
+	                .collect(Collectors.toList());
+	        System.out.println("Số lượng đơn hàng sau tìm kiếm: " + allOrders.size());
+	    }
 
-		// Manual pagination
-		int start = Math.min(page * size, allOrders.size());
-		int end = Math.min(start + size, allOrders.size());
-		List<Order> pagedOrders = allOrders.subList(start, end);
+	    // Apply date filter (filter by createAt)
+	    if (startDate != null || endDate != null) {
+	        LocalDateTime startDateTime = (startDate != null) ? startDate.atStartOfDay() : null;
+	        LocalDateTime endDateTime = (endDate != null) ? endDate.atTime(LocalTime.MAX) : null;
 
-		Pageable pageable = PageRequest.of(page, size);
-		org.springframework.data.domain.PageImpl<Order> pageImpl = new org.springframework.data.domain.PageImpl<>(
-				pagedOrders, pageable, allOrders.size());
+	        allOrders = allOrders.stream()
+	                .filter(o -> {
+	                    LocalDateTime orderDate = o.getCreateAt();
+	                    if (orderDate == null) return false;
 
-		// Count by status
-		Map<String, Long> statusCounts = new java.util.HashMap<>();
-		statusCounts.put("ALL", orderService.countOrdersByVendorId(currentUser.getUserID()));
-		statusCounts.put("PENDING",
-				orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(), OrderStatusHelper.STATUS_PENDING));
-		statusCounts.put("CONFIRMED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
-				OrderStatusHelper.STATUS_CONFIRMED));
-		statusCounts.put("PREPARING", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
-				OrderStatusHelper.STATUS_PREPARING));
-		statusCounts.put("PACKED",
-				orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(), OrderStatusHelper.STATUS_PACKED));
-		statusCounts.put("SHIPPED",
-				orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(), OrderStatusHelper.STATUS_SHIPPED));
-		statusCounts.put("DELIVERED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
-				OrderStatusHelper.STATUS_DELIVERED));
-		statusCounts.put("CANCELLED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
-				OrderStatusHelper.STATUS_CANCELLED));
-		statusCounts.put("RETURNED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
-				OrderStatusHelper.STATUS_RETURNED));
+	                    // Check start date
+	                    if (startDateTime != null && orderDate.isBefore(startDateTime)) {
+	                        return false;
+	                    }
 
-		model.addAttribute("orders", pagedOrders);
-		model.addAttribute("page", pageImpl);
-		model.addAttribute("statusCounts", statusCounts);
-		model.addAttribute("currentStatus", status != null ? OrderStatusHelper.getOrderStatusLabel(status) : "ALL");
-		model.addAttribute("OrderStatusHelper", OrderStatusHelper.class);
+	                    // Check end date
+	                    if (endDateTime != null && orderDate.isAfter(endDateTime)) {
+	                        return false;
+	                    }
 
-		return "vendor/orders";
+	                    return true;
+	                })
+	                .collect(Collectors.toList());
+	        
+	        System.out.println("Số lượng đơn hàng sau lọc theo ngày: " + allOrders.size());
+	    }
+
+	    // Manual pagination
+	    int start = Math.min(page * size, allOrders.size());
+	    int end = Math.min(start + size, allOrders.size());
+	    List<Order> pagedOrders = allOrders.subList(start, end);
+
+	    Pageable pageable = PageRequest.of(page, size);
+	    org.springframework.data.domain.PageImpl<Order> pageImpl = new org.springframework.data.domain.PageImpl<>(
+	            pagedOrders, pageable, allOrders.size());
+
+	    // Count by status
+	    Map<String, Long> statusCounts = new java.util.HashMap<>();
+	    statusCounts.put("ALL", orderService.countOrdersByVendorId(currentUser.getUserID()));
+	    statusCounts.put("PENDING",
+	            orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(), OrderStatusHelper.STATUS_PENDING));
+	    statusCounts.put("CONFIRMED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
+	            OrderStatusHelper.STATUS_CONFIRMED));
+	    statusCounts.put("PREPARING", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
+	            OrderStatusHelper.STATUS_PREPARING));
+	    statusCounts.put("PACKED",
+	            orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(), OrderStatusHelper.STATUS_PACKED));
+	    statusCounts.put("SHIPPED",
+	            orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(), OrderStatusHelper.STATUS_SHIPPED));
+	    statusCounts.put("DELIVERED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
+	            OrderStatusHelper.STATUS_DELIVERED));
+	    statusCounts.put("CANCELLED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
+	            OrderStatusHelper.STATUS_CANCELLED));
+	    statusCounts.put("RETURNED", orderService.countOrdersByVendorIdAndStatus(currentUser.getUserID(),
+	            OrderStatusHelper.STATUS_RETURNED));
+
+	    model.addAttribute("orders", pagedOrders);
+	    model.addAttribute("page", pageImpl);
+	    model.addAttribute("statusCounts", statusCounts);
+	    model.addAttribute("currentStatus", status != null ? OrderStatusHelper.getOrderStatusLabel(status) : "ALL");
+	    model.addAttribute("OrderStatusHelper", OrderStatusHelper.class);
+
+	    return "vendor/orders";
 	}
+
 
 	@GetMapping("/orders/{id}")
 	public String viewOrderDetail(@PathVariable String id, Authentication authentication, Model model) {
