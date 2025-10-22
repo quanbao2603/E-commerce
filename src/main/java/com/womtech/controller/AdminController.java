@@ -4,18 +4,26 @@ import com.womtech.entity.*;
 import com.womtech.service.*;
 
 import java.io.IOException;
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.EmptyResultDataAccessException;
+import java.security.Principal;
 
 @Controller
 @RequestMapping("/admin")
@@ -47,6 +55,9 @@ public class AdminController {
 	
 	@Autowired
 	private VoucherService voucherService;
+	
+	@Autowired
+    private PostService postService;
 
 	// ========== DASHBOARD ==========
 	@GetMapping("/dashboard")
@@ -598,12 +609,21 @@ public class AdminController {
 	}
 	@GetMapping("/users/lock/{id}")
 	public String lockUser(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
+	    Optional<User> currentUserOpt = userService.findById(currentUserId);
+	    
+	    if (currentUserOpt.isPresent() && currentUserOpt.get().getUserID().equals(id)) {
+	        redirectAttributes.addFlashAttribute("error", "Không thể tự khóa chính mình!");
+	        return "redirect:/admin/users";
+	    }
+
 	    try {
 	        userService.lockUser(id);
 	        redirectAttributes.addFlashAttribute("success", "User đã bị khóa thành công!");
 	    } catch (Exception e) {
 	        redirectAttributes.addFlashAttribute("error", "Lỗi khi khóa user: " + e.getMessage());
 	    }
+
 	    return "redirect:/admin/users";
 	}
 
@@ -618,21 +638,68 @@ public class AdminController {
 	    return "redirect:/admin/users";
 	}
 	
+	@GetMapping("/users/delete/{id}")
+	public String deleteUser(
+	        @PathVariable("id") String userId,
+	        Principal principal,
+	        RedirectAttributes redirectAttributes
+	) {
+	    try {
+	        // Không cho tự xoá chính mình
+	        if (principal != null && userId.equals(principal.getName())) {
+	            redirectAttributes.addFlashAttribute("error", "Bạn không thể tự xoá chính tài khoản của mình.");
+	            return "redirect:/admin/users";
+	        }
+
+	        userService.deleteUserById(userId);
+	        redirectAttributes.addFlashAttribute("success", "Xoá tài khoản thành công!");
+
+	    } catch (EmptyResultDataAccessException e) {
+	        // deleteById() ném ra nếu không tồn tại
+	        redirectAttributes.addFlashAttribute("error", "Không tìm thấy user với ID: " + userId);
+	    } catch (DataIntegrityViolationException e) {
+	        // Lỗi ràng buộc khoá ngoại: user còn dữ liệu liên quan
+	        redirectAttributes.addFlashAttribute("error",
+	                "Không thể xoá do tài khoản còn dữ liệu liên quan (đơn hàng/sản phẩm/bài viết...). " +
+	                "Hãy xoá/đổi chủ sở hữu dữ liệu liên quan trước.");
+	    } catch (RuntimeException e) {
+	        // Nếu bạn ném RuntimeException("User not found ...") trong service
+	        redirectAttributes.addFlashAttribute("error", e.getMessage());
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Đã xảy ra lỗi khi xoá user: " + e.getMessage());
+	    }
+	    return "redirect:/admin/users";
+	}
+	
 	@GetMapping("/vouchers")
 	public String listVouchers(
 	        @RequestParam(value = "code", required = false) String code,
 	        @RequestParam(value = "status", required = false) Integer status,
-	        @RequestParam(value = "ownerId", required = false) String ownerId,
 	        @RequestParam(defaultValue = "0") int page,
 	        @RequestParam(defaultValue = "10") int size,
-	        Model model) {
+	        Model model,
+	        Principal principal) {
+
+	    // Lấy vendor đang đăng nhập
+		Optional<User> optUser = userService.findById(principal.getName());
+		if (optUser.isEmpty()) {
+		    throw new RuntimeException("User not found for id: " + principal.getName());
+		}
+		User currentUser = optUser.get();
+	    String ownerId = null;
+
+	    // Nếu là vendor thì chỉ xem voucher của chính mình
+	    if (currentUser.getRole().getRolename().equals("VENDOR")) {
+	        ownerId = currentUser.getUserID();
+	    }
 
 	    Page<Voucher> vouchers = voucherService.search(code, status, ownerId, PageRequest.of(page, size));
+
 	    model.addAttribute("vouchers", vouchers.getContent());
 	    model.addAttribute("page", vouchers);
 	    model.addAttribute("code", code);
 	    model.addAttribute("status", status);
-	    model.addAttribute("ownerId", ownerId);
+
 	    return "admin/vouchers";
 	}
 
@@ -655,6 +722,17 @@ public class AdminController {
 	@PostMapping("/vouchers/save")
 	public String saveVoucher(@ModelAttribute Voucher voucher, RedirectAttributes redirectAttributes) {
 	    try {
+	    	String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+	        User owner = userService.findById(userId)
+	                .orElseThrow(() -> new IllegalStateException("Không tìm thấy vendor đăng nhập"));
+	        voucher.setOwner(owner);
+	        if (voucher.getExpire_date() != null) {
+	            LocalDateTime today = LocalDateTime.now();
+	            if (voucher.getExpire_date().isBefore(today)) {
+	                redirectAttributes.addFlashAttribute("error", "Ngày hết hạn phải sau ngày hiện tại!");
+	                return "redirect:/vendor/vouchers";
+	            }
+	        }
 	        if (voucher.getVoucherID() == null) {
 	            voucherService.create(voucher);
 	        } else {
@@ -690,5 +768,92 @@ public class AdminController {
 	    voucherService.disableVoucher(id);
 	    redirectAttributes.addFlashAttribute("success", "Voucher đã bị vô hiệu hóa!");
 	    return "redirect:/admin/vouchers";
+	}
+	
+	// ========== POST MANAGEMENT ==========
+	@GetMapping("/posts")
+	public String listPosts(
+	        @RequestParam(value = "title", required = false) String title,
+	        @RequestParam(value = "status", required = false) Integer status,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Principal principal,   // <-- thay Authentication bằng Principal
+	        Model model) {
+
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
+
+	    User currentUser = userService.findById(principal.getName())
+	            .orElseThrow(() -> new RuntimeException("User not found: " + principal.getName()));
+
+	    String role = currentUser.getRole().getRolename();
+
+	    Page<Post> posts = postService.search(currentUser.getUserID(), role, title, status, pageable);
+
+	    model.addAttribute("posts", posts.getContent());
+	    model.addAttribute("page", posts);
+	    model.addAttribute("title", title);
+	    model.addAttribute("status", status);
+
+	    return role.equalsIgnoreCase("ADMIN") ? "admin/posts" : "vendor/posts";
+	}
+
+	@GetMapping("/posts/new")
+	public String newPostForm(Model model) {
+	    model.addAttribute("post", new Post());
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "admin/post-form";
+	}
+
+	@GetMapping("/posts/edit/{id}")
+	public String editPostForm(@PathVariable String id, Model model) {
+	    Post post = postService.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Post not found"));
+	    model.addAttribute("post", post);
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "admin/post-form";
+	}
+
+	@PostMapping("/posts/save")
+	public String savePost(
+	        @ModelAttribute Post post,
+	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile,
+	        RedirectAttributes redirectAttributes) {
+	    try {
+	        // Xử lý upload thumbnail
+	        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+	            // Xóa thumbnail cũ nếu đã có
+	            if (post.getPostID() != null && post.getThumbnail() != null) {
+	                cloudinaryService.deleteImage(post.getThumbnail());
+	            }
+
+	            // Upload thumbnail mới lên Cloudinary
+	            String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
+	            post.setThumbnail(thumbnailUrl);
+	        }
+
+	        // Lưu bài viết
+	        if (post.getPostID() == null) {
+	            postService.create(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được tạo thành công!");
+	        } else {
+	            postService.update(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được cập nhật!");
+	        }
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu bài viết: " + e.getMessage());
+	    }
+
+	    return "redirect:/admin/posts";
+	}
+
+	@GetMapping("/posts/delete/{id}")
+	public String deletePost(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    try {
+	        postService.delete(id);
+	        redirectAttributes.addFlashAttribute("success", "Bài viết đã được xóa!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa bài viết: " + e.getMessage());
+	    }
+	    return "redirect:/admin/posts";
 	}
 }

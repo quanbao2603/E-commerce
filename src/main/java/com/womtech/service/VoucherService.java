@@ -9,7 +9,7 @@ import org.springframework.data.domain.Pageable;
 import com.womtech.entity.Voucher;
 
 public interface VoucherService extends BaseService<Voucher, String> {
-	Voucher create(Voucher voucher);
+    Voucher create(Voucher voucher);
     Voucher update(Voucher voucher);
     void delete(String voucherId);
     Optional<Voucher> findById(String voucherId);

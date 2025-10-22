@@ -2,49 +2,31 @@ package com.womtech.controller;
 
 import com.womtech.entity.*;
 import com.womtech.service.*;
-import com.womtech.util.CookieUtil;
-import com.womtech.util.EmailUtil;
 import com.womtech.util.OrderStatusHelper;
-
-import java.time.Duration;
-import java.time.Instant;
-import java.time.temporal.ChronoUnit;
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
-import jakarta.servlet.http.HttpSession;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 import org.springframework.web.servlet.mvc.support.RedirectAttributes;
 import java.math.BigDecimal;
+import java.security.Principal;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Controller
 @RequestMapping("/vendor")
 public class VendorController {
-
-	@Autowired
-	private EmailUtil emailUtil;
-
-	private static final String CK_AT = "AT";
-	private static final String CK_RT = "RT";
-	private static final String CK_REMEMBER = "WOM_REMEMBER";
-
-	// Session keys cho flow “Vendor Register”
-	private static final String SK_VR_OTP = "VR_OTP";
-	private static final String SK_VR_EXPIRE = "VR_EXPIRE";
-	private static final String SK_VR_LAST_SEND = "VR_LAST_SEND";
-
-	private static final int VR_OTP_TTL_MIN = 10; // OTP sống 10 phút
-	private static final int VR_RESEND_COOLDOWN = 60;
 
 	@Autowired
 	private ProductService productService;
@@ -69,6 +51,12 @@ public class VendorController {
 
 	@Autowired
 	private OrderService orderService;
+	
+	@Autowired
+	private VoucherService voucherService;
+	
+	@Autowired
+    private PostService postService;
 
 	// Helper method to get current user
 	private User getCurrentUser(Authentication authentication) {
@@ -629,184 +617,219 @@ public class VendorController {
 		return "vendor/revenue";
 	}
 
-	@GetMapping("/register")
-	public String showVendorRegisterOtp(Authentication authentication, Model model, RedirectAttributes ra,
-			HttpServletRequest req) {
-		User currentUser = getCurrentUser(authentication);
-
-		java.util.List<String> roles = userService.getRolesByUserId(currentUser.getUserID());
-		boolean alreadyVendor = roles.stream().anyMatch(r -> "VENDOR".equalsIgnoreCase(r));
-
-		if (alreadyVendor) {
-			ra.addFlashAttribute("info", "Tài khoản của bạn đã là Vendor.");
-			return "redirect:/";
-		}
-
-		String email = currentUser.getEmail();
-		if (email == null || email.isBlank()) {
-			ra.addFlashAttribute("error", "Tài khoản chưa có email để nhận OTP. Vui lòng cập nhật email trước.");
-			return "redirect:/user/profile";
-		}
-
-		HttpSession session = req.getSession(true);
-
-		// Chống spam gửi OTP theo cooldown
-		Instant last = (Instant) session.getAttribute(SK_VR_LAST_SEND);
-		if (last != null && Duration.between(last, Instant.now()).getSeconds() < VR_RESEND_COOLDOWN) {
-			long left = VR_RESEND_COOLDOWN - Duration.between(last, Instant.now()).getSeconds();
-			ra.addFlashAttribute("error", "Vui lòng chờ " + left + " giây nữa để gửi lại OTP.");
-			return "redirect:/vendor/register";
-		}
-
-		// Sinh OTP + set session
-		String otp = generateOtp();
-		Instant expire = Instant.now().plus(Duration.ofMinutes(VR_OTP_TTL_MIN));
-
-		session.setAttribute(SK_VR_OTP, otp);
-		session.setAttribute(SK_VR_EXPIRE, expire);
-		session.setAttribute(SK_VR_LAST_SEND, Instant.now());
-
-		// Gửi email OTP – tận dụng EmailUtil bạn đã có
-		try {
-			// Có thể dùng template verify/forgot của bạn. Ví dụ dùng verify:
-			emailUtil.sendVerifyOtp(email, currentUser.getUsername(), otp, VR_OTP_TTL_MIN);
-		} catch (Exception e) {
-			ra.addFlashAttribute("error", "Không thể gửi email OTP. Vui lòng thử lại.");
-			// Xóa session OTP để an toàn
-			clearVrSession(session);
-			return "redirect:/";
-		}
-
-		// Hiển thị trang nhập OTP
-		model.addAttribute("maskedEmail", maskEmail(email));
-		model.addAttribute("ttlSeconds", VR_OTP_TTL_MIN * 60);
-		model.addAttribute("cooldown", VR_RESEND_COOLDOWN);
-		return "vendor/register-otp";
-	}
-
-	// ====== 2) POST /vendor/register – xác thực OTP + đổi role + ép đăng nhập lại
-	// ======
-	@PostMapping("/register")
-	public String handleVendorRegisterOtp(@RequestParam("otp") String otp, Authentication authentication,
-			HttpServletRequest request, HttpServletResponse response, RedirectAttributes ra) {
-
-		User currentUser = getCurrentUser(authentication);
-		HttpSession session = request.getSession(false);
-
-		if (session == null) {
-			ra.addFlashAttribute("error", "Phiên OTP không hợp lệ. Vui lòng thử lại.");
-			return "redirect:/vendor/register";
-		}
-
-		String saved = (String) session.getAttribute(SK_VR_OTP);
-		Instant expireAt = (Instant) session.getAttribute(SK_VR_EXPIRE);
-
-		if (saved == null || expireAt == null) {
-			ra.addFlashAttribute("error", "OTP không tồn tại hoặc phiên đã hết hạn.");
-			clearVrSession(session);
-			return "redirect:/vendor/register";
-		}
-		if (Instant.now().isAfter(expireAt)) {
-			ra.addFlashAttribute("error", "OTP đã hết hạn. Vui lòng gửi lại.");
-			clearVrSession(session);
-			return "redirect:/vendor/register";
-		}
-		if (otp == null || !otp.trim().equals(saved)) {
-			ra.addFlashAttribute("error", "OTP không đúng. Vui lòng kiểm tra lại.");
-			return "redirect:/vendor/register";
-		}
-
-		// OTP hợp lệ → đổi role sang VENDOR
-		try {
-			// Nếu muốn "chỉ còn" VENDOR thì triển khai như promoteToVendor(...) xóa role cũ
-			// Nếu muốn "giữ cả USER + VENDOR" thì chỉ add role VENDOR nếu chưa có:
-			userService.promoteToVendor(currentUser.getUserID());
-		} catch (Exception e) {
-			ra.addFlashAttribute("error", "Không thể cập nhật quyền Vendor: " + e.getMessage());
-			return "redirect:/vendor/register";
-		} finally {
-			clearVrSession(session);
-		}
-
-		// Ép đăng nhập lại: revoke/clear cookies + session → chuyển tới /auth/login
-		clearAuthCookies(request, response);
-		session.invalidate();
-		org.springframework.security.core.context.SecurityContextHolder.clearContext();
-
-		ra.addFlashAttribute("success", "Đăng ký shop thành công! Vui lòng đăng nhập lại để áp dụng quyền Vendor.");
-		return "redirect:/auth/login";
-	}
-
-	// ====== 3) POST /vendor/register/resend – gửi lại OTP ======
-	@PostMapping("/register/resend")
-	public String resendVendorOtp(Authentication authentication, HttpServletRequest req, RedirectAttributes ra) {
-		User currentUser = getCurrentUser(authentication);
-		HttpSession session = req.getSession(true);
-
-		Instant last = (Instant) session.getAttribute(SK_VR_LAST_SEND);
-		if (last != null && Duration.between(last, Instant.now()).getSeconds() < VR_RESEND_COOLDOWN) {
-			long left = VR_RESEND_COOLDOWN - Duration.between(last, Instant.now()).getSeconds();
-			ra.addFlashAttribute("error", "Vui lòng chờ " + left + " giây nữa để gửi lại OTP.");
-			return "redirect:/vendor/register";
-		}
-
-		String otp = generateOtp();
-		Instant expire = Instant.now().plus(Duration.ofMinutes(VR_OTP_TTL_MIN));
-		session.setAttribute(SK_VR_OTP, otp);
-		session.setAttribute(SK_VR_EXPIRE, expire);
-		session.setAttribute(SK_VR_LAST_SEND, Instant.now());
-
-		try {
-			emailUtil.sendVerifyOtp(currentUser.getEmail(), currentUser.getUsername(), otp, VR_OTP_TTL_MIN);
-		} catch (Exception ex) {
-			ra.addFlashAttribute("error", "Không thể gửi lại OTP lúc này. Vui lòng thử lại.");
-			return "redirect:/vendor/register";
-		}
-
-		ra.addFlashAttribute("success", "Đã gửi lại OTP đến email của bạn.");
-		return "redirect:/vendor/register";
-	}
-
 	// ========== API ENDPOINTS ==========
 	@GetMapping("/api/subcategories/category/{categoryID}")
 	@ResponseBody
 	public List<Subcategory> getSubcategoriesByCategory(@PathVariable String categoryID) {
 		return subcategoryService.getSubcategoriesByCategoryId(categoryID);
 	}
+	
+	@GetMapping("/vouchers")
+	public String listVouchers(
+	        @RequestParam(value = "code", required = false) String code,
+	        @RequestParam(value = "status", required = false) Integer status,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Model model,
+	        Principal principal) {
 
-	private static String generateOtp() {
-		return String.format("%06d", new java.util.Random().nextInt(1_000_000));
+	    // Lấy vendor đang đăng nhập
+		Optional<User> optUser = userService.findById(principal.getName());
+		if (optUser.isEmpty()) {
+		    throw new RuntimeException("User not found for id: " + principal.getName());
+		}
+		User currentUser = optUser.get();
+	    String ownerId = null;
+
+	    // Nếu là vendor thì chỉ xem voucher của chính mình
+	    if (currentUser.getRole().getRolename().equals("VENDOR")) {
+	        ownerId = currentUser.getUserID();
+	    }
+
+	    Page<Voucher> vouchers = voucherService.search(code, status, ownerId, PageRequest.of(page, size));
+
+	    model.addAttribute("vouchers", vouchers.getContent());
+	    model.addAttribute("page", vouchers);
+	    model.addAttribute("code", code);
+	    model.addAttribute("status", status);
+
+	    return "vendor/vouchers";
+	}
+	
+	@GetMapping("/vouchers/new")
+	public String newVoucherForm(Model model) {
+	    model.addAttribute("voucher", new Voucher());
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "vendor/voucher-form";
 	}
 
-	private static String maskEmail(String email) {
-		if (email == null || !email.contains("@"))
-			return "email của bạn";
-		String[] parts = email.split("@", 2);
-		String local = parts[0];
-		if (local.length() <= 2)
-			return local.charAt(0) + "***@" + parts[1];
-		return local.charAt(0) + "***" + local.charAt(local.length() - 1) + "@" + parts[1];
+	@GetMapping("/vouchers/edit/{id}")
+	public String editVoucherForm(@PathVariable String id, Model model) {
+	    Voucher voucher = voucherService.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Voucher not found"));
+	    model.addAttribute("voucher", voucher);
+	    model.addAttribute("users", userService.getAllUsers());
+	    return "vendor/voucher-form";
 	}
 
-	private static void clearVrSession(HttpSession s) {
-		s.removeAttribute(SK_VR_OTP);
-		s.removeAttribute(SK_VR_EXPIRE);
-		s.removeAttribute(SK_VR_LAST_SEND);
+	@PostMapping("/vouchers/save")
+	public String saveVoucher(@ModelAttribute Voucher voucher, RedirectAttributes redirectAttributes) {
+	    try {
+	    	String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+	        User owner = userService.findById(userId)
+	                .orElseThrow(() -> new IllegalStateException("Không tìm thấy vendor đăng nhập"));
+	        voucher.setOwner(owner);
+	        
+	        if (voucher.getExpire_date() != null) {
+	            LocalDateTime today = LocalDateTime.now();
+	            if (voucher.getExpire_date().isBefore(today)) {
+	                redirectAttributes.addFlashAttribute("error", "Ngày hết hạn phải sau ngày hiện tại!");
+	                return "redirect:/vendor/vouchers";
+	            }
+	        }
+	        
+	        if (voucher.getVoucherID() == null) {
+	            voucherService.create(voucher);
+	        } else {
+	            voucherService.update(voucher);
+	        }
+	        redirectAttributes.addFlashAttribute("success", "Voucher đã được lưu thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu voucher: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/vouchers";
 	}
 
-	private void clearAuthCookies(HttpServletRequest request, HttpServletResponse response) {
-		CookieUtil.delete(request, response, CK_AT);
-		CookieUtil.delete(request, response, CK_RT);
-		CookieUtil.delete(request, response, CK_REMEMBER);
+	@GetMapping("/vouchers/delete/{id}")
+	public String deleteVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    try {
+	        voucherService.delete(id);
+	        redirectAttributes.addFlashAttribute("success", "Voucher đã được xóa thành công!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa voucher: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/vouchers";
+	}
 
-		// Xóa JSESSIONID (host-only)
-		jakarta.servlet.http.Cookie js = new jakarta.servlet.http.Cookie("JSESSIONID", "");
-		js.setPath("/");
-		js.setHttpOnly(true);
-		js.setMaxAge(0);
-		response.addCookie(js);
+	@GetMapping("/vouchers/enable/{id}")
+	public String enableVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    voucherService.enableVoucher(id);
+	    redirectAttributes.addFlashAttribute("success", "Voucher đã được kích hoạt!");
+	    return "redirect:/vendor/vouchers";
+	}
 
-		response.addHeader("Set-Cookie",
-				"JSESSIONID=; Path=/; Max-Age=0; HttpOnly; SameSite=Lax; Expires=Thu, 01 Jan 1970 00:00:00 GMT");
+	@GetMapping("/vouchers/disable/{id}")
+	public String disableVoucher(@PathVariable String id, RedirectAttributes redirectAttributes) {
+	    voucherService.disableVoucher(id);
+	    redirectAttributes.addFlashAttribute("success", "Voucher đã bị vô hiệu hóa!");
+	    return "redirect:/vendor/vouchers";
+	}
+	// ========== POST MANAGEMENT ==========
+	@GetMapping("/posts")
+	public String listPosts(
+	        @RequestParam(value = "title", required = false) String title,
+	        @RequestParam(value = "status", required = false) Integer status,
+	        @RequestParam(defaultValue = "0") int page,
+	        @RequestParam(defaultValue = "10") int size,
+	        Authentication authentication,
+	        Model model) {
+
+	    Pageable pageable = PageRequest.of(page, size, Sort.by("createAt").descending());
+
+	    User currentUser = getCurrentUser(authentication);
+	    String role = currentUser.getRole().getRolename();
+
+	    Page<Post> posts = postService.search(currentUser.getUserID(), role, title, status, pageable);
+
+	    model.addAttribute("posts", posts.getContent());
+	    model.addAttribute("page", posts);
+	    model.addAttribute("title", title);
+	    model.addAttribute("status", status);
+
+	    return "vendor/posts";
+	}
+
+	@GetMapping("/posts/new")
+	public String newPostForm(Model model, Principal principal) {
+	    Post post = new Post();
+	    post.setUser(userService.findById(principal.getName()).orElse(null)); // Gán vendor hiện tại
+	    model.addAttribute("post", post);
+	    return "vendor/post-form";
+	}
+
+	@GetMapping("/posts/edit/{id}")
+	public String editPostForm(@PathVariable String id, Principal principal, Model model) {
+	    Post post = postService.findById(id)
+	            .orElseThrow(() -> new RuntimeException("Post not found"));
+
+	    // Kiểm tra quyền: vendor chỉ được edit bài của mình
+	    if (!post.getUser().getUserID().equals(principal.getName())) {
+	        throw new RuntimeException("Không có quyền chỉnh sửa bài viết này");
+	    }
+
+	    model.addAttribute("post", post);
+	    return "vendor/post-form";
+	}
+
+	@PostMapping("/posts/save")
+	public String savePost(
+	        @ModelAttribute Post post,
+	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile,
+	        Principal principal,
+	        RedirectAttributes redirectAttributes) {
+	    try {
+	        // Gán vendor hiện tại
+	        post.setUser(userService.findById(principal.getName()).orElse(null));
+
+	        // Xử lý upload thumbnail
+	        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+	            if (post.getPostID() != null && post.getThumbnail() != null) {
+	                cloudinaryService.deleteImage(post.getThumbnail());
+	            }
+	            String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
+	            post.setThumbnail(thumbnailUrl);
+	        }
+
+	        if (post.getPostID() == null) {
+	            postService.create(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được tạo thành công!");
+	        } else {
+	            // Kiểm tra quyền: chỉ update bài của mình
+	            Post existingPost = postService.findById(post.getPostID())
+	                    .orElseThrow(() -> new RuntimeException("Post not found"));
+	            if (!existingPost.getUser().getUserID().equals(principal.getName())) {
+	                throw new RuntimeException("Không có quyền cập nhật bài viết này");
+	            }
+	            postService.update(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được cập nhật!");
+	        }
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu bài viết: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/posts";
+	}
+
+	@GetMapping("/posts/delete/{id}")
+	public String deletePost(@PathVariable String id, Principal principal, RedirectAttributes redirectAttributes) {
+	    try {
+	        Post post = postService.findById(id)
+	                .orElseThrow(() -> new RuntimeException("Post not found"));
+
+	        // Kiểm tra quyền: chỉ xóa bài của mình
+	        if (!post.getUser().getUserID().equals(principal.getName())) {
+	            throw new RuntimeException("Không có quyền xóa bài viết này");
+	        }
+
+	        // Xóa thumbnail nếu có
+	        if (post.getThumbnail() != null) {
+	            cloudinaryService.deleteImage(post.getThumbnail());
+	        }
+
+	        postService.delete(id);
+	        redirectAttributes.addFlashAttribute("success", "Bài viết đã được xóa!");
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi xóa bài viết: " + e.getMessage());
+	    }
+	    return "redirect:/vendor/posts";
 	}
 }

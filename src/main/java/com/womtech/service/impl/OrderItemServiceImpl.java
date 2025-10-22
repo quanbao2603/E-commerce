@@ -29,8 +29,7 @@ public class OrderItemServiceImpl extends BaseServiceImpl<OrderItem, String> imp
 
 	@Override
 	public boolean hasUserPurchasedProduct(String userId, String productId) {
-		// TODO Auto-generated method stub
-		return false;
+		return orderItemRepository.hasUserPurchasedProduct(userId, productId);
 	}
 	
 	@Override

@@ -28,7 +28,7 @@ import lombok.RequiredArgsConstructor;
 @Controller
 @RequestMapping("/checkout")
 @RequiredArgsConstructor
-public class CheckOutController {
+public class CheckOutController {     
 	private final CartService cartService;
 	private final AddressService addressService;
 	private final OrderService orderService;
@@ -39,7 +39,7 @@ public class CheckOutController {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
 			return "redirect:/auth/login";
-		}
+		}    
 		User user = userOpt.get();
 		
 		Cart cart = cartService.findByUser(user);

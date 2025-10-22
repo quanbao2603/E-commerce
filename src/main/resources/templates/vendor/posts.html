@@ -1,21 +1,20 @@
 <!DOCTYPE html>
 <html lang="en" xmlns:th="http://www.thymeleaf.org"
       xmlns:layout="http://www.ultraq.net.nz/thymeleaf/layout"
-      layout:decorate="~{admin/layout}">
+      layout:decorate="~{vendor/layout}">
 <head>
-    <title>Quản Lý Voucher - WomTech Admin</title>
-    <link rel="stylesheet" href="/css/admin/vouchers.css">
+    <title>Quản Lý Bài Viết - WomTech Vendor</title>
 </head>
 <body>
-<h1 layout:fragment="page-title">Quản Lý Voucher</h1>
+<h1 layout:fragment="page-title">Quản Lý Bài Viết của Bạn</h1>
 
 <div layout:fragment="content">
 
     <!-- 🔍 Thanh tìm kiếm và bộ lọc -->
     <div class="filter-bar mb-3">
-        <form id="filterForm" th:action="@{/admin/vouchers}" method="get" class="row g-2 align-items-end">
+        <form id="filterForm" th:action="@{/vendor/posts}" method="get" class="row g-2 align-items-end">
 
-            <!-- Ô tìm kiếm -->
+            <!-- Ô tìm kiếm theo tiêu đề -->
             <div class="col-md-4 col-12">
                 <div class="input-group">
                     <span class="input-group-text bg-white">
@@ -25,7 +24,7 @@
                            name="search"
                            id="searchInput"
                            class="form-control border-start-0"
-                           placeholder="Tìm theo mã voucher..."
+                           placeholder="Tìm theo tiêu đề..."
                            th:value="${param.search}"
                            autocomplete="off">
                 </div>
@@ -65,16 +64,16 @@
         </div>
     </div>
 
-    <!-- Bảng Voucher -->
+    <!-- Bảng Bài Viết -->
     <div class="admin-table">
         <div class="table-header d-flex justify-content-between align-items-center">
             <h5 class="mb-0">
-                <i class="fas fa-ticket-alt me-2"></i>
-                Danh Sách Voucher
+                <i class="fas fa-newspaper me-2"></i>
+                Danh Sách Bài Viết
                 <span id="filterCount" class="filter-badge" style="display: none;">0</span>
             </h5>
-            <a th:href="@{/admin/vouchers/new}" class="btn btn-success">
-                <i class="fas fa-plus me-1"></i> Thêm Voucher
+            <a th:href="@{/vendor/posts/new}" class="btn btn-success">
+                <i class="fas fa-plus me-1"></i> Thêm Bài Viết
             </a>
         </div>
 
@@ -82,71 +81,62 @@
             <table class="table mb-0">
                 <thead>
                 <tr>
-                    <th>Mã Voucher</th>
-                    <th>Tên Voucher</th>
-                    <th>Giá trị (Discount)</th>
-                    <th>Giá tối thiểu</th>
-                    <th>Hạn sử dụng</th>
+                    <th>Tiêu đề</th>
+                    <th>Loại</th>
+                    <th>Ngày tạo</th>
+                    <th>Ngày cập nhật</th>
                     <th>Trạng Thái</th>
                     <th>Thao Tác</th>
                 </tr>
                 </thead>
                 <tbody>
-                <tr th:each="voucher : ${vouchers}">
-                    <td th:text="${voucher.voucherID}">VOUCHER01</td>
-                    <td th:text="${voucher.code}">Tên voucher</td>
-                    <td th:text="${voucher.discount != null ? voucher.discount + ' ₫' : '0 ₫'}">10₫</td>
-                    <td th:text="${voucher.min_price != null ? voucher.min_price + ' ₫' : '-'}">-</td>
-                    <td th:text="${voucher.expire_date != null ? voucher.expire_date.format(T(java.time.format.DateTimeFormatter).ofPattern('dd/MM/yyyy HH:mm')) : '-'}">-</td>
+                <tr th:each="post : ${posts}">
+                    <td th:text="${post.title}">Tiêu đề bài viết</td>
+                    <td th:text="${post.type}">Loại bài viết</td>
+                    <td th:text="${post.createAt != null ? post.createAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd/MM/yyyy HH:mm')) : '-'}">-</td>
+                    <td th:text="${post.updateAt != null ? post.updateAt.format(T(java.time.format.DateTimeFormatter).ofPattern('dd/MM/yyyy HH:mm')) : '-'}">-</td>
                     <td>
                         <span class="badge"
-                              th:classappend="${voucher.status == 1 ? 'bg-success' : 'bg-danger'}"
-                              th:text="${voucher.status == 1 ? 'Hoạt động' : 'Không hoạt động'}">Status</span>
+                              th:classappend="${post.status == 1 ? 'bg-success' : 'bg-danger'}"
+                              th:text="${post.status == 1 ? 'Hoạt động' : 'Không hoạt động'}">Status</span>
                     </td>
                     <td>
                         <div class="btn-group">
-                            <a th:href="@{/admin/vouchers/edit/{id}(id=${voucher.voucherID})}" 
+                            <a th:href="@{/vendor/posts/edit/{id}(id=${post.postID})}" 
                                class="btn btn-sm btn-outline-primary" title="Chỉnh sửa">
                                 <i class="fas fa-edit"></i>
                             </a>
-                            <a th:href="@{/admin/vouchers/delete/{id}(id=${voucher.voucherID})}" 
+                            <a th:href="@{/vendor/posts/delete/{id}(id=${post.postID})}" 
                                class="btn btn-sm btn-outline-danger" title="Xóa"
-                               onclick="return confirm('Bạn có chắc muốn xóa voucher này?')">
+                               onclick="return confirm('Bạn có chắc muốn xóa bài viết này?')">
                                 <i class="fas fa-trash"></i>
                             </a>
                         </div>
                     </td>
                 </tr>
 
-                <tr th:if="${vouchers.empty}">
-                    <td colspan="7" class="text-center py-5">
-                        <i class="fas fa-ticket-alt fa-3x text-muted mb-3"></i>
-                        <p class="text-muted">Không tìm thấy voucher nào phù hợp với bộ lọc.</p>
-                        <button type="button" class="btn btn-outline-primary me-2" id="resetEmptyBtn">
-                            <i class="fas fa-redo me-2"></i>Xóa bộ lọc
-                        </button>
-                    </td>
-                </tr>
+                <tr th:if="${posts.empty}">
+				    <td colspan="6" class="text-center py-5">
+				        <i class="fas fa-newspaper fa-3x text-muted mb-3"></i>
+				        <p class="text-muted">Không tìm thấy bài viết nào.</p>
+				
+				        <!-- Hiển thị nút "Xóa bộ lọc" chỉ khi có bộ lọc -->
+				        <button type="button" class="btn btn-outline-primary me-2"
+				                id="resetEmptyBtn"
+				                th:if="${param.search != null or param.status != null}">
+				            <i class="fas fa-redo me-2"></i>Xóa bộ lọc
+				        </button>
+				    </td>
+				</tr>
                 </tbody>
             </table>
         </div>
     </div>
-    <div th:if="${error}" class="alert alert-danger alert-dismissible fade show" role="alert">
-	    <i class="fas fa-exclamation-circle me-2"></i>
-	    <span th:text="${error}"></span>
-	    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-	</div>
-	
-	<div th:if="${success}" class="alert alert-success alert-dismissible fade show" role="alert">
-	    <i class="fas fa-check-circle me-2"></i>
-	    <span th:text="${success}"></span>
-	    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-	</div>
 
     <!-- Phân trang -->
-    <div th:replace="~{admin/fragments/pagination :: pagination(${page}, '/admin/vouchers')}"></div>
+    <div th:replace="~{vendor/fragments/pagination :: pagination(${page}, '/vendor/posts')}"></div>
 
-    <!-- Script -->
+    <!-- Script (giữ nguyên như admin) -->
     <script th:inline="javascript">
         document.addEventListener('DOMContentLoaded', function() {
             updateActiveFilters();
@@ -171,7 +161,7 @@
         function resetFilters() {
             document.getElementById('searchInput').value = '';
             document.getElementById('statusSelect').selectedIndex = 0;
-            window.location.href = '/admin/vouchers';
+            window.location.href = '/vendor/posts';
         }
 
         function updateActiveFilters() {
