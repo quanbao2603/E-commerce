@@ -25,7 +25,7 @@ public interface UserService extends BaseService<User, String>{
 
     LoginResponse login(LoginRequest request);
     
- // ✅ Thêm mới: trả về danh sách role name (viết hoa) theo userId
+ // Thêm mới: trả về danh sách role name (viết hoa) theo userId
     List<String> getRolesByUserId(String userId);
 
     // (tuỳ chọn) nếu cần dùng theo username sau này
