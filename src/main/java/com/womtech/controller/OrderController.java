@@ -1,6 +1,7 @@
 package com.womtech.controller;
 
 import java.security.Principal;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.stereotype.Controller;
@@ -14,6 +15,7 @@ import org.springframework.web.bind.annotation.RequestParam;
 import com.womtech.entity.Order;
 import com.womtech.entity.User;
 import com.womtech.service.OrderService;
+import com.womtech.service.VnpayService;
 import com.womtech.util.AuthUtils;
 import com.womtech.util.OrderStatusHelper;
 
@@ -25,6 +27,7 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class OrderController {
 	private final OrderService orderService;
+	private final VnpayService vnpayService;
 	private final AuthUtils authUtils;
 	
 	@GetMapping("/{id}")
@@ -90,13 +93,31 @@ public class OrderController {
 	}
 	
 	@PostMapping("/payment")
-	public String paymentOrder(HttpSession session, Model model, Principal principal,
-							   @RequestParam String orderID) {
-		Optional<User> userOpt = authUtils.getCurrentUser(principal);
-		if (userOpt.isEmpty()) {
-			return "redirect:/auth/login";
-		}
-//		User user = userOpt.get();
-		return "error/403";
+	public String paymentOrder(@RequestParam String orderID, Principal principal, Model model) {
+	    Optional<User> userOpt = authUtils.getCurrentUser(principal);
+	    if (userOpt.isEmpty()) return "redirect:/auth/login";
+
+	    Optional<Order> orderOpt = orderService.findById(orderID);
+	    if (orderOpt.isEmpty()) {
+	        model.addAttribute("error", "Không tìm thấy đơn hàng.");
+	        return "user/order-detail";
+	    }
+
+	    Order order = orderOpt.get();
+
+	    try {
+	        String paymentUrl = vnpayService.createPaymentUrl(order);
+	        return "redirect:" + paymentUrl; // chuyển sang VNPAY
+	    } catch (Exception e) {
+	        e.printStackTrace();
+	        model.addAttribute("error", "Không thể tạo URL thanh toán. Vui lòng thử lại.");
+	        return "user/order-detail";
+	    }
+	}
+	
+	@GetMapping("/vnpay-return")
+	public String vnpayReturn(@RequestParam Map<String, String> params) {
+	    boolean success = vnpayService.handleReturn(params);
+	    return "redirect:/";
 	}
 }
