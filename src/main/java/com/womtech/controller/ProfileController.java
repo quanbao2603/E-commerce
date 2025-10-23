@@ -19,6 +19,7 @@ import com.womtech.entity.Address;
 import com.womtech.entity.Order;
 import com.womtech.entity.User;
 import com.womtech.service.AddressService;
+import com.womtech.service.GhnService;
 import com.womtech.service.OrderService;
 import com.womtech.service.UserService;
 
@@ -34,6 +35,7 @@ public class ProfileController {
 	private final UserService userService;
 	private final AddressService addressService;
 	private final OrderService orderService;
+	private final GhnService ghnService;
 
 	@GetMapping("/profile")
 	public String showProfilePage(HttpSession session, Model model, Principal principal,
@@ -160,70 +162,96 @@ public class ProfileController {
 
 	@PostMapping("/add-address")
 	public String addAddress(HttpSession session, Principal principal,
-							 @RequestParam String fullname,
-							 @RequestParam String phone,
-							 @RequestParam String street,
-							 @RequestParam String ward,
-							 @RequestParam String district,
-							 @RequestParam String city) {
+	                         @RequestParam String fullname,
+	                         @RequestParam String phone,
+	                         @RequestParam String street,
+	                         @RequestParam String ward,
+	                         @RequestParam String district,
+	                         @RequestParam String city,
+	                         @RequestParam String cityId,
+	                         @RequestParam String districtId,
+	                         @RequestParam String wardId) {
 
-		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
-			return "redirect:/auth/login";
-		}
+	    if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+	        return "redirect:/auth/login";
+	    }
 
-		String userId = principal.getName();
-		var userOpt = userService.findById(userId);
-		if (userOpt.isEmpty())
-			return "redirect:/auth/login";
-		var user = userOpt.get();
-		
-		Address address = Address.builder().user(user).fullname(fullname).phone(phone).street(street).ward(ward)
-				.district(district).city(city).createAt(LocalDateTime.now()).updateAt(LocalDateTime.now()).build();
-		addressService.save(address);
-		
-		if (addressService.findByUserAndIsDefaultTrue(user).isEmpty())
-			addressService.setDefaultAddress(address);
-		
-		return "redirect:/user/profile?tab=address";
+	    String userId = principal.getName();
+	    var userOpt = userService.findById(userId);
+	    if (userOpt.isEmpty())
+	        return "redirect:/auth/login";
+	    var user = userOpt.get();
+
+	    Address address = Address.builder()
+	            .user(user)
+	            .fullname(fullname)
+	            .phone(phone)
+	            .street(street)
+	            .ward(ward)
+	            .wardId(wardId)
+	            .district(district)
+	            .districtId(districtId)
+	            .city(city)
+	            .cityId(cityId)
+	            .createAt(LocalDateTime.now())
+	            .updateAt(LocalDateTime.now())
+	            .build();
+
+	    addressService.save(address);
+
+	    // Nếu chưa có địa chỉ mặc định thì set luôn
+	    if (addressService.findByUserAndIsDefaultTrue(user).isEmpty())
+	        addressService.setDefaultAddress(address);
+
+	    return "redirect:/user/profile?tab=address";
 	}
 
 	@PostMapping("/update-address")
 	public String updateAddress(HttpSession session, Principal principal,
-								@RequestParam String addressID,
-								@RequestParam String fullname,
-								@RequestParam String phone,
-								@RequestParam String street,
-								@RequestParam String ward,
-								@RequestParam String district,
-								@RequestParam String city) throws Exception {
-		if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
-			return "redirect:/auth/login";
-		}
+	                            @RequestParam String addressID,
+	                            @RequestParam String fullname,
+	                            @RequestParam String phone,
+	                            @RequestParam String street,
+	                            @RequestParam String ward,
+	                            @RequestParam String district,
+	                            @RequestParam String city,
+	                            @RequestParam String cityId,
+	                            @RequestParam String districtId,
+	                            @RequestParam String wardId) throws Exception {
 
-		String userId = principal.getName();
-		var userOpt = userService.findById(userId);
-		if (userOpt.isEmpty())
-			return "redirect:/auth/login";
-		var user = userOpt.get();
+	    if (principal == null || principal.getName() == null || principal.getName().isBlank()) {
+	        return "redirect:/auth/login";
+	    }
 
-		Optional<Address> addressDbOpt = addressService.findById(addressID);
-		
-		if (addressDbOpt.isEmpty()) {
-			throw new Exception("Không tìm thấy ID địa chỉ");
-		} else {
-			Address addressDb = addressDbOpt.get();
-			if (!addressDb.getUser().equals(user))
-				throw new AccessDeniedException("Không có quyền truy cập");
-			addressDb.setFullname(fullname);
-			addressDb.setPhone(phone);
-			addressDb.setStreet(street);
-			addressDb.setWard(ward);
-			addressDb.setDistrict(district);
-			addressDb.setCity(city);
-			addressDb.setUpdateAt(LocalDateTime.now());
-		    addressService.save(addressDb);
-		}
-		return "redirect:/user/profile?tab=address";
+	    String userId = principal.getName();
+	    var userOpt = userService.findById(userId);
+	    if (userOpt.isEmpty())
+	        return "redirect:/auth/login";
+	    var user = userOpt.get();
+
+	    Optional<Address> addressDbOpt = addressService.findById(addressID);
+
+	    if (addressDbOpt.isEmpty()) {
+	        throw new Exception("Không tìm thấy ID địa chỉ");
+	    } else {
+	        Address addressDb = addressDbOpt.get();
+	        if (!addressDb.getUser().equals(user))
+	            throw new AccessDeniedException("Không có quyền truy cập");
+
+	        addressDb.setFullname(fullname);
+	        addressDb.setPhone(phone);
+	        addressDb.setStreet(street);
+	        addressDb.setWard(ward);
+	        addressDb.setWardId(wardId);
+	        addressDb.setDistrict(district);
+	        addressDb.setDistrictId(districtId);
+	        addressDb.setCity(city);
+	        addressDb.setCityId(cityId);
+	        addressDb.setUpdateAt(LocalDateTime.now());
+
+	        addressService.save(addressDb);
+	    }
+	    return "redirect:/user/profile?tab=address";
 	}
 	
 	@PostMapping("/setdefault-address")
