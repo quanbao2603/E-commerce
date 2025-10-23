@@ -15,12 +15,9 @@ import org.springframework.stereotype.Service;
 
 import com.womtech.entity.Address;
 import com.womtech.entity.Cart;
-import com.womtech.service.AddressService;
-import com.womtech.service.CartItemService;
 import com.womtech.service.CartService;
 import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
-import com.womtech.service.VoucherService;
 import com.womtech.util.OrderStatusHelper;
 
 import org.springframework.data.domain.Page;
@@ -44,13 +41,7 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
     @Autowired
 	CartService cartService;
 	@Autowired
-    CartItemService cartItemService;
-	@Autowired
-    AddressService addressService;
-	@Autowired
 	OrderItemService orderItemService;
-	@Autowired
-	VoucherService voucherService;
 	
 	public OrderServiceImpl(JpaRepository<Order, String> repo) {
 		super(repo);
@@ -391,7 +382,7 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
     @Override
 	public BigDecimal totalPrice(Order order) {
     	BigDecimal total = BigDecimal.ZERO;
-    	List<OrderItem> items = orderItemService.findByOrder(order);
+    	List<OrderItem> items = orderItemRepository.findByOrder(order);
         if (items.isEmpty()) {
             return total;
         }

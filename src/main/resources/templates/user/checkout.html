@@ -153,8 +153,8 @@
 									class="list-group-item d-flex justify-content-between align-items-center">
 									<div>
 										<span class="fw-bold text-primary" th:text="${cv.voucher.code}">VOUCHER2025</span>
-										<small class="text-muted d-block"
-											th:text="'Giảm ' + ${#numbers.formatDecimal(cv.discountValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></small>
+										<small class="text-success d-block ms-3"
+											th:text="'-' + ${#numbers.formatDecimal(cv.discountValue, 0, 'COMMA', 0, 'POINT')} + ' ₫'"></small>
 									</div>
 									<form th:action="@{/checkout/remove-voucher}" method="post"
 										class="m-0">

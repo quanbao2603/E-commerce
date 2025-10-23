@@ -149,7 +149,7 @@ public class CheckOutController {
 	public String processCheckout(HttpSession session, Model model, Principal principal,
 								  @RequestParam("selectedAddressId") String addressID,
 								  @RequestParam String payment_method,
-								  @RequestParam String voucherCode) throws Exception {
+								  @RequestParam String voucherCode) {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
 			return "redirect:/auth/login";

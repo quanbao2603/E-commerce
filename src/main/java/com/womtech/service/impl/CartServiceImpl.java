@@ -12,8 +12,8 @@ import com.womtech.entity.Cart;
 import com.womtech.entity.CartItem;
 import com.womtech.entity.Product;
 import com.womtech.entity.User;
+import com.womtech.repository.CartItemRepository;
 import com.womtech.repository.CartRepository;
-import com.womtech.service.CartItemService;
 import com.womtech.service.CartService;
 
 @Service
@@ -21,7 +21,7 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
 	@Autowired
 	CartRepository cartRepository;
 	@Autowired
-	CartItemService cartItemService;
+	CartItemRepository cartItemRepository;
 	
 	public CartServiceImpl(JpaRepository<Cart, String> repo) {
 		super(repo);
@@ -43,7 +43,7 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
     	Cart cart = findByUser(user);
 		
 		CartItem item;
-        Optional<CartItem> existingItem = cartItemService.findByCartAndProduct(cart, product);
+        Optional<CartItem> existingItem = cartItemRepository.findByCartAndProduct(cart, product);
         if (existingItem.isEmpty()) {
             item = CartItem.builder()
                     .cart(cart)
@@ -54,38 +54,38 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
             item = existingItem.get();
             item.setQuantity(item.getQuantity() + quantity);
         }
-        cartItemService.save(item);
+        cartItemRepository.save(item);
     }
     
     @Override
 	public void removeItem(String cartItemID) {
-        cartItemService.deleteById(cartItemID);
+        cartItemRepository.deleteById(cartItemID);
     }
     
     @Override
 	public void clearCart(User user) {
-    	cartItemService.deleteByCart(findByUser(user));
+    	cartItemRepository.deleteByCart(findByUser(user));
     }
     
     @Override
 	public void updateQuantity(String cartItemID, int quantity) {
-    	Optional<CartItem> cartItemOpt = cartItemService.findById(cartItemID);
+    	Optional<CartItem> cartItemOpt = cartItemRepository.findById(cartItemID);
     	if (cartItemOpt.isEmpty())
     		return;
     	
     	CartItem cartItem = cartItemOpt.get();
     	if (quantity <= 0) {
-    		cartItemService.deleteById(cartItemID);
+    		cartItemRepository.deleteById(cartItemID);
     	} else {
     		cartItem.setQuantity(quantity);
-    		cartItemService.save(cartItem);
+    		cartItemRepository.save(cartItem);
     	}
     }
     
     @Override
 	public BigDecimal totalPrice(Cart cart) {
     	BigDecimal total = BigDecimal.ZERO;
-    	List<CartItem> items = cartItemService.findByCart(cart);
+    	List<CartItem> items = cartItemRepository.findByCart(cart);
         if (items.isEmpty()) {
             return total;
         }
@@ -108,7 +108,7 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
     @Override
 	public int totalQuantity(Cart cart) {
     	int total = 0;
-    	List<CartItem> items = cartItemService.findByCart(cart);
+    	List<CartItem> items = cartItemRepository.findByCart(cart);
         if (items.isEmpty()) {
             return total;
         }
@@ -122,7 +122,7 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
 	@Override
 	public BigDecimal totalPriceByOwner(Cart cart, User owner) {
     	BigDecimal total = BigDecimal.ZERO;
-    	List<CartItem> items = cartItemService.findByCart(cart);
+    	List<CartItem> items = cartItemRepository.findByCart(cart);
         if (items.isEmpty()) {
             return total;
         }

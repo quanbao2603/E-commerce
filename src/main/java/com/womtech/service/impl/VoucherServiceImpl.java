@@ -175,6 +175,9 @@ public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> impleme
         	if (voucher == currentVoucher)
         		break;
         	
+        	if (voucher.getOwner() == null)
+        		continue; // Có owner
+        	
         	if (!voucher.getOwner().getUserID().equals(currentVoucher.getOwner().getUserID()))
         		continue; // Khác owner
         	
