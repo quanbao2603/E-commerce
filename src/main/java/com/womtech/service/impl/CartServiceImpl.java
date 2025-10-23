@@ -63,8 +63,8 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
     }
     
     @Override
-	public void clearCart(User user) {
-    	cartItemRepository.deleteByCart(findByUser(user));
+	public void clearCart(Cart cart) {
+    	cartItemRepository.deleteByCart(cart);
     }
     
     @Override

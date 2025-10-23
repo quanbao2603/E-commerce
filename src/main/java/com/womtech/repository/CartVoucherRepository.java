@@ -12,4 +12,5 @@ import com.womtech.entity.CartVoucherID;
 @Repository
 public interface CartVoucherRepository extends JpaRepository<CartVoucher, CartVoucherID> {
 	List<CartVoucher> findByCart(Cart cart);
+	void deleteByCart(Cart cart);
 }

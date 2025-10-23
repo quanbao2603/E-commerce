@@ -51,6 +51,8 @@ public class CartVoucherServiceImpl extends BaseServiceImpl<CartVoucher, CartVou
 		for (CartVoucher cv : cartVouchers) {
 			if (!voucherService.isValid(cv.getVoucher()))
 				cartVoucherRepository.delete(cv);
+			if (!voucherService.isUsable(cv.getVoucher(), cart.getUser()))
+				cartVoucherRepository.delete(cv);
 		}
 		
 		cartVouchers = findByCart(cart);

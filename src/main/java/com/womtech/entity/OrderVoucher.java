@@ -24,13 +24,13 @@ public class OrderVoucher {
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@MapsId("orderID")
-	@JoinColumn(name = "orderID", foreignKey = @ForeignKey(name = "fk_order_voucher_order"))
+	@JoinColumn(name = "orderID", foreignKey = @ForeignKey(name = "fk_order_voucher_order"), nullable = false)
 	@JsonIgnore
 	private Order order;
 
 	@ManyToOne(fetch = FetchType.LAZY)
 	@MapsId("voucherID")
-	@JoinColumn(name = "voucherID", foreignKey = @ForeignKey(name = "fk_order_voucher_voucher"))
+	@JoinColumn(name = "voucherID", foreignKey = @ForeignKey(name = "fk_order_voucher_voucher"), nullable = false)
 	private Voucher voucher;
 
 	@Builder.Default

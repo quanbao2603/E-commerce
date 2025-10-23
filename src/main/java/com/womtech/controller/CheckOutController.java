@@ -46,7 +46,11 @@ public class CheckOutController {
 		
 		// Address
 		Optional<Address> defaultAddressOpt = addressService.findByUserAndIsDefaultTrue(user);
+		if (!defaultAddressOpt.isEmpty())
+			model.addAttribute("defaultAddress", defaultAddressOpt.get());
 		List<Address> addresses = addressService.findByUser(user);
+		if (addresses.isEmpty())
+			model.addAttribute("addressError", "Chưa có địa chỉ giao hàng. Vui lòng thêm địa chỉ.");
 		
 		// Price
 		BigDecimal totalPrice = cartService.totalPrice(cart);
@@ -60,12 +64,12 @@ public class CheckOutController {
 		
 		for (CartVoucher cv : cartVouchers) {
 			if (cv.getDiscountValue().compareTo(BigDecimal.ZERO) <= 0)
-				model.addAttribute("voucherError", "Một số mã giảm giá chưa đủ điều kiện áp dụng");
+				if (!model.containsAttribute("voucherError"))
+			        model.addAttribute("voucherError", "Một số mã giảm giá chưa đủ điều kiện áp dụng.");
 		}
 		
 		// Model
 		model.addAttribute("cart", cart);
-		model.addAttribute("defaultAddress", defaultAddressOpt.get());
 		model.addAttribute("addresses", addresses);
 		model.addAttribute("totalPrice", totalPrice);
 		model.addAttribute("cartVouchers", cartVouchers);
@@ -95,23 +99,31 @@ public class CheckOutController {
 		// Add Voucher
         Optional<Voucher> voucherOpt = voucherService.findByCode(voucherCode.trim());
         if (voucherOpt.isEmpty()) {
-            ra.addFlashAttribute("voucherError", "Mã giảm giá không hợp lệ");
+            ra.addFlashAttribute("voucherError", "Mã giảm giá không hợp lệ.");
             return "redirect:/checkout";
         }
         Voucher voucher = voucherOpt.get();
         
         if (!voucherService.isValid(voucher)) {
-            ra.addFlashAttribute("voucherError", "Mã giảm giá đã hết hạn hoặc không còn hiệu lực");
+            ra.addFlashAttribute("voucherError", "Mã giảm giá đã hết hạn hoặc không còn hiệu lực.");
             return "redirect:/checkout";
         }
         
         if (!voucherService.isUsable(voucher, user)) {
-        	ra.addFlashAttribute("voucherError", "Bạn đã sử dụng mã giảm giá này rồi");
+        	ra.addFlashAttribute("voucherError", "Bạn đã sử dụng mã giảm giá này rồi.");
             return "redirect:/checkout";
         }
         
+        List<CartVoucher> cartVouchers = cartVoucherService.findByCart(cart);
+        for (CartVoucher cv : cartVouchers) {
+        	if (cv.getVoucher().getVoucherID().equals(voucher.getVoucherID())) {
+        		ra.addFlashAttribute("voucherError", "Mã giảm giá này đã được áp dụng.");
+                return "redirect:/checkout";
+        	}
+        }
+        
         if (!voucherService.isApplicable(voucher, totalPrice))
-        	ra.addFlashAttribute("voucherError", "Mã giảm giá chưa đủ điều kiện để áp dụng");
+        	ra.addFlashAttribute("voucherError", "Mã giảm giá chưa đủ điều kiện để áp dụng.");
         
         cartVoucherService.addVoucherToCart(cart, voucher);
 		return "redirect:/checkout";
@@ -135,7 +147,7 @@ public class CheckOutController {
 		// Remove Voucher
         Optional<Voucher> voucherOpt = voucherService.findByCode(voucherCode.trim());
         if (voucherOpt.isEmpty()) {
-            ra.addFlashAttribute("voucherError", "Mã giảm giá không hợp lệ");
+            ra.addFlashAttribute("voucherError", "Mã giảm giá không hợp lệ.");
             return "redirect:/checkout";
         }
         Voucher voucher = voucherOpt.get();
@@ -149,15 +161,37 @@ public class CheckOutController {
 	public String processCheckout(HttpSession session, Model model, Principal principal,
 								  @RequestParam("selectedAddressId") String addressID,
 								  @RequestParam String payment_method,
-								  @RequestParam String voucherCode) {
+								  @RequestParam String voucherCode,
+								  RedirectAttributes ra) {
 		Optional<User> userOpt = authUtils.getCurrentUser(principal);
 		if (userOpt.isEmpty()) {
 			return "redirect:/auth/login";
 		}
 		User user = userOpt.get();
 		
-		Address address = addressService.findById(addressID).orElse(null);
-		Order order = orderService.createOrder(user, address, payment_method, voucherCode);
+		// Cart
+		Cart cart = cartService.findByUser(user);
+		if (cart.getItems().isEmpty())
+			return "redirect:/cart";
+		
+		// Address
+		Optional<Address> addressOpt = addressService.findById(addressID);
+		if (addressOpt.isEmpty()) {
+			ra.addFlashAttribute("addressError", "Vui lòng chọn địa chỉ giao hàng trước khi đặt hàng.");
+			return "redirect:/checkout";
+		}
+		Address address = addressOpt.get();
+		
+		// Price
+		BigDecimal totalPrice = cartService.totalPrice(cart);
+		
+		// Tính toán vouchers
+		cartVoucherService.applyVouchersToCart(cart, totalPrice);
+		
+		BigDecimal totalDiscountPrice = cartVoucherService.getTotalDiscountPrice(cart);
+		BigDecimal finalPrice = totalPrice.subtract(totalDiscountPrice);
+		
+		Order order = orderService.createOrderFromCart(cart, address, payment_method, finalPrice);
 		
 		return "redirect:/order/" + order.getOrderID();
 	}
