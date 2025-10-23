@@ -403,7 +403,9 @@ public class AdminController {
 			@RequestParam(defaultValue = "20") int size, Model model) {
 		Pageable pageable = PageRequest.of(page, size, Sort.by("product.productID").ascending());
 		Page<Specification> specificationPage = specificationService.getAllSpecifications(pageable);
-
+		List<Product> allProducts = productService.getAllProducts(); // Cần có service method này
+		
+		model.addAttribute("products", allProducts); // THÊM DÒNG NÀY
 		model.addAttribute("specifications", specificationPage.getContent());
 		model.addAttribute("page", specificationPage);
 		return "admin/specifications";
