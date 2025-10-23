@@ -118,4 +118,29 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
         }
         return total;
     }
+    
+	@Override
+	public BigDecimal totalPriceByOwner(Cart cart, User owner) {
+    	BigDecimal total = BigDecimal.ZERO;
+    	List<CartItem> items = cartItemService.findByCart(cart);
+        if (items.isEmpty()) {
+            return total;
+        }
+        
+        for (CartItem item : items) {
+        	Product product = item.getProduct();
+        	
+        	if (product.getOwnerUser() == null || !product.getOwnerUser().getUserID().equals(owner.getUserID()))
+        		continue;
+        	
+            BigDecimal price = (product.getDiscount_price() != null && product.getDiscount_price().compareTo(BigDecimal.ZERO) > 0)
+            		? product.getDiscount_price()
+            				: product.getPrice();
+
+            BigDecimal itemTotal = price.multiply(BigDecimal.valueOf(item.getQuantity()));
+
+            total = total.add(itemTotal);
+        }
+        return total;
+    }
 }
