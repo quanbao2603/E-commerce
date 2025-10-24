@@ -12,8 +12,8 @@ import com.womtech.entity.CartItem;
 import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
 import com.womtech.entity.Product;
+import com.womtech.repository.CartItemRepository;
 import com.womtech.repository.OrderItemRepository;
-import com.womtech.service.CartItemService;
 import com.womtech.service.OrderItemService;
 
 @Service
@@ -21,7 +21,7 @@ public class OrderItemServiceImpl extends BaseServiceImpl<OrderItem, String> imp
 	@Autowired
 	OrderItemRepository orderItemRepository;
 	@Autowired
-	CartItemService cartItemService;
+	CartItemRepository cartItemRepository;
 
 	public OrderItemServiceImpl(JpaRepository<OrderItem, String> repo) {
 		super(repo);
@@ -34,7 +34,7 @@ public class OrderItemServiceImpl extends BaseServiceImpl<OrderItem, String> imp
 	
 	@Override
 	public void createItemsFromCart(Order order, Cart cart) {
-    	List<CartItem> cartItems = cartItemService.findByCart(cart);
+    	List<CartItem> cartItems = cartItemRepository.findByCart(cart);
     	
     	for (CartItem cartItem : cartItems) {
     		Product product = cartItem.getProduct();
