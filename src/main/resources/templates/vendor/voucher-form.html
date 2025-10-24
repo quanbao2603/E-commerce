@@ -16,7 +16,7 @@
               th:action="@{/vendor/vouchers/save}" 
               method="post">
               
-            <input type="hidden" th:field="*{voucherID}" />
+            <input type="hidden" th:field="*{voucherID}" th:if="${voucher.voucherID != null}" />
 
             <div class="mb-3">
                 <label for="code" class="form-label">Mã Voucher</label>

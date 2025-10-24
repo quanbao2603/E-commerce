@@ -431,74 +431,51 @@ function initEditMap(id, lat = 10.762622, lng = 106.660172) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initAddressDropdowns();
-	document.addEventListener('DOMContentLoaded', () => {
-	    const addForm = document.querySelector('#add-address-form form');
-	    const streetInput = document.querySelector('#add-address-form input[name="street"]');
-	    
-	    // Tạo datalist cho street
-	    const streetDatalist = document.createElement('datalist');
-	    streetDatalist.id = 'street-list';
-	    document.body.appendChild(streetDatalist);
-	    streetInput.setAttribute('list', 'street-list');
 
-	    // Hàm kiểm tra hợp lệ
-	    function isStreetValid(value) {
-	        // 1. Regex: chữ, số, khoảng trắng, - hoặc /
-	        const regex = /^[0-9A-Za-zÀ-ỹ\s\-\/]{2,100}$/;
-	        if (!regex.test(value)) return false;
+    // ======= Regex để kiểm tra địa chỉ hợp lệ =======
+    // Cho phép: số, chữ, khoảng trắng, dấu / , . - , và ký tự tiếng Việt
+    const streetRegex = /^[0-9A-Za-zÀ-ỹà-ỹ\s\/,.\-]+$/;
 
-	        // 2. Phải có trong danh sách gợi ý
-	        const options = Array.from(streetDatalist.options).map(o => o.value);
-	        if (!options.includes(value)) return false;
+    // ======= Validate hàm chung cho cả Add và Edit =======
+    function validateStreetInput(input) {
+        const value = input.value.trim();
+        if (!value) {
+            alert('Vui lòng nhập địa chỉ (số nhà, tên đường).');
+            input.focus();
+            return false;
+        }
+        if (!streetRegex.test(value)) {
+            alert('Địa chỉ chứa ký tự không hợp lệ. Vui lòng chỉ nhập chữ, số và ký tự cơ bản như "/", "-", ",".');
+            input.focus();
+            return false;
+        }
+        if (value.length < 3) {
+            alert('Địa chỉ quá ngắn. Vui lòng nhập chi tiết hơn (ví dụ: "123 Nguyễn Trãi").');
+            input.focus();
+            return false;
+        }
+        return true;
+    }
 
-	        return true;
-	    }
+    // ======= Áp dụng cho form thêm địa chỉ =======
+    const addForm = document.querySelector('#add-address-form form');
+    if (addForm) {
+        const addStreetInput = addForm.querySelector('input[name="street"]');
+        addForm.addEventListener('submit', (e) => {
+            if (!validateStreetInput(addStreetInput)) {
+                e.preventDefault();
+            }
+        });
+    }
 
-	    // Cập nhật danh sách street từ API
-	    async function updateStreetList() {
-	        const ward = document.getElementById('wardSelect')?.selectedOptions[0]?.text || '';
-	        const district = document.getElementById('districtSelect')?.selectedOptions[0]?.text || '';
-	        const province = document.getElementById('provinceSelect')?.selectedOptions[0]?.text || '';
-	        if (!district || !province) return;
-
-	        try {
-	            const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(`${district}, ${province}`)}&limit=50`);
-	            const data = await res.json();
-	            streetDatalist.innerHTML = '';
-	            const streets = new Set();
-
-	            if (data.features) {
-	                data.features.forEach(f => {
-	                    if (f.properties && f.properties.name) streets.add(f.properties.name);
-	                });
-	            }
-
-	            streets.forEach(s => {
-	                const option = document.createElement('option');
-	                option.value = s;
-	                streetDatalist.appendChild(option);
-	            });
-	        } catch (err) {
-	            console.error('Error fetching streets:', err);
-	        }
-	    }
-
-	    // Bắt sự kiện thay đổi tỉnh/quận/phường
-	    ['provinceSelect', 'districtSelect', 'wardSelect'].forEach(id => {
-	        document.getElementById(id)?.addEventListener('change', updateStreetList);
-	    });
-
-	    // Validate khi submit form
-	    addForm?.addEventListener('submit', (e) => {
-	        const streetVal = streetInput.value.trim();
-	        if (!isStreetValid(streetVal)) {
-	            e.preventDefault();
-	            alert('Vui lòng chọn một số nhà/đường hợp lệ từ danh sách và đúng ký tự hợp lệ.');
-	            streetInput.focus();
-	        }
-	    });
-
-	    // Khởi tạo danh sách lần đầu
-	    updateStreetList();
-	});
+    // ======= Áp dụng cho tất cả form chỉnh sửa =======
+    const editForms = document.querySelectorAll('.edit-form');
+    editForms.forEach(form => {
+        const editStreetInput = form.querySelector('input[name="street"]');
+        form.addEventListener('submit', (e) => {
+            if (!validateStreetInput(editStreetInput)) {
+                e.preventDefault();
+            }
+        });
+    });
 });

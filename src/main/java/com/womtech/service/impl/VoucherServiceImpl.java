@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -227,5 +228,16 @@ public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> impleme
         
         BigDecimal currentRate = currentVoucher.getDiscount().divide(BigDecimal.valueOf(100));
         return total.multiply(currentRate); // Nhân cho discount%
+    }
+	
+	@Scheduled(cron = "0 0 0 * * ?") // mỗi ngày 0h
+    public void disableExpiredVouchers() {
+        List<Voucher> activeVouchers = voucherRepository.findByStatus(1);
+        for (Voucher v : activeVouchers) {
+            if (v.getExpire_date().isBefore(LocalDateTime.now())) {
+                v.setStatus(0);
+                voucherRepository.save(v);
+            }
+        }
     }
 }
