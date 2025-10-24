@@ -474,7 +474,7 @@
 									
 									            <div class="mb-2">
 									                <label class="form-label">Số Nhà, Đường</label>
-									                <input type="text" class="form-control mb-2" name="street" required>
+									                <input type="text" class="form-control mb-2" name="street" required >
 									
 									                <!-- Map container -->
 									                <div id="map-add" style="height: 300px; border: 1px solid #ccc;"></div>
@@ -575,7 +575,7 @@
 											
 											    <div class="mb-3">
 											        <label class="form-label">Số Nhà, Đường</label>
-											        <input type="text" class="form-control" name="street" th:value="${addr.street}">
+											        <input type="text" class="form-control" name="street" th:value="${addr.street}" required>
 											        <!-- Map container cho edit -->
 													<div th:id="'map-' + ${addr.addressID}" style="height: 300px; border: 1px solid #ccc;"></div>
 													

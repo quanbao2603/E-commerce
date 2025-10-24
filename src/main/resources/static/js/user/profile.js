@@ -228,24 +228,36 @@ const editMaps = {}, editMarkers = {}, editBounds = {};
 
 async function updateAddressFromLatLng(lat, lng, id = null) {
     try {
-        const res = await fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json&addressdetails=1`, {
-            headers: { 'Accept-Language': 'vi' }
-        });
+        const prefix = id ? `#form-${id}` : '#add-address-form';
+        const streetInput = document.querySelector(`${prefix} input[name="street"]`);
+        const wardSelect = document.querySelector(`${prefix} select[name="ward"]`);
+        const districtSelect = document.querySelector(`${prefix} select[name="district"]`);
+        const provinceSelect = document.querySelector(`${prefix} select[name="province"]`);
+
+        let street = '';
+
+        // Photon reverse geocoding
+        const res = await fetch(`https://photon.komoot.io/reverse?lat=${lat}&lon=${lng}`);
         const data = await res.json();
-        if (data?.address) {
-            const prefix = id ? `#form-${id}` : '#add-address-form';
-            const streetInput = document.querySelector(`${prefix} input[name="street"]`);
-            const wardInput = document.querySelector(`${prefix} input[name="ward"]`);
-            const districtInput = document.querySelector(`${prefix} input[name="district"]`);
-            const cityInput = document.querySelector(`${prefix} input[name="city"]`);
-            
-            if (streetInput) streetInput.value = `${data.address.house_number || ''} ${data.address.road || ''}`.trim();
-            if (wardInput) wardInput.value = data.address.suburb || data.address.village || data.address.hamlet || '';
-            if (districtInput) districtInput.value = data.address.county || data.address.district || '';
-            if (cityInput) cityInput.value = data.address.city || data.address.state || '';
+        if (data.features && data.features.length > 0) {
+            const feature = data.features[0].properties;
+            if (feature.name) {
+                street = feature.name;
+            }
         }
+
+        // Fallback: nếu ko có name, dùng ward/district/province
+        if (!street) {
+            const wardName = wardSelect?.selectedOptions[0]?.text || '';
+            const districtName = districtSelect?.selectedOptions[0]?.text || '';
+            const provinceName = provinceSelect?.selectedOptions[0]?.text || '';
+            street = wardName ? `${wardName}, ${districtName}, ${provinceName}` : `${districtName}, ${provinceName}`;
+        }
+
+        if (streetInput) streetInput.value = street;
+
     } catch (err) {
-        console.error('Geocoding error:', err);
+        console.error('Photon geocoding error:', err);
     }
 }
 
@@ -262,17 +274,24 @@ async function goToArea(districtId, wardId) {
 
     const queries = [];
     if (wardName) queries.push(`${wardName}, ${districtName}, ${provinceName}`);
-    queries.push(`${districtName}, ${provinceName}`); // fallback
+    queries.push(`${districtName}, ${provinceName}`);
 
     for (let q of queries) {
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`);
+            const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1`);
             const data = await res.json();
-            if (data[0]) {
-                const bbox = data[0].boundingbox;
+            if (data.features && data.features.length > 0) {
+                const feature = data.features[0];
+                const [minLat, minLon, maxLat, maxLon] = feature.bbox || [
+                    feature.geometry.coordinates[1],
+                    feature.geometry.coordinates[0],
+                    feature.geometry.coordinates[1],
+                    feature.geometry.coordinates[0]
+                ];
+
                 addBounds = L.latLngBounds(
-                    [parseFloat(bbox[0]), parseFloat(bbox[2])],
-                    [parseFloat(bbox[1]), parseFloat(bbox[3])]
+                    [minLat, minLon],
+                    [maxLat, maxLon]
                 );
                 addMap.fitBounds(addBounds);
 
@@ -283,10 +302,10 @@ async function goToArea(districtId, wardId) {
                 document.getElementById('longitude-add').value = center.lng;
 
                 await updateAddressFromLatLng(center.lat, center.lng);
-                return; // đã tìm được, dừng loop
+                return;
             }
         } catch (err) {
-            console.error('Error in goToArea:', err);
+            console.error('Photon goToArea error:', err);
         }
     }
 }
@@ -304,17 +323,24 @@ async function goToEditArea(id, districtId, wardId) {
 
     const queries = [];
     if (wardName) queries.push(`${wardName}, ${districtName}, ${provinceName}`);
-    queries.push(`${districtName}, ${provinceName}`); // fallback
+    queries.push(`${districtName}, ${provinceName}`);
 
     for (let q of queries) {
         try {
-            const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`);
+            const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(q)}&limit=1`);
             const data = await res.json();
-            if (data[0]) {
-                const bbox = data[0].boundingbox;
+            if (data.features && data.features.length > 0) {
+                const feature = data.features[0];
+                const [minLat, minLon, maxLat, maxLon] = feature.bbox || [
+                    feature.geometry.coordinates[1],
+                    feature.geometry.coordinates[0],
+                    feature.geometry.coordinates[1],
+                    feature.geometry.coordinates[0]
+                ];
+
                 editBounds[id] = L.latLngBounds(
-                    [parseFloat(bbox[0]), parseFloat(bbox[2])],
-                    [parseFloat(bbox[1]), parseFloat(bbox[3])]
+                    [minLat, minLon],
+                    [maxLat, maxLon]
                 );
                 editMaps[id].fitBounds(editBounds[id]);
 
@@ -325,10 +351,10 @@ async function goToEditArea(id, districtId, wardId) {
                 document.getElementById(`longitude-${id}`).value = center.lng;
 
                 await updateAddressFromLatLng(center.lat, center.lng, id);
-                return; // đã tìm được, dừng loop
+                return;
             }
         } catch (err) {
-            console.error(`Error in goToEditArea for id ${id}:`, err);
+            console.error(`Photon goToEditArea error for id ${id}:`, err);
         }
     }
 }
@@ -405,4 +431,74 @@ function initEditMap(id, lat = 10.762622, lng = 106.660172) {
 
 document.addEventListener('DOMContentLoaded', () => {
     initAddressDropdowns();
+	document.addEventListener('DOMContentLoaded', () => {
+	    const addForm = document.querySelector('#add-address-form form');
+	    const streetInput = document.querySelector('#add-address-form input[name="street"]');
+	    
+	    // Tạo datalist cho street
+	    const streetDatalist = document.createElement('datalist');
+	    streetDatalist.id = 'street-list';
+	    document.body.appendChild(streetDatalist);
+	    streetInput.setAttribute('list', 'street-list');
+
+	    // Hàm kiểm tra hợp lệ
+	    function isStreetValid(value) {
+	        // 1. Regex: chữ, số, khoảng trắng, - hoặc /
+	        const regex = /^[0-9A-Za-zÀ-ỹ\s\-\/]{2,100}$/;
+	        if (!regex.test(value)) return false;
+
+	        // 2. Phải có trong danh sách gợi ý
+	        const options = Array.from(streetDatalist.options).map(o => o.value);
+	        if (!options.includes(value)) return false;
+
+	        return true;
+	    }
+
+	    // Cập nhật danh sách street từ API
+	    async function updateStreetList() {
+	        const ward = document.getElementById('wardSelect')?.selectedOptions[0]?.text || '';
+	        const district = document.getElementById('districtSelect')?.selectedOptions[0]?.text || '';
+	        const province = document.getElementById('provinceSelect')?.selectedOptions[0]?.text || '';
+	        if (!district || !province) return;
+
+	        try {
+	            const res = await fetch(`https://photon.komoot.io/api/?q=${encodeURIComponent(`${district}, ${province}`)}&limit=50`);
+	            const data = await res.json();
+	            streetDatalist.innerHTML = '';
+	            const streets = new Set();
+
+	            if (data.features) {
+	                data.features.forEach(f => {
+	                    if (f.properties && f.properties.name) streets.add(f.properties.name);
+	                });
+	            }
+
+	            streets.forEach(s => {
+	                const option = document.createElement('option');
+	                option.value = s;
+	                streetDatalist.appendChild(option);
+	            });
+	        } catch (err) {
+	            console.error('Error fetching streets:', err);
+	        }
+	    }
+
+	    // Bắt sự kiện thay đổi tỉnh/quận/phường
+	    ['provinceSelect', 'districtSelect', 'wardSelect'].forEach(id => {
+	        document.getElementById(id)?.addEventListener('change', updateStreetList);
+	    });
+
+	    // Validate khi submit form
+	    addForm?.addEventListener('submit', (e) => {
+	        const streetVal = streetInput.value.trim();
+	        if (!isStreetValid(streetVal)) {
+	            e.preventDefault();
+	            alert('Vui lòng chọn một số nhà/đường hợp lệ từ danh sách và đúng ký tự hợp lệ.');
+	            streetInput.focus();
+	        }
+	    });
+
+	    // Khởi tạo danh sách lần đầu
+	    updateStreetList();
+	});
 });
