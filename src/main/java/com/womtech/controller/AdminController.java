@@ -724,22 +724,24 @@ public class AdminController {
 	@PostMapping("/vouchers/save")
 	public String saveVoucher(@ModelAttribute Voucher voucher, RedirectAttributes redirectAttributes) {
 	    try {
-	    	String userId = SecurityContextHolder.getContext().getAuthentication().getName();
+	        String userId = SecurityContextHolder.getContext().getAuthentication().getName();
 	        User owner = userService.findById(userId)
 	                .orElseThrow(() -> new IllegalStateException("Không tìm thấy vendor đăng nhập"));
 	        voucher.setOwner(owner);
-	        if (voucher.getExpire_date() != null) {
-	            LocalDateTime today = LocalDateTime.now();
-	            if (voucher.getExpire_date().isBefore(today)) {
-	                redirectAttributes.addFlashAttribute("error", "Ngày hết hạn phải sau ngày hiện tại!");
-	                return "redirect:/vendor/vouchers";
-	            }
+
+	        if (voucher.getExpire_date() != null && voucher.getExpire_date().isBefore(LocalDateTime.now())) {
+	            redirectAttributes.addFlashAttribute("error", "Ngày hết hạn phải sau ngày hiện tại!");
+	            return "redirect:/admin/vouchers";
 	        }
-	        if (voucher.getVoucherID() == null) {
+
+	        if (voucher.getVoucherID() == null || voucher.getVoucherID().isBlank()) {
+	            // Thêm mới
 	            voucherService.create(voucher);
 	        } else {
+	            // Cập nhật
 	            voucherService.update(voucher);
 	        }
+
 	        redirectAttributes.addFlashAttribute("success", "Voucher đã được lưu thành công!");
 	    } catch (Exception e) {
 	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu voucher: " + e.getMessage());
