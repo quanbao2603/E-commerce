@@ -230,7 +230,7 @@ public class VoucherServiceImpl extends BaseServiceImpl<Voucher, String> impleme
         return total.multiply(currentRate); // Nhân cho discount%
     }
 	
-	@Scheduled(cron = "0 0 0 * * ?") // mỗi ngày 0h
+	@Scheduled(cron = "0 0 * * * ?") // mỗi giờ
     public void disableExpiredVouchers() {
         List<Voucher> activeVouchers = voucherRepository.findByStatus(1);
         for (Voucher v : activeVouchers) {
