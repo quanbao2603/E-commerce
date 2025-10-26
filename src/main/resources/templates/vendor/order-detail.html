@@ -4,18 +4,17 @@
 	layout:decorate="~{vendor/layout}">
 <head>
 <title>Chi Tiết Đơn Hàng - Vendor Panel</title>
-<link rel="stylesheet" href="/css/vendor/order-detail.css">
+    <link rel="stylesheet" href="/css/vendor/order-detail.css">
 
 <style>
-.item-status-form {
-	display: flex;
-	gap: 8px;
-	align-items: flex-end;
-}
-
-.item-status-select {
-	min-width: 180px;
-}
+	.item-status-form {
+		display: flex;
+		gap: 8px;
+		align-items: flex-end;
+	}
+	.item-status-select {
+		min-width: 180px;
+	}
 </style>
 </head>
 <body>
@@ -73,7 +72,7 @@
 									</span>
 								</p>
 							</div>
-						</div>
+						</div>				
 					</div>
 				</div>
 			</div>
@@ -119,17 +118,6 @@
 								123 Lê Lợi, Phường 1, Quận 3, TP.HCM </span>
 						</p>
 					</div>
-
-					<!-- Assign Shipper Button -->
-					<div class="text-center">
-						<form th:action="@{/vendor/orders/assign-shipper}" method="post"
-							class="d-inline-block">
-							<input type="hidden" name="orderID" th:value="${order.orderID}">
-							<button type="submit" class="btn btn-outline-primary">
-								<i class="fas fa-truck me-2"></i> Gán đơn hàng cho Shipper
-							</button>
-						</form>
-					</div>
 				</div>
 			</div>
 		</div>
@@ -172,7 +160,7 @@
 								<div>
 									<strong th:text="${item.product.name}">item.product
 										Name</strong>
-								</div>
+								</div> 
 							</td>
 							<td><span class="badge bg-secondary"
 								th:text="${item.product.brand.name}"> Brand </span></td>
@@ -181,45 +169,52 @@
 							<td th:text="${item.quantity}"></td>
 							<td
 								th:text="${#numbers.formatDecimal(item.price.multiply(item.quantity),0,'COMMA',0,'POINT')} + ' ₫'"></td>
-							<td><span class="badge"
-								th:text="${OrderStatusHelper.getItemStatusLabel(item.status)}"
-								th:classappend="' ' + ${OrderStatusHelper.getItemStatusBadgeClass(item.status)}">
-							</span></td>
 							<td>
-								<form
-									th:action="@{'/vendor/orders/update-item-status/' + ${order.orderID} + '/' + ${item.orderItemID}}"
+								<span class="badge"
+									th:text="${OrderStatusHelper.getItemStatusLabel(item.status)}"
+									th:classappend="' ' + ${OrderStatusHelper.getItemStatusBadgeClass(item.status)}">
+								</span>
+							</td>
+							<td>
+								<form th:action="@{'/vendor/orders/update-item-status/' + ${order.orderID} + '/' + ${item.orderItemID}}"
 									method="post" class="item-status-form">
-									<input type="hidden" name="vendorId"
-										th:value="${currentUser.userID}" /> <select name="newStatus"
-										class="form-select form-select-sm item-status-select" required>
+									<input type="hidden" name="vendorId" th:value="${currentUser.userID}" />
+									
+									<select name="newStatus" class="form-select form-select-sm item-status-select" required>
 										<option value="">-- Chọn trạng thái --</option>
-										<option th:value="${OrderStatusHelper.ITEM_STATUS_CANCELLED}"
+										<option 
+											th:value="${OrderStatusHelper.ITEM_STATUS_CANCELLED}"
 											th:text="'Hủy'"
 											th:disabled="${item.status == OrderStatusHelper.ITEM_STATUS_CANCELLED}">
 										</option>
-										<option th:value="${OrderStatusHelper.ITEM_STATUS_CONFIRMED}"
+										<option 
+											th:value="${OrderStatusHelper.ITEM_STATUS_CONFIRMED}"
 											th:text="'Xác Nhận'"
 											th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_CONFIRMED}">
 										</option>
-										<option th:value="${OrderStatusHelper.ITEM_STATUS_PREPARING}"
+										<option 
+											th:value="${OrderStatusHelper.ITEM_STATUS_PREPARING}"
 											th:text="'Chuẩn Bị'"
 											th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_PREPARING}">
 										</option>
-										<option th:value="${OrderStatusHelper.ITEM_STATUS_PACKED}"
+										<option 
+											th:value="${OrderStatusHelper.ITEM_STATUS_PACKED}"
 											th:text="'Đóng Gói'"
 											th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_PACKED}">
 										</option>
-										<option th:value="${OrderStatusHelper.ITEM_STATUS_SHIPPED}"
+										<option 
+											th:value="${OrderStatusHelper.ITEM_STATUS_SHIPPED}"
 											th:text="'Đang Giao'"
 											th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_SHIPPED}">
 										</option>
-										<option th:value="${OrderStatusHelper.ITEM_STATUS_DELIVERED}"
+										<option 
+											th:value="${OrderStatusHelper.ITEM_STATUS_DELIVERED}"
 											th:text="'Đã Giao'"
 											th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_DELIVERED}">
 										</option>
-
+										
 									</select>
-
+									
 									<button type="submit" class="btn btn-sm btn-primary">
 										<i class="fas fa-save"></i>
 									</button>
