@@ -186,4 +186,10 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 		        throw new RuntimeException("User not found with ID: " + userId);
 		    }
 	}
+
+	@Override
+	public List<User> findByRolename(String rolename) {
+		Role role = roleRepository.findByRolename(rolename).orElseThrow();
+		return userRepository.findByRole(role);
+	}
 }

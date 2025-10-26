@@ -520,7 +520,10 @@ public class VendorController {
 		model.addAttribute("vendorSubtotal", vendorSubtotal);
 		model.addAttribute("OrderStatusHelper", OrderStatusHelper.class);
 		model.addAttribute("currentUser", currentUser);
-
+		
+		List<User> shippers = userService.findByRolename("SHIPPER");
+		model.addAttribute("shippers", shippers);
+		
 		return "vendor/order-detail";
 	}
 	
@@ -558,6 +561,11 @@ public class VendorController {
 
 		return "redirect:/vendor/orders/" + orderId;
 	}
+	
+//	@PostMapping("/orders/assign-shipper")
+//	public String assignShipperOrder() {
+//		
+//	}
 
 	@GetMapping("/revenue")
 	public String viewRevenue(@RequestParam(required = false) String period,
