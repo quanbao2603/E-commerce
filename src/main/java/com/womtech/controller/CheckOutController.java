@@ -156,7 +156,6 @@ public class CheckOutController {
         cartVoucherService.deleteById(cartVoucherID);
 		return "redirect:/checkout";
 	}
-	
 	@PostMapping("/confirm")
 	public String processCheckout(HttpSession session, Model model, Principal principal,
 								  @RequestParam("selectedAddressId") String addressID,
