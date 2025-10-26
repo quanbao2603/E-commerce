@@ -51,7 +51,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
            "FROM OrderItem oi " +
            "WHERE oi.product.ownerUser.userID = :vendorId " +
            "AND oi.order.createAt BETWEEN :start AND :end " +
-           "AND oi.status = 6 " + 
+           "AND oi.order.paymentStatus = 1 " + 
            "GROUP BY DATE(oi.order.createAt) " +
            "ORDER BY DATE(oi.order.createAt)")
     List<Object[]> findDailyRevenueByVendorAndPeriod(@Param("vendorId") String vendorId, 
