@@ -6,6 +6,7 @@ import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.womtech.entity.Cart;
 import com.womtech.entity.CartItem;
@@ -17,6 +18,7 @@ import com.womtech.repository.OrderItemRepository;
 import com.womtech.service.OrderItemService;
 
 @Service
+@Transactional
 public class OrderItemServiceImpl extends BaseServiceImpl<OrderItem, String> implements OrderItemService {
 	@Autowired
 	OrderItemRepository orderItemRepository;
@@ -53,6 +55,7 @@ public class OrderItemServiceImpl extends BaseServiceImpl<OrderItem, String> imp
     }
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<OrderItem> findByOrder(Order order) {
 		return orderItemRepository.findByOrder(order);
 	}

@@ -5,6 +5,7 @@ import java.util.List;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.womtech.entity.Cart;
 import com.womtech.entity.CartVoucher;
@@ -16,6 +17,7 @@ import com.womtech.service.OrderVoucherService;
 import com.womtech.service.VoucherService;
 
 @Service
+@Transactional
 public class OrderVoucherServiceImpl extends BaseServiceImpl<OrderVoucher, OrderVoucherID> implements OrderVoucherService {
 	@Autowired
 	OrderVoucherRepository orderVoucherRepository;
@@ -50,11 +52,13 @@ public class OrderVoucherServiceImpl extends BaseServiceImpl<OrderVoucher, Order
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<OrderVoucher> findByOrder(Order Order) {
 		return orderVoucherRepository.findByOrder(Order);
 	}
 	
 	@Override
+	@Transactional(readOnly = true)
 	public BigDecimal getTotalDiscountPrice(Order order) {
 		List<OrderVoucher> orderVouchers = findByOrder(order);
 		
