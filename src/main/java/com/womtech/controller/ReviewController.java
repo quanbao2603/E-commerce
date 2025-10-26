@@ -106,7 +106,7 @@ public class ReviewController {
     @PostMapping("/delete/{id}")
     public String deleteReview(@PathVariable String id, RedirectAttributes redirectAttributes) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        String userID = auth.getName();
+        String username = auth.getName();
 
         Optional<Review> reviewOpt = reviewService.findById(id);
         if (reviewOpt.isEmpty()) {
@@ -117,10 +117,13 @@ public class ReviewController {
         Review review = reviewOpt.get();
         String productID = review.getProduct().getProductID();
 
-        boolean isAdmin = auth.getAuthorities().stream()
-                .anyMatch(role -> role.getAuthority().equals("ADMIN"));
+        System.out.println("Review username: " + review.getUser().getUsername());
+        System.out.println("Review userID: " + review.getUser().getUserID());
 
-        if (review.getUser().getUserID().equals(userID) || isAdmin) {
+        boolean isAdmin = auth.getAuthorities().stream()
+                .anyMatch(role -> role.getAuthority().equals("ROLE_ADMIN"));
+
+        if (review.getUser().getUsername().equals(username) || isAdmin) {
             reviewService.deleteById(id);
             redirectAttributes.addFlashAttribute("success", "Đã xóa đánh giá thành công!");
         } else {
