@@ -33,6 +33,7 @@ import java.time.format.DateTimeFormatter;
 import java.util.*;
 
 @Service
+@Transactional
 public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements OrderService {
 
 	@Autowired

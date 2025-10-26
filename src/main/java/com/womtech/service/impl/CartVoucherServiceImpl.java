@@ -31,6 +31,7 @@ public class CartVoucherServiceImpl extends BaseServiceImpl<CartVoucher, CartVou
 	}
 
 	@Override
+	@Transactional(readOnly = true)
 	public List<CartVoucher> findByCart(Cart cart) {
 		return cartVoucherRepository.findByCart(cart);
 	}
@@ -88,6 +89,7 @@ public class CartVoucherServiceImpl extends BaseServiceImpl<CartVoucher, CartVou
 	}
 	
 	@Override
+	@Transactional(readOnly = true)
 	public BigDecimal getTotalDiscountPrice(Cart cart) {
 		List<CartVoucher> cartVouchers = findByCart(cart);
 		
@@ -100,6 +102,7 @@ public class CartVoucherServiceImpl extends BaseServiceImpl<CartVoucher, CartVou
 		return totalDiscountPrice;
 	}
 	
+	@Transactional(readOnly = true)
 	private BigDecimal getTotalNonGlobalDiscountPrice(List<CartVoucher> cartVouchers) {
 		BigDecimal totalDiscountPrice = BigDecimal.ZERO;
 		

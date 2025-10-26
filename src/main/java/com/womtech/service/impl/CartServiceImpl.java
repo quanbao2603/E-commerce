@@ -8,6 +8,8 @@ import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.womtech.entity.Cart;
 import com.womtech.entity.CartItem;
 import com.womtech.entity.Product;
@@ -17,6 +19,7 @@ import com.womtech.repository.CartRepository;
 import com.womtech.service.CartService;
 
 @Service
+@Transactional
 public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements CartService {
 	@Autowired
 	CartRepository cartRepository;
@@ -64,7 +67,8 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
     
     @Override
 	public void clearCart(Cart cart) {
-    	cartItemRepository.deleteByCart(cart);
+    	cart.getItems().clear();
+    	save(cart);
     }
     
     @Override
