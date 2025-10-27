@@ -43,4 +43,6 @@ public interface UserService extends BaseService<User, String>{
     void lockUser(String userId);  // khoá user
     void unlockUser(String userId); // mở khoá user
     void deleteUserById(String userId);
+
+	List<User> findByRolename(String rolename);
 }	
