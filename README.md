@@ -141,9 +141,11 @@ src/
     ├── templates/
     ├── static/
     ├── application.yml
-    └── email-templates/
+    └── email-templates/ 
+```
 
 ---
+
 
 ## 🏁 Kết luận
 
