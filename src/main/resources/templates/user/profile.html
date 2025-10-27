@@ -82,22 +82,47 @@
 						<div class="card profile-sidebar">
 							<div class="card-body text-center">
 								<!-- Profile Avatar -->
-								<div class="profile-avatar mb-3">
-									<div class="avatar-circle">
-										<i class="bi bi-person-fill fa-3x text-primary"></i>
+								<form th:action="@{/user/avatar}" method="post"
+									enctype="multipart/form-data" class="text-center">
+									<div class="mb-3">
+										<div th:if="${user.avatar != null}">
+											<img th:src="${user.avatar}" alt="Ảnh đại diện"
+												class="rounded-circle img-fluid mb-2" width="120">
+										</div>
+										<div th:if="${user.avatar == null}">
+											<div class="avatar-circle">
+												<i class="bi bi-person-fill fa-3x text-primary"></i>
+											</div>
+										</div>
 									</div>
-								</div>
+									<div class="mb-3">
+										<input type="file" name="avatar" accept="image/*"
+											class="form-control">
+									</div>
+									<button type="submit" class="btn btn-primary">Cập nhật
+										ảnh đại diện</button>
+								</form>
 
-								<h5 class="card-title mb-1"
-									th:text="${defaultAddress != null ? defaultAddress.fullname : user.username}">
-									Tên Người Dùng</h5>
+								<h5 class="card-title mb-1" th:text="${user.username}">Tên
+									Người Dùng</h5>
 
 								<p class="text-muted mb-3" th:text="${user.email}">email@example.com</p>
 
-								<div class="badge bg-primary mb-3">
-									<i class="bi bi-award me-1"></i> <span
-										th:text="${isAdmin} ? 'Quản Trị Viên' : 'Khách Hàng'">Khách
-										Hàng</span>
+								<div class="mb-3">
+									<span class="badge text-white px-3 py-2"
+										th:classappend="
+			${user.role.rolename == 'ADMIN'} ? 'bg-danger' :
+			(${user.role.rolename == 'VENDOR'} ? 'bg-success' :
+			(${user.role.rolename == 'SHIPPER'} ? 'bg-warning text-dark' :
+			'bg-primary'))">
+										<i class="bi bi-award me-1"></i> <span
+										th:text="
+			${user.role.rolename == 'ADMIN'} ? 'Quản Trị Viên' :
+			(${user.role.rolename == 'VENDOR'} ? 'Người Bán Hàng' :
+			(${user.role.rolename == 'SHIPPER'} ? 'Người Giao Hàng' :
+			'Khách Hàng'))">
+											Khách Hàng </span>
+									</span>
 								</div>
 							</div>
 
