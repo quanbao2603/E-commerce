@@ -174,7 +174,6 @@
 							<th>Số lượng</th>
 							<th>Thành tiền</th>
 							<th>Trạng thái</th>
-							<th>Hành động</th>
 						</tr>
 					</thead>
 					<tbody>
@@ -247,6 +246,74 @@
 									</button>
 								</form>
 							</td>
+							<td>
+    <div class="d-flex align-items-center gap-2">
+        <!-- Giá gốc (nếu có chiết khấu) -->
+        <del th:if="${item.netTotal != item.price}"
+             class="text-muted small me-2"
+             th:text="${#numbers.formatDecimal(item.price.multiply(item.quantity), 0, 'COMMA', 0, 'POINT')} + ' ₫'">
+        </del>
+        <!-- Giá sau chiết khấu -->
+        <strong class="text-success"
+                th:text="${#numbers.formatDecimal(item.netTotal.multiply(item.quantity), 0, 'COMMA', 0, 'POINT')} + ' ₫'"
+                data-bs-toggle="tooltip"
+                data-bs-placement="top"
+                title="Thành tiền là giá trị thực sau khi trừ chiết khấu của sàn">
+        </strong>
+        <!-- Badge chiết khấu (nếu có) -->
+<span th:if="${item.netTotal != item.price and item.price > 0}"
+      class="badge bg-success ms-2"
+      data-bs-toggle="tooltip"
+      title="Phần trăm chiết khấu được áp dụng">
+    <span th:text="${#numbers.formatDecimal((1 - item.netTotal / item.price) * 100, 1, 'COMMA', 0, 'POINT')} + ' %'"></span>
+</span>
+    </div>
+</td>
+							
+							<td>
+    <form th:action="@{'/vendor/orders/update-item-status/' + ${order.orderID} + '/' + ${item.orderItemID}}"
+          method="post" class="item-status-form d-flex align-items-center">
+        <input type="hidden" name="vendorId" th:value="${currentUser.userID}" />
+        
+        <select name="newStatus" class="form-select form-select-sm item-status-select me-2" required>
+            <option value="">-- Chọn trạng thái --</option>
+            <option 
+                th:value="${OrderStatusHelper.ITEM_STATUS_CANCELLED}"
+                th:text="'Hủy'"
+                th:disabled="${item.status == OrderStatusHelper.ITEM_STATUS_CANCELLED}">
+            </option>
+            <option 
+                th:value="${OrderStatusHelper.ITEM_STATUS_CONFIRMED}"
+                th:text="'Xác Nhận'"
+                th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_CONFIRMED}">
+            </option>
+            <option 
+                th:value="${OrderStatusHelper.ITEM_STATUS_PREPARING}"
+                th:text="'Chuẩn Bị'"
+                th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_PREPARING}">
+            </option>
+            <option 
+                th:value="${OrderStatusHelper.ITEM_STATUS_PACKED}"
+                th:text="'Đóng Gói'"
+                th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_PACKED}">
+            </option>
+            <option 
+                th:value="${OrderStatusHelper.ITEM_STATUS_SHIPPED}"
+                th:text="'Đang Giao'"
+                th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_SHIPPED}">
+            </option>
+            <option 
+                th:value="${OrderStatusHelper.ITEM_STATUS_DELIVERED}"
+                th:text="'Đã Giao'"
+                th:disabled="${item.status >= OrderStatusHelper.ITEM_STATUS_DELIVERED}">
+            </option>
+        </select>
+        
+        <button type="submit" class="btn btn-sm btn-primary">
+            <i class="fas fa-save"></i>
+        </button>
+    </form>
+</td>
 						</tr>
 					</tbody>
 					<tfoot>
