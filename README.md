@@ -126,6 +126,7 @@
 
 ## 📂 Cấu trúc thư mục chính
 
+```bash
 src/
 ├── main/java/com/womtech/
 │   ├── controller/
