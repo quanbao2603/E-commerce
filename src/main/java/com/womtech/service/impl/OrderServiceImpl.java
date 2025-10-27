@@ -6,6 +6,8 @@ import com.womtech.entity.User;
 import com.womtech.repository.CartRepository;
 import com.womtech.repository.OrderItemRepository;
 import com.womtech.repository.OrderRepository;
+import com.womtech.repository.UserRepository;
+
 import java.math.BigDecimal;
 import java.math.RoundingMode;
 import java.time.LocalDateTime;
@@ -50,6 +52,9 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 
 	@Autowired
 	private OrderVoucherService orderVoucherService;
+
+	@Autowired
+	private UserRepository userRepository;
 
 	// 🔥 THÊM COMMISSION SERVICE
 	@Autowired
@@ -362,7 +367,7 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 
 		// 3. Tạo OrderVoucher
 		orderVoucherService.createOrderVoucherFromCart(order, cart);
-		
+
 		// 4. TẠO COMMISSION CHO TỪNG ORDER ITEM
 		List<OrderItem> orderItems = orderItemRepository.findByOrder(order);
 		for (OrderItem orderItem : orderItems) {
@@ -370,15 +375,17 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 				commissionService.createCommissionForOrderItem(orderItem);
 			} catch (Exception e) {
 				// Log lỗi nhưng không làm fail transaction
-				System.out.println("Lỗi khi tạo commission cho OrderItem " + orderItem.getOrderItemID() + ": " + e.getMessage());			}
+				System.out.println(
+						"Lỗi khi tạo commission cho OrderItem " + orderItem.getOrderItemID() + ": " + e.getMessage());
+			}
 		}
 
 		// --- 3.1: Tính lại tổng đơn từ orderItem.netTotal ---
 		BigDecimal recalculatedTotal = BigDecimal.ZERO;
 		for (OrderItem item : orderItems) {
-		    BigDecimal price = item.getPrice();
-		    BigDecimal qty = BigDecimal.valueOf(item.getQuantity() == null ? 0 : item.getQuantity());
-		    recalculatedTotal = recalculatedTotal.add(price.multiply(qty));
+			BigDecimal price = item.getPrice();
+			BigDecimal qty = BigDecimal.valueOf(item.getQuantity() == null ? 0 : item.getQuantity());
+			recalculatedTotal = recalculatedTotal.add(price.multiply(qty));
 		}
 		order.setTotalPrice(recalculatedTotal.setScale(2, RoundingMode.HALF_UP));
 
@@ -436,5 +443,132 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 	@Override
 	public Page<Order> findByUserAndStatus(User user, int status, Pageable pageable) {
 		return orderRepository.findByUserAndStatus(user, status, pageable);
+	}
+
+	// ================= SHIPPER ASSIGNMENT (dựa vào ITEM STATUS) =================
+
+	@Override
+	public void assignShipper(String orderId, String shipperId, String vendorId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+		// 1) Quyền vendor: order phải có item thuộc vendor hiện tại
+		boolean hasVendorItems = order.getItems().stream().anyMatch(i -> i.getProduct() != null
+				&& i.getProduct().getOwnerUser() != null && vendorId.equals(i.getProduct().getOwnerUser().getUserID()));
+		if (!hasVendorItems) {
+			throw new RuntimeException("Bạn không có quyền gán shipper cho đơn hàng này.");
+		}
+
+		// 2) Validate shipper + role SHIPPER + active theo status (status=1 là active)
+		User shipper = userRepository.findById(shipperId)
+				.orElseThrow(() -> new RuntimeException("Không tìm thấy shipper."));
+		if (!userRepository.isUserShipper(shipperId)) {
+			throw new RuntimeException("Tài khoản được chọn không phải SHIPPER.");
+		}
+		if (!isUserActive(shipper)) {
+			throw new RuntimeException("Shipper đã bị vô hiệu hoặc không hoạt động.");
+		}
+
+		// 3) Không cho gán nếu đơn đã khoá (mọi item đều DELIVERED/CANCELLED)
+		if (isOrderLockedForAssignment(order)) {
+			throw new RuntimeException("Đơn đã hoàn tất/đã huỷ, không thể gán shipper.");
+		}
+
+		// 4) Gán + tracking
+		order.setShipper(shipper);
+		order.setAssignedAt(LocalDateTime.now());
+		order.setAssignedByVendorId(vendorId);
+
+		// 5) KHÔNG tự nhảy trạng thái item. Vendor sẽ cập nhật item qua UI của bạn.
+		// (Nếu muốn tự bump, tuỳ chọn: nếu tất cả item >= PACKED thì có thể set sang
+		// SHIPPED, nhưng mình để nguyên an toàn)
+
+		// 6) Cập nhật order.status theo "mức nhỏ nhất" của item (đồng bộ nhẹ)
+		Integer minItemStatus = order.getItems().stream().map(OrderItem::getStatus).filter(Objects::nonNull)
+				.min(Integer::compareTo).orElse(null);
+		if (minItemStatus != null) {
+			order.setStatus(OrderStatusHelper.itemStatusToOrderStatus(minItemStatus));
+		}
+
+		orderRepository.save(order);
+	}
+
+	@Override
+	public void unassignShipper(String orderId, String vendorId) {
+		Order order = orderRepository.findById(orderId)
+				.orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng"));
+
+		// 1) Quyền vendor
+		boolean hasVendorItems = order.getItems().stream().anyMatch(i -> i.getProduct() != null
+				&& i.getProduct().getOwnerUser() != null && vendorId.equals(i.getProduct().getOwnerUser().getUserID()));
+		if (!hasVendorItems) {
+			throw new RuntimeException("Bạn không có quyền huỷ gán shipper cho đơn hàng này.");
+		}
+
+		// 2) Không cho huỷ gán khi:
+		// - Đơn đã khoá (mọi item DELIVERED/CANCELLED)
+		// - HOẶC có bất kỳ item đã sang SHIPPED (đang giao)
+		if (isOrderLockedForAssignment(order) || hasAnyItemFromStatus(order, OrderStatusHelper.ITEM_STATUS_SHIPPED)) {
+			throw new RuntimeException("Đơn đã hoàn tất/đã huỷ hoặc đã giao/đang giao, không thể huỷ gán.");
+		}
+
+		order.setShipper(null);
+		order.setAssignedAt(null);
+		order.setAssignedByVendorId(null);
+
+		// 3) Đồng bộ order.status (vẫn dựa theo min item status hiện tại)
+		Integer minItemStatus = order.getItems().stream().map(OrderItem::getStatus).filter(Objects::nonNull)
+				.min(Integer::compareTo).orElse(null);
+		if (minItemStatus != null) {
+			order.setStatus(OrderStatusHelper.itemStatusToOrderStatus(minItemStatus));
+		}
+
+		orderRepository.save(order);
+	}
+
+	@Override
+	public List<Order> getOrdersByShipper(String shipperId) {
+		return orderRepository.findByShipper_UserIDOrderByCreateAtDesc(shipperId);
+	}
+
+	@Override
+	public List<Order> getOrdersByShipperAndStatus(String shipperId, Integer status) {
+		return orderRepository.findByShipper_UserIDAndStatusOrderByCreateAtDesc(shipperId, status);
+	}
+
+	@Override
+	public List<Order> getUnassignedOrdersByVendor(String vendorId) {
+		return orderRepository.findUnassignedOrdersByVendor(vendorId);
+	}
+
+	@Override
+	public List<Order> getOrdersByVendorAndShipper(String vendorId, String shipperId) {
+		return orderRepository.findOrdersByVendorAndShipper(vendorId, shipperId);
+	}
+
+	// ================= Helpers =================
+
+	/** Active nếu status==1 (hoặc null thì coi như active tuỳ thiết kế của bạn) */
+	private boolean isUserActive(User u) {
+		Integer s = (u != null) ? u.getStatus() : null;
+		return s == null || s == 1;
+	}
+
+	/**
+	 * Đơn coi như "khoá" cho gán/huỷ khi TẤT CẢ item đều DELIVERED hoặc CANCELLED
+	 */
+	private boolean isOrderLockedForAssignment(Order order) {
+		if (order.getItems() == null || order.getItems().isEmpty())
+			return false;
+
+		return order.getItems().stream()
+				.allMatch(i -> i.getStatus() != null && (i.getStatus().equals(OrderStatusHelper.ITEM_STATUS_DELIVERED)
+						|| i.getStatus().equals(OrderStatusHelper.ITEM_STATUS_CANCELLED)));
+	}
+
+	/** Có bất kỳ item đạt/qua một mốc status nào đó (ví dụ SHIPPED) */
+	private boolean hasAnyItemFromStatus(Order order, int thresholdStatus) {
+		return order.getItems() != null
+				&& order.getItems().stream().anyMatch(i -> i.getStatus() != null && i.getStatus() >= thresholdStatus);
 	}
 }

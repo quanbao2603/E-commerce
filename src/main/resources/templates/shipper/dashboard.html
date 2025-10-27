@@ -4,14 +4,13 @@
 	layout:decorate="~{shipper/layout}">
 <head>
 <title>Dashboard - Shipper Panel</title>
-<!-- đưa CSS riêng ở child nếu muốn -->
 <link rel="stylesheet" href="/css/shipper/dashboard.css">
 </head>
 <body>
 	<h1 layout:fragment="page-title">Dashboard</h1>
 
 	<div layout:fragment="content">
-		<!-- Welcome Section -->
+		<!-- Welcome -->
 		<div class="mb-4">
 			<h2>
 				Xin chào, <span
@@ -22,12 +21,12 @@
 				suất giao hàng.</p>
 		</div>
 
-		<!-- Statistics Cards -->
+		<!-- Statistics -->
 		<div class="row g-4 mb-4">
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
-						style="background: linear-gradient(135deg, #3b82f6, #60a5fa); color: white;">
+						style="background: linear-gradient(135deg, #3b82f6, #60a5fa); color: #fff;">
 						<i class="fas fa-user-check"></i>
 					</div>
 					<div class="stat-value" th:text="${assignedCount}">0</div>
@@ -38,7 +37,7 @@
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
-						style="background: linear-gradient(135deg, #10b981, #34d399); color: white;">
+						style="background: linear-gradient(135deg, #10b981, #34d399); color: #fff;">
 						<i class="fas fa-truck-fast"></i>
 					</div>
 					<div class="stat-value" th:text="${inTransitCount}">0</div>
@@ -49,7 +48,7 @@
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
-						style="background: linear-gradient(135deg, #7c3aed, #a78bfa); color: white;">
+						style="background: linear-gradient(135deg, #7c3aed, #a78bfa); color: #fff;">
 						<i class="fas fa-circle-check"></i>
 					</div>
 					<div class="stat-value" th:text="${deliveredCount}">0</div>
@@ -60,7 +59,7 @@
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
-						style="background: linear-gradient(135deg, #ef4444, #dc2626); color: white;">
+						style="background: linear-gradient(135deg, #ef4444, #dc2626); color: #fff;">
 						<i class="fas fa-triangle-exclamation"></i>
 					</div>
 					<div class="stat-value" th:text="${failedCount}">0</div>
@@ -71,11 +70,11 @@
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
-						style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: white;">
+						style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff;">
 						<i class="fas fa-money-bill-wave"></i>
 					</div>
 					<div class="stat-value"
-						th:text="${#numbers.formatDecimal(codToCollect, 0, 'COMMA', 0, 'POINT')}">0</div>
+						th:text="${#numbers.formatDecimal(codToCollect,0,'COMMA',0,'POINT')}">0</div>
 					<div class="stat-label">COD Cần Thu (₫)</div>
 				</div>
 			</div>
@@ -83,17 +82,17 @@
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
-						style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: white;">
+						style="background: linear-gradient(135deg, #0ea5e9, #38bdf8); color: #fff;">
 						<i class="fas fa-sack-dollar"></i>
 					</div>
 					<div class="stat-value"
-						th:text="${#numbers.formatDecimal(codCollected, 0, 'COMMA', 0, 'POINT')}">0</div>
+						th:text="${#numbers.formatDecimal(codCollected,0,'COMMA',0,'POINT')}">0</div>
 					<div class="stat-label">COD Đã Thu (₫)</div>
 				</div>
 			</div>
 		</div>
 
-		<!-- Quick Actions -->
+		<!-- Quick actions -->
 		<div class="row g-4 mb-4">
 			<div class="col-md-12">
 				<div class="admin-table">
@@ -125,7 +124,7 @@
 			</div>
 		</div>
 
-		<!-- Recent Deliveries -->
+		<!-- Recent orders for this shipper -->
 		<div class="row g-4 mb-4">
 			<div class="col-md-12">
 				<div class="admin-table">
@@ -135,46 +134,59 @@
 							<i class="fas fa-clock me-2"></i> Đơn Giao Gần Đây
 						</h5>
 						<a href="/shipper/deliveries"
-							class="btn btn-sm btn-outline-primary">Xem Tất Cả <i
-							class="fas fa-arrow-right ms-1"></i></a>
+							class="btn btn-sm btn-outline-primary"> Xem Tất Cả <i
+							class="fas fa-arrow-right ms-1"></i>
+						</a>
 					</div>
 
 					<div class="table-responsive">
 						<table class="table mb-0">
 							<thead>
 								<tr>
-									<th>Mã Giao</th>
 									<th>Mã Đơn</th>
 									<th>Khách Hàng</th>
 									<th>Trạng Thái</th>
 									<th>Phân Công</th>
+									<th>Thanh Toán</th>
 									<th>Thao Tác</th>
 								</tr>
 							</thead>
 							<tbody>
-								<tr th:each="delivery : ${recentDeliveries}">
-									<td><strong th:text="${delivery.id}">DEL-ID</strong></td>
-									<td th:text="${delivery.orderId}">ORD-ID</td>
+								<!-- recentOrders là List<Order> -->
+								<tr th:each="o : ${recentOrders}">
+									<td><strong th:text="${o.orderID}">ORD-ID</strong></td>
+
 									<td>
-										<div th:text="${delivery.customerName}">Tên KH</div> <small
-										class="text-muted" th:text="${delivery.customerPhone}">SĐT</small>
+										<div th:text="${o.user != null ? o.user.username : 'N/A'}">Tên
+											KH</div> <small class="text-muted"
+										th:text="${o.address != null ? o.address.phone : ''}">SĐT</small>
 									</td>
+
 									<td><span class="badge"
-										th:classappend="${delivery.status == 'DELIVERED' ? 'bg-success' :
-                                           (delivery.status == 'FAILED' ? 'bg-danger' :
-                                           (delivery.status == 'IN_TRANSIT' ? 'bg-warning' : 'bg-primary'))}"
-										th:text="${delivery.status}">STATUS</span></td>
+										th:text="${OrderStatusHelper.getStatusLabel(o.status)}"
+										th:classappend="' ' + ${OrderStatusHelper.getStatusBadgeClass(o.status)}">
+									</span></td>
+
 									<td><small
-										th:text="${#temporals.format(delivery.assignedAt, 'dd/MM/yyyy HH:mm')}">Date</small></td>
-									<td><a
-										th:href="@{/shipper/deliveries/{id}(id=${delivery.id})}"
+										th:text="${o.assignedAt != null ? #temporals.format(o.assignedAt,'dd/MM/yyyy HH:mm') : '-'}">-</small>
+									</td>
+
+									<td><span class="badge"
+										th:text="${OrderStatusHelper.getPaymentStatusLabel(o.paymentStatus)}"
+										th:classappend="' ' + ${OrderStatusHelper.getPaymentBadgeClass(o.paymentStatus)}">
+									</span></td>
+
+									<td>
+										<!-- tuỳ bạn sẽ có trang chi tiết cho shipper; tạm dẫn bằng orderId -->
+										<a th:href="@{/shipper/deliveries(orderId=${o.orderID})}"
 										class="btn btn-sm btn-outline-primary"> <i
 											class="fas fa-eye"></i> Xem
-									</a></td>
+									</a>
+									</td>
 								</tr>
 
 								<tr
-									th:if="${recentDeliveries == null or #lists.isEmpty(recentDeliveries)}">
+									th:if="${recentOrders == null or #lists.isEmpty(recentOrders)}">
 									<td colspan="6" class="text-center py-5"><i
 										class="fas fa-truck-moving fa-3x text-muted mb-3"></i>
 										<p class="text-muted">Chưa có đơn giao nào</p></td>

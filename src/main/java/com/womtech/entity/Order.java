@@ -50,7 +50,17 @@ public class Order {
 	@Builder.Default
 	@Column(nullable = false)
 	private Integer status = 1;
+	
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "shipper_id", foreignKey = @ForeignKey(name = "fk_orders_shipper_users"))
+    private User shipper;
 
+    @Column(name = "assigned_at")
+    private LocalDateTime assignedAt;
+
+    @Column(name = "assigned_by_vendor_id", length = 36)
+    private String assignedByVendorId;
+   
 	@Builder.Default
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
 	private List<OrderItem> items = new ArrayList<>();
