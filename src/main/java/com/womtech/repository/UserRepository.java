@@ -15,22 +15,27 @@ import com.womtech.entity.User;
 
 @Repository
 public interface UserRepository extends JpaRepository<User, String> {
-    Optional<User> findByEmail(String email);
+	Optional<User> findByEmail(String email);
 
-    Optional<User> findByUsername(String username);
+	Optional<User> findByUsername(String username);
 
-    boolean existsByEmail(String email);
+	boolean existsByEmail(String email);
 
-    boolean existsByUsername(String username);
-    
-    @Query("SELECT u FROM User u " +
-    	       "WHERE (:keyword IS NULL OR u.username LIKE %:keyword% OR u.email LIKE %:keyword% OR u.userID LIKE %:keyword%) " +
-    	       "AND (:role IS NULL OR u.role.rolename = :role) " +
-    	       "AND (:status IS NULL OR u.status = :status)")
-    	Page<User> searchUsers(@Param("keyword") String keyword,
-    	                       @Param("role") String role,
-    	                       @Param("status") Integer status,
-    	                       Pageable pageable);
-    
-    List<User> findByRole(Role role);
+	boolean existsByUsername(String username);
+
+	@Query("SELECT u FROM User u "
+			+ "WHERE (:keyword IS NULL OR u.username LIKE %:keyword% OR u.email LIKE %:keyword% OR u.userID LIKE %:keyword%) "
+			+ "AND (:role IS NULL OR u.role.rolename = :role) " + "AND (:status IS NULL OR u.status = :status)")
+	Page<User> searchUsers(@Param("keyword") String keyword, @Param("role") String role,
+			@Param("status") Integer status, Pageable pageable);
+
+	List<User> findByRole(Role role);
+
+	@Query("""
+			   select (count(u) > 0) from User u
+			   join u.role r
+			   where u.userID = :uid and upper(r.rolename) = 'SHIPPER'
+			""")
+	boolean isUserShipper(@Param("uid") String userId);
+
 }

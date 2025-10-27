@@ -115,12 +115,41 @@
 						</p>
 					</div>
 
-					<div class="text-center mt-3">
+					<!-- Nếu ĐÃ gán shipper -->
+					<div class="mt-3" th:if="${order.shipper != null}">
+						<div class="p-3 border rounded bg-light">
+							<p class="mb-1">
+								<i class="fas fa-truck me-2 text-success"></i> <strong>Shipper:</strong>
+								<span th:text="${order.shipper.username}"></span> <span
+									class="text-muted" th:if="${order.shipper.email != null}">
+									(<span th:text="${order.shipper.email}"></span>)
+								</span>
+							</p>
+							<p class="mb-0" th:if="${order.assignedAt != null}">
+								<i class="far fa-clock me-2 text-secondary"></i> <strong>Gán
+									lúc:</strong> <span
+									th:text="${#temporals.format(order.assignedAt, 'dd/MM/yyyy HH:mm')}"></span>
+							</p>
+						</div>
+
+						<!-- Nút huỷ gán -->
+						<form class="mt-2 d-inline"
+							th:action="@{'/vendor/orders/unassign-shipper/' + ${order.orderID}}"
+							method="post">
+							<button type="submit" class="btn btn-outline-danger btn-sm">
+								<i class="fas fa-times-circle me-1"></i> Huỷ gán shipper
+							</button>
+						</form>
+					</div>
+
+					<!-- Nếu CHƯA gán shipper -->
+					<div class="text-center mt-3" th:if="${order.shipper == null}">
 						<button type="button" class="btn btn-outline-primary"
 							data-bs-toggle="modal" data-bs-target="#assignShipperModal">
 							<i class="fas fa-truck me-2"></i> Chọn shipper cho đơn hàng
 						</button>
 					</div>
+
 				</div>
 			</div>
 		</div>
