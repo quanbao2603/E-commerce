@@ -126,7 +126,7 @@
 
 ## 📂 Cấu trúc thư mục chính
 
-<pre> ```bash src/ ├── main/java/com/womtech/ │ ├── controller/ │ ├── dto/ │ ├── entity/ │ ├── repository/ │ ├── service/ │ ├── config/ │ ├── util/ │ └── security/ └── resources/ ├── templates/ ├── static/ ├── application.yml └── email-templates/ ``` </pre>
+
 
 ---
 
