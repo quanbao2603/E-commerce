@@ -479,3 +479,14 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+document.getElementById("avatarFile").addEventListener("change", function (event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            document.getElementById("avatarPreview").src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
+});
