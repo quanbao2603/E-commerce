@@ -156,7 +156,7 @@ public class VnpayServiceImpl implements VnpayService {
             }
 
             Order order = orderOpt.get();
-            order.setPaymentStatus("00".equals(vnpResponseCode) ? 1 : 2);
+            order.setPaymentStatus("00".equals(vnpResponseCode) ? 1 : 0);
             orderRepository.save(order);
 
             return true;
