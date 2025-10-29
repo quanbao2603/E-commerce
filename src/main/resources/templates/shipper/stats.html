@@ -63,8 +63,9 @@
 					<button class="btn btn-primary">
 						<i class="fas fa-filter me-1"></i>Áp dụng
 					</button>
-					<a href="/shipper/stats" class="btn btn-outline-secondary ms-2"><i
-						class="fas fa-rotate-left me-1"></i>Mặc định</a>
+					<a href="/shipper/stats" class="btn btn-outline-secondary ms-2">
+						<i class="fas fa-rotate-left me-1"></i>Mặc định
+					</a>
 				</div>
 			</form>
 		</div>
@@ -81,6 +82,7 @@
 					<div class="stat-label">Được phân công</div>
 				</div>
 			</div>
+
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
@@ -91,6 +93,7 @@
 					<div class="stat-label">Đang giao</div>
 				</div>
 			</div>
+
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
@@ -102,6 +105,7 @@
 					<div class="stat-label">Đã giao</div>
 				</div>
 			</div>
+
 			<div class="col-md-3">
 				<div class="stat-card">
 					<div class="stat-icon"
@@ -110,6 +114,21 @@
 					</div>
 					<div class="stat-value" th:text="${totals!=null?totals.returned:0}">0</div>
 					<div class="stat-label">Hoàn trả</div>
+				</div>
+			</div>
+
+			<!-- KPI Thu nhập (ước tính) -->
+			<div class="col-md-3">
+				<div class="stat-card">
+					<div class="stat-icon"
+						style="background: linear-gradient(135deg, #f59e0b, #fbbf24); color: #fff">
+						<i class="fas fa-sack-dollar"></i>
+					</div>
+					<div class="stat-value">
+						<span
+							th:text="${#numbers.formatDecimal(totalIncome, 0, 'POINT', 0, 'POINT')}">0</span>₫
+					</div>
+					<div class="stat-label">Thu nhập (ước tính)</div>
 				</div>
 			</div>
 		</div>
@@ -141,9 +160,23 @@
 					</div>
 				</div>
 			</div>
+
+			<!-- Thu nhập theo ngày -->
+			<div class="col-12">
+				<div class="admin-table">
+					<div class="table-header">
+						<h5 class="mb-0">
+							<i class="fas fa-chart-area me-2"></i>Thu nhập theo ngày
+						</h5>
+					</div>
+					<div class="p-3 chart-wrap">
+						<canvas id="incomeChart"></canvas>
+					</div>
+				</div>
+			</div>
 		</div>
 
-		<!-- Top khu vực/khách hàng (tuỳ chọn dữ liệu) -->
+		<!-- Top khu vực/khách hàng (tùy dữ liệu) -->
 		<div class="row g-4 mt-4" th:if="${topAreas != null}">
 			<div class="col-md-6">
 				<div class="admin-table">
@@ -206,20 +239,60 @@
 			</div>
 		</div>
 
+		<!-- Scripts -->
 		<script th:inline="javascript">
     /*<![CDATA[*/
-    const labels = /*[[${dailyLabels}]]*/ [];
+    const labels    = /*[[${dailyLabels}]]*/ [];
     const delivered = /*[[${dailyDelivered}]]*/ [];
     const returned  = /*[[${dailyReturned}]]*/ [];
+    const income    = /*[[${dailyIncome}]]*/ []; // mỗi phần tử = 15000 * deliveredCountInDay
 
+    // Biểu đồ Đã giao (line)
     new Chart(document.getElementById('deliveredChart'), {
       type: 'line',
-      data: { labels, datasets: [{ label: 'Đã giao', data: delivered, tension: 0.35 }] }
+      data: { labels, datasets: [{ label: 'Đã giao', data: delivered, tension: 0.35 }] },
+      options: {
+        plugins: {
+          tooltip: { callbacks: { label: (ctx) => ' ' + ctx.raw + ' đơn' } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
     });
 
+    // Biểu đồ Hoàn trả (bar)
     new Chart(document.getElementById('returnedChart'), {
       type: 'bar',
-      data: { labels, datasets: [{ label: 'Hoàn trả', data: returned }] }
+      data: { labels, datasets: [{ label: 'Hoàn trả', data: returned }] },
+      options: {
+        plugins: {
+          tooltip: { callbacks: { label: (ctx) => ' ' + ctx.raw + ' đơn' } }
+        },
+        scales: { y: { beginAtZero: true, ticks: { precision: 0 } } }
+      }
+    });
+
+    // Biểu đồ Thu nhập theo ngày (bar)
+    new Chart(document.getElementById('incomeChart'), {
+      type: 'bar',
+      data: { labels, datasets: [{ label: 'Thu nhập (₫)', data: income }] },
+      options: {
+        parsing: false,
+        scales: {
+          y: {
+            beginAtZero: true,
+            ticks: {
+              callback: (value) => Intl.NumberFormat('vi-VN').format(value)
+            }
+          }
+        },
+        plugins: {
+          tooltip: {
+            callbacks: {
+              label: (ctx) => ' ' + Intl.NumberFormat('vi-VN').format(ctx.raw) + ' ₫'
+            }
+          }
+        }
+      }
     });
     /*]]>*/
   </script>

@@ -30,6 +30,8 @@ public class ShipperController {
 	private final OrderService orderService;
 	private final UserService userService;
 
+	private static final BigDecimal PER_ORDER_REWARD = new BigDecimal("15000");
+
 	// ===== Helpers =====
 	private User requireCurrentUser(Principal principal) {
 		if (principal == null)
@@ -39,22 +41,42 @@ public class ShipperController {
 	}
 
 	private void assertOrderBelongsToShipper(Order o, String shipperId) {
-		if (o.getShipper() == null || o.getShipper().getUserID() == null
+		if (o == null || o.getShipper() == null || o.getShipper().getUserID() == null
 				|| !o.getShipper().getUserID().equals(shipperId)) {
 			throw new IllegalStateException("Bạn không có quyền trên đơn này.");
 		}
 	}
 
 	private long countByStatus(List<Order> orders, Integer status) {
+		if (orders == null || orders.isEmpty())
+			return 0;
 		return orders.stream().filter(o -> Objects.equals(o.getStatus(), status)).count();
 	}
 
-	private BigDecimal sumCOD(List<Order> orders, boolean collected) {
-		// collected=true => paymentStatus == 1 ; false => null/0
-		return orders.stream().filter(o -> o.getPaymentMethod() != null
-				&& o.getPaymentMethod().toUpperCase().contains("COD")
-				&& ((collected && Objects.equals(o.getPaymentStatus(), 1))
-						|| (!collected && (o.getPaymentStatus() == null || Objects.equals(o.getPaymentStatus(), 0)))))
+	/**
+	 * CÁCH 2: Tổng giá trị TẤT CẢ đơn (trừ đơn HỦY). Không xét phương thức/TT thanh
+	 * toán.
+	 */
+	private BigDecimal sumAllOrdersExceptCancelled(List<Order> orders) {
+		if (orders == null || orders.isEmpty())
+			return BigDecimal.ZERO;
+		return orders.stream().filter(o -> !Objects.equals(o.getStatus(), OrderStatusHelper.STATUS_CANCELLED))
+				.map(o -> o.getTotalPrice() == null ? BigDecimal.ZERO : o.getTotalPrice())
+				.reduce(BigDecimal.ZERO, BigDecimal::add);
+	}
+
+	/**
+	 * (Giữ nguyên) COD đã thu: COD + paymentStatus=1 + loại CANCELLED/RETURNED (an
+	 * toàn dữ liệu)
+	 */
+	private BigDecimal sumCODCollected(List<Order> orders) {
+		if (orders == null || orders.isEmpty())
+			return BigDecimal.ZERO;
+		return orders.stream()
+				.filter(o -> o.getPaymentMethod() != null && o.getPaymentMethod().toUpperCase().contains("COD"))
+				.filter(o -> Objects.equals(o.getPaymentStatus(), 1))
+				.filter(o -> !Objects.equals(o.getStatus(), OrderStatusHelper.STATUS_CANCELLED)
+						&& !Objects.equals(o.getStatus(), OrderStatusHelper.STATUS_RETURNED))
 				.map(o -> o.getTotalPrice() == null ? BigDecimal.ZERO : o.getTotalPrice())
 				.reduce(BigDecimal.ZERO, BigDecimal::add);
 	}
@@ -71,9 +93,16 @@ public class ShipperController {
 		long failedCount = countByStatus(all, OrderStatusHelper.STATUS_CANCELLED)
 				+ countByStatus(all, OrderStatusHelper.STATUS_RETURNED);
 
-		BigDecimal codToCollect = sumCOD(all, false);
-		BigDecimal codCollected = sumCOD(all, true);
-		List<Order> recentOrders = all.stream().limit(5).collect(Collectors.toList());
+		// CÁCH 2: Tổng tất cả đơn trừ HỦY
+		BigDecimal codToCollect = sumAllOrdersExceptCancelled(all);
+		// Giữ nguyên logic "đã thu" nếu bạn vẫn muốn KPI này
+		BigDecimal codCollected = sumCODCollected(all);
+
+		// Sắp xếp mới nhất trước theo updateAt -> createAt
+		List<Order> recentOrders = all.stream()
+				.sorted(Comparator.comparing((Order o) -> Optional.ofNullable(o.getUpdateAt()).orElse(o.getCreateAt()),
+						Comparator.nullsLast(Comparator.naturalOrder())).reversed())
+				.limit(5).collect(Collectors.toList());
 
 		model.addAttribute("currentUser", current);
 		model.addAttribute("assignedCount", assignedCount);
@@ -99,11 +128,13 @@ public class ShipperController {
 		List<Order> orders = (status != null) ? orderService.getOrdersByShipperAndStatus(current.getUserID(), status)
 				: orderService.getOrdersByShipper(current.getUserID());
 
-		// lọc theo ngày
+		// Lọc theo ngày (createAt). Nếu có assignedAt/deliveredAt bạn có thể đổi tùy
+		// mục đích
 		LocalDateTime from = (startDate != null && !startDate.isBlank()) ? LocalDate.parse(startDate).atStartOfDay()
 				: null;
 		LocalDateTime to = (endDate != null && !endDate.isBlank()) ? LocalDate.parse(endDate).atTime(LocalTime.MAX)
 				: null;
+
 		if (from != null || to != null) {
 			orders = orders.stream().filter(o -> {
 				LocalDateTime t = o.getCreateAt();
@@ -117,7 +148,7 @@ public class ShipperController {
 			}).collect(Collectors.toList());
 		}
 
-		// search theo orderID / username / phone
+		// Tìm kiếm theo orderID / username / phone
 		if (search != null && !search.isBlank()) {
 			String q = search.toLowerCase().trim();
 			orders = orders.stream()
@@ -129,14 +160,14 @@ public class ShipperController {
 					.collect(Collectors.toList());
 		}
 
-		// phân trang
+		// Phân trang thủ công
 		int start = Math.min(page * size, orders.size());
 		int end = Math.min(start + size, orders.size());
 		List<Order> pageContent = orders.subList(start, end);
 		Pageable pageable = PageRequest.of(page, size);
 		PageImpl<Order> pageImpl = new PageImpl<>(pageContent, pageable, orders.size());
 
-		// đếm tab
+		// Đếm theo tab
 		Map<String, Long> counts = new HashMap<>();
 		List<Order> allForCount = orderService.getOrdersByShipper(current.getUserID());
 		counts.put("ALL", (long) allForCount.size());
@@ -274,51 +305,90 @@ public class ShipperController {
 
 	// ===== Thống kê =====
 	@GetMapping("/stats")
-	public String stats(@RequestParam(required = false) String from, @RequestParam(required = false) String to,
-			Principal principal, Model model) {
+	public String stats(@RequestParam(required = false, name = "startDate") String startDate,
+			@RequestParam(required = false, name = "endDate") String endDate, Principal principal, Model model) {
+
 		User current = requireCurrentUser(principal);
 
-		LocalDateTime end = (to != null && !to.isBlank()) ? LocalDate.parse(to).atTime(LocalTime.MAX)
+		// ---- Range ngày ----
+		LocalDateTime end = (endDate != null && !endDate.isBlank()) ? LocalDate.parse(endDate).atTime(LocalTime.MAX)
 				: LocalDateTime.now();
-		LocalDateTime start = (from != null && !from.isBlank()) ? LocalDate.parse(from).atStartOfDay()
+		LocalDateTime start = (startDate != null && !startDate.isBlank()) ? LocalDate.parse(startDate).atStartOfDay()
 				: end.minusDays(30);
 
+		// ---- Lấy tất cả đơn được gán cho shipper trong khoảng ----
 		List<Order> allAssigned = orderService.getOrdersByShipper(current.getUserID());
+
+		// Dùng createAt để vẽ biểu đồ (nếu có deliveredAt, cân nhắc thay)
 		List<Order> range = allAssigned.stream().filter(o -> {
 			LocalDateTime t = o.getCreateAt();
 			return t != null && !t.isBefore(start) && !t.isAfter(end);
 		}).collect(Collectors.toList());
 
-		long totalAssigned = range.size();
-		long totalDelivered = countByStatus(range, OrderStatusHelper.STATUS_DELIVERED);
-		long totalFailed = countByStatus(range, OrderStatusHelper.STATUS_CANCELLED)
-				+ countByStatus(range, OrderStatusHelper.STATUS_RETURNED);
-		BigDecimal codCollected = sumCOD(range, true);
+		// ---- Totals cho 4 KPI ----
+		Map<String, Long> totals = new HashMap<>();
+		totals.put("assigned", (long) range.size());
+		totals.put("shipped", countByStatus(range, OrderStatusHelper.STATUS_SHIPPED));
+		totals.put("delivered", countByStatus(range, OrderStatusHelper.STATUS_DELIVERED));
+		totals.put("returned", countByStatus(range, OrderStatusHelper.STATUS_RETURNED));
 
-		Map<LocalDate, Long> deliveredPerDay = range.stream()
-				.filter(o -> Objects.equals(o.getStatus(), OrderStatusHelper.STATUS_DELIVERED)).collect(
+		// ---- Thu nhập: mỗi đơn "ĐÃ GIAO" tính 15.000đ ----
+		List<Order> deliveredRange = range.stream()
+				.filter(o -> Objects.equals(o.getStatus(), OrderStatusHelper.STATUS_DELIVERED))
+				.collect(Collectors.toList());
+
+		BigDecimal totalIncome = PER_ORDER_REWARD.multiply(BigDecimal.valueOf(deliveredRange.size()));
+
+		// ---- Nhóm theo ngày để vẽ biểu đồ ----
+		Map<LocalDate, Long> deliveredPerDay = deliveredRange.stream().collect(
+				Collectors.groupingBy(o -> o.getCreateAt().toLocalDate(), TreeMap::new, Collectors.counting()));
+
+		Map<LocalDate, Long> returnedPerDay = range.stream()
+				.filter(o -> Objects.equals(o.getStatus(), OrderStatusHelper.STATUS_RETURNED)).collect(
 						Collectors.groupingBy(o -> o.getCreateAt().toLocalDate(), TreeMap::new, Collectors.counting()));
 
-		List<String> labels = new ArrayList<>();
-		List<Long> values = new ArrayList<>();
+		// Labels + values (đảm bảo đủ mọi ngày trong khoảng)
+		List<String> dailyLabels = new ArrayList<>();
+		List<Long> dailyDelivered = new ArrayList<>();
+		List<Long> dailyReturned = new ArrayList<>();
+		List<BigDecimal> dailyIncome = new ArrayList<>();
+
 		LocalDate cur = start.toLocalDate();
 		LocalDate ed = end.toLocalDate();
 		while (!cur.isAfter(ed)) {
-			labels.add(cur.toString());
-			values.add(deliveredPerDay.getOrDefault(cur, 0L));
+			long d = deliveredPerDay.getOrDefault(cur, 0L);
+			long r = returnedPerDay.getOrDefault(cur, 0L);
+
+			dailyLabels.add(cur.toString());
+			dailyDelivered.add(d);
+			dailyReturned.add(r);
+			dailyIncome.add(PER_ORDER_REWARD.multiply(BigDecimal.valueOf(d)));
+
 			cur = cur.plusDays(1);
 		}
 
+		// ---- Đẩy dữ liệu cho view ----
 		model.addAttribute("currentUser", current);
-		model.addAttribute("from", start.toLocalDate().toString());
-		model.addAttribute("to", end.toLocalDate().toString());
-		model.addAttribute("totalAssigned", totalAssigned);
-		model.addAttribute("totalDelivered", totalDelivered);
-		model.addAttribute("totalFailed", totalFailed);
-		model.addAttribute("codCollected", codCollected);
-		model.addAttribute("chartLabels", labels);
-		model.addAttribute("chartValues", values);
+		model.addAttribute("startDate", start.toLocalDate().toString());
+		model.addAttribute("endDate", end.toLocalDate().toString());
+
+		model.addAttribute("totals", totals); // map: assigned, shipped, delivered, returned
+		model.addAttribute("totalIncome", totalIncome); // BigDecimal
+
+		model.addAttribute("dailyLabels", dailyLabels); // List<String>
+		model.addAttribute("dailyDelivered", dailyDelivered); // List<Long>
+		model.addAttribute("dailyReturned", dailyReturned); // List<Long>
+		model.addAttribute("dailyIncome", dailyIncome); // List<BigDecimal>
+
 		model.addAttribute("OrderStatusHelper", OrderStatusHelper.class);
 		return "shipper/stats";
+	}
+
+	@GetMapping("/help")
+	public String shipperHelp(Model model, Principal principal) {
+		User current = requireCurrentUser(principal);
+		model.addAttribute("currentUser", current);
+		model.addAttribute("OrderStatusHelper", OrderStatusHelper.class);
+		return "shipper/help";
 	}
 }

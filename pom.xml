@@ -126,9 +126,9 @@
 			<artifactId>gson</artifactId>
 		</dependency>
 		<dependency>
-		    <groupId>org.jsoup</groupId>
-		    <artifactId>jsoup</artifactId>
-		    <version>1.21.2</version>
+			<groupId>org.jsoup</groupId>
+			<artifactId>jsoup</artifactId>
+			<version>1.21.2</version>
 		</dependency>
 	</dependencies>
 
@@ -160,5 +160,4 @@
 			</plugin>
 		</plugins>
 	</build>
-
 </project>
