@@ -105,7 +105,7 @@
 | 💸 Thanh toán điện tử | VNPAY / MOMO | Mô phỏng thực tế thanh toán |
 | 🚚 Giao hàng & Shipper | Giao đơn, cập nhật trạng thái | Mô phỏng hoạt động vận hành |
 | 🧾 Voucher động | Theo thời gian, loại sản phẩm | Tăng tính linh hoạt marketing |
-| 🗺 Theo dõi giao hàng (Tùy chọn) | Google Maps API | Theo dõi vị trí đơn realtime |
+| 🗺 Theo dõi giao hàng (Tùy chọn) | Nominatim API | Theo dõi vị trí đơn realtime |
 
 ---
 
@@ -119,7 +119,7 @@
 | Authentication | Spring Security, JWT, BCrypt, OTP |
 | Realtime | Spring WebSocket |
 | Payment | VNPAY, MOMO API |
-| Deploy | Heroku / AWS / Render |
+| Deploy | Railway / AWS / Render |
 | Dev Tools | Maven, Lombok, JPA, Cloudinary API |
 
 ---
@@ -141,7 +141,7 @@ src/
     ├── templates/
     ├── static/
     ├── application.yml
-    └── email-templates/ 
+    └── email/ 
 ```
 
 ---
