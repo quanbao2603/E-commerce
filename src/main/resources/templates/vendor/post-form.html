@@ -18,6 +18,7 @@
         <form th:object="${post}"
               th:action="@{/vendor/posts/save}"
               method="post" enctype="multipart/form-data">
+              <input type="hidden" th:field="*{postID}">
 
             <!-- Tiêu đề -->
             <div class="mb-3">
@@ -31,7 +32,7 @@
                 <label for="editor" class="form-label">Nội dung</label>
                 <div id="editor" style="height: 300px;"></div>
                 <!-- Trường ẩn để lưu nội dung HTML -->
-                <textarea th:field="*{content}" id="content" hidden required></textarea>
+                <input type="hidden" th:field="*{content}" id="content">
             </div>
 
             <!-- Thumbnail -->
@@ -42,7 +43,18 @@
                     <img th:src="@{${post.thumbnail}}" alt="Thumbnail" class="img-thumbnail" style="max-width: 200px;">
                 </div>
             </div>
-
+			
+			<!-- Type -->
+			<div class="mb-3">
+			    <label class="form-label">Loại bài viết</label>
+			    <select class="form-select" th:field="*{type}" required>
+			        <option value="">-- Chọn loại --</option>
+			        <option value="BLOG">Blog</option>
+			        <option value="NEWS">News</option>
+			        <option value="TUTORIAL">Tutorial</option>
+			    </select>
+			</div>
+			
             <!-- Trạng thái -->
             <div class="mb-3">
                 <label class="form-label">Trạng thái</label>

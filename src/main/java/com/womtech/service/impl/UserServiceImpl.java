@@ -192,4 +192,10 @@ public class UserServiceImpl extends BaseServiceImpl<User, String> implements Us
 		Role role = roleRepository.findByRolename(rolename).orElseThrow();
 		return userRepository.findByRole(role);
 	}
+	
+	@Override
+    @Transactional
+    public User save(User user) {
+        return userRepository.save(user);
+    }
 }
