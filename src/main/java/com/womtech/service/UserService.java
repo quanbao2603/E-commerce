@@ -45,4 +45,6 @@ public interface UserService extends BaseService<User, String>{
     void deleteUserById(String userId);
 
 	List<User> findByRolename(String rolename);
+	
+	User save(User user);
 }	

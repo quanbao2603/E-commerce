@@ -2,12 +2,16 @@ package com.womtech.controller;
 
 import com.womtech.entity.*;
 import com.womtech.service.*;
+import com.womtech.util.PasswordUtil;
+
+import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
 import java.security.Principal;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import java.util.UUID;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
@@ -58,6 +62,9 @@ public class AdminController {
 	
 	@Autowired
     private PostService postService;
+	
+	@Autowired
+	private RoleService roleService;
 
 	// ========== DASHBOARD ==========
 	@GetMapping("/dashboard")
@@ -609,6 +616,93 @@ public class AdminController {
 	    model.addAttribute("page", page);
 	    return "admin/users";
 	}
+	@GetMapping("/users/new")
+	public String newUserForm(Model model) {
+	    model.addAttribute("user", new User());
+	    model.addAttribute("roles", roleService.findAll());
+	    return "admin/user-form";
+	}
+
+	@PostMapping("/users/save")
+    public String saveUser(
+            @ModelAttribute("user") User user,
+            @RequestParam(value = "avatarFile", required = false) MultipartFile avatarFile,
+            @RequestParam(value = "passwordRaw", required = false) String pwRaw
+    ) {
+
+        // --- ROLE ---
+        if (user.getRole() != null && user.getRole().getRoleID() != null) {
+            Role r = roleService.findById(user.getRole().getRoleID())
+                    .orElseThrow(() -> new RuntimeException("Role not found"));
+            user.setRole(r);
+        }
+
+        // --- NEW USER ---
+        if (user.getUserID() == null || user.getUserID().isEmpty()) {
+
+            // Password bắt buộc
+            if (pwRaw == null || pwRaw.isEmpty()) {
+                throw new RuntimeException("Password không được để trống khi tạo mới user");
+            }
+            user.setPassword(PasswordUtil.encode(pwRaw));
+
+            // Avatar
+            if (avatarFile != null && !avatarFile.isEmpty()) {
+                String uploadUrl = cloudinaryService.uploadImage(avatarFile);
+                user.setAvatar(uploadUrl);
+            }
+
+            // Save new user
+            userService.save(user);
+            return "redirect:/admin/users";
+        }
+
+        // --- UPDATE USER ---
+        User existing = userService.findById(user.getUserID())
+                .orElseThrow(() -> new RuntimeException("User not found"));
+
+        // Cập nhật từng field từ form
+        existing.setUsername(user.getUsername());
+        existing.setEmail(user.getEmail());
+        existing.setRole(user.getRole());
+        existing.setStatus(user.getStatus());
+
+        // Password: nếu có pwRaw mới thì encode, không thì giữ nguyên
+        if (pwRaw != null && !pwRaw.isEmpty()) {
+            existing.setPassword(PasswordUtil.encode(pwRaw));
+        }
+
+        // Avatar
+        if (avatarFile != null && !avatarFile.isEmpty()) {
+            // Xóa avatar cũ
+            if (existing.getAvatar() != null) {
+                cloudinaryService.deleteImage(existing.getAvatar());
+            }
+            String uploadUrl = cloudinaryService.uploadImage(avatarFile);
+            existing.setAvatar(uploadUrl);
+        }
+
+        // Save update
+        userService.save(existing);
+
+        return "redirect:/admin/users";
+    }
+	@GetMapping("/users/edit/{id}")
+    public String editUser(@PathVariable String id, Model model, HttpSession session) {
+
+        String currentUserId = (String) session.getAttribute("userID");
+
+        if (id.equals(currentUserId)) {
+            throw new RuntimeException("Admin cannot edit your own account.");
+        }
+
+        User user = userService.findById(id)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+        model.addAttribute("user", user);
+        model.addAttribute("roles", roleService.findAll());
+
+        return "admin/user-form";
+    }
 	@GetMapping("/users/lock/{id}")
 	public String lockUser(@PathVariable String id, RedirectAttributes redirectAttributes) {
 	    String currentUserId = SecurityContextHolder.getContext().getAuthentication().getName();
@@ -820,9 +914,10 @@ public class AdminController {
 	@PostMapping("/posts/save")
 	public String savePost(
 	        @ModelAttribute Post post,
-	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile,
+	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile, Principal principal,
 	        RedirectAttributes redirectAttributes) {
 	    try {
+	    	post.setUser(userService.findById(principal.getName()).orElse(null));
 	        // Xử lý upload thumbnail
 	        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
 	            // Xóa thumbnail cũ nếu đã có
