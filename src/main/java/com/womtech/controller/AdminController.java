@@ -569,8 +569,12 @@ public class AdminController {
 	@PostMapping("/inventory/save")
 	public String saveInventory(@ModelAttribute Inventory inventory, RedirectAttributes redirectAttributes) {
 		try {
-			inventoryService.saveInventory(inventory);
-			redirectAttributes.addFlashAttribute("success", "Tồn kho đã được cập nhật thành công!");
+			if (inventory.getInventoryID() != null && inventory.getInventoryID().isEmpty()) {
+	            inventory.setInventoryID(null);
+	        }
+
+	        inventoryService.saveInventory(inventory);
+	        redirectAttributes.addFlashAttribute("success", "Tồn kho đã được cập nhật thành công!");
 		} catch (Exception e) {
 			redirectAttributes.addFlashAttribute("error", "Lỗi khi cập nhật tồn kho: " + e.getMessage());
 		}
