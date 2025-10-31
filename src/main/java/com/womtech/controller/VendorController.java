@@ -837,39 +837,56 @@ public class VendorController {
 	}
 
 	@PostMapping("/posts/save")
-	public String savePost(@ModelAttribute Post post,
-			@RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile, Principal principal,
-			RedirectAttributes redirectAttributes) {
-		try {
-			// Gán vendor hiện tại
-			post.setUser(userService.findById(principal.getName()).orElse(null));
+	public String savePost(
+	        @ModelAttribute Post post,
+	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile, 
+	        Principal principal,
+	        RedirectAttributes redirectAttributes) {
 
-			// Xử lý upload thumbnail
-			if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
-				if (post.getPostID() != null && post.getThumbnail() != null) {
-					cloudinaryService.deleteImage(post.getThumbnail());
-				}
-				String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
-				post.setThumbnail(thumbnailUrl);
-			}
+	    try {
+	        // --- Set user chắc chắn tồn tại ---
+	        User currentUser = userService.findById(principal.getName())
+	                .orElseThrow(() -> new RuntimeException("Người dùng đăng nhập không tồn tại"));
+	        post.setUser(currentUser);
 
-			if (post.getPostID() == null) {
-				postService.create(post);
-				redirectAttributes.addFlashAttribute("success", "Bài viết đã được tạo thành công!");
-			} else {
-				// Kiểm tra quyền: chỉ update bài của mình
-				Post existingPost = postService.findById(post.getPostID())
-						.orElseThrow(() -> new RuntimeException("Post not found"));
-				if (!existingPost.getUser().getUserID().equals(principal.getName())) {
-					throw new RuntimeException("Không có quyền cập nhật bài viết này");
-				}
-				postService.update(post);
-				redirectAttributes.addFlashAttribute("success", "Bài viết đã được cập nhật!");
-			}
-		} catch (Exception e) {
-			redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu bài viết: " + e.getMessage());
-		}
-		return "redirect:/vendor/posts";
+	        // --- Upload thumbnail nếu có ---
+	        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
+	            if (post.getPostID() != null && post.getThumbnail() != null) {
+	                cloudinaryService.deleteImage(post.getThumbnail());
+	            }
+	            String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
+	            post.setThumbnail(thumbnailUrl);
+	        }
+
+	        if (post.getPostID() == null || post.getPostID().isEmpty()) {
+	            // --- Tạo mới bài viết ---
+	        	post.setPostID(null);
+	            post.setCreateAt(LocalDateTime.now());
+	            post.setUpdateAt(LocalDateTime.now());
+	            postService.create(post);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được tạo thành công!");
+	        } else {
+	            // --- Cập nhật bài viết ---
+	            Post existing = postService.findById(post.getPostID())
+	                    .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại"));
+
+	            existing.setTitle(post.getTitle());
+	            existing.setType(post.getType());
+	            existing.setContent(post.getContent());
+	            existing.setThumbnail(post.getThumbnail());
+	            existing.setStatus(post.getStatus());
+	            existing.setUpdateAt(LocalDateTime.now());
+
+	            postService.update(existing);
+	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được cập nhật!");
+	        }
+
+	    } catch (Exception e) {
+	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu bài viết: " + e.getMessage());
+	        e.printStackTrace();
+	    }
+
+	    return "redirect:/vendor/posts";
 	}
 
 	@GetMapping("/posts/delete/{id}")
