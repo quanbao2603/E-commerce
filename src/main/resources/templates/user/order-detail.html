@@ -23,13 +23,95 @@
 						th:text="${order.orderID}">ORDER123</span></small>
 				</div>
 				<div class="text-end">
-					<div>
-						<span class="badge" th:classappend="${orderStatusBadge}"
-							th:text="${orderStatusLabel}">Trạng thái</span>
+
+					<!-- Nếu ĐÃ HỦY -->
+					<div th:if="${order.status == 0}" class="text-danger fw-bold">
+						Đơn hàng đã hủy</div>
+
+					<!-- Nếu không phải hủy → hiển thị timeline -->
+					<div th:if="${order.status != 0}" class="tracking-steps">
+
+						<!-- 1. Chờ xác nhận -->
+						<div class="step" th:classappend="${order.status >= 1} ? ' done'">
+							<div class="dot"></div>
+							<div class="icon">
+								<i class="bi bi-hourglass-split"></i>
+							</div>
+							<div class="label">Chờ xác nhận</div>
+						</div>
+						<div class="line" th:classappend="${order.status >= 2} ? ' done'"></div>
+
+						<!-- 2. Đã xác nhận -->
+						<div class="step" th:classappend="${order.status >= 2} ? ' done'">
+							<div class="dot"></div>
+							<div class="icon">
+								<i class="bi bi-check2-circle"></i>
+							</div>
+							<div class="label">Đã xác nhận</div>
+						</div>
+						<div class="line" th:classappend="${order.status >= 3} ? ' done'"></div>
+
+						<!-- 3. Đang chuẩn bị -->
+						<div class="step" th:classappend="${order.status >= 3} ? ' done'">
+							<div class="dot"></div>
+							<div class="icon">
+								<i class="bi bi-tools"></i>
+							</div>
+							<div class="label">Chuẩn bị</div>
+						</div>
+						<div class="line" th:classappend="${order.status >= 4} ? ' done'"></div>
+
+						<!-- 4. Đóng gói -->
+						<div class="step" th:classappend="${order.status >= 4} ? ' done'">
+							<div class="dot"></div>
+							<div class="icon">
+								<i class="bi bi-box-seam"></i>
+							</div>
+							<div class="label">Đóng gói</div>
+						</div>
+						<div class="line" th:classappend="${order.status >= 5} ? ' done'"></div>
+
+						<!-- 5. Đang giao -->
+						<div class="step" th:classappend="${order.status >= 5} ? ' done'">
+							<div class="dot"></div>
+							<div class="icon">
+								<i class="bi bi-truck"></i>
+							</div>
+							<div class="label">Đang giao</div>
+						</div>
+						<div class="line" th:classappend="${order.status >= 6} ? ' done'"></div>
+
+						<!-- 6. Đã giao -->
+						<div class="step" th:classappend="${order.status >= 6} ? ' done'">
+							<div class="dot"></div>
+							<div class="icon">
+								<i class="bi bi-check-all"></i>
+							</div>
+							<div class="label">Đã giao</div>
+						</div>
+
+						<!-- 7. Hoàn trả (nếu có) -->
+						<div class="line" th:if="${order.status >= 7}"
+							th:classappend="' done'"></div>
+						<div class="step" th:if="${order.status >= 7}"
+							th:classappend="' done'">
+							<div class="dot"></div>
+							<div class="icon">
+								<i class="bi bi-arrow-counterclockwise"></i>
+							</div>
+							<div class="label">Hoàn trả</div>
+						</div>
+
+
 					</div>
-					<small class="text-muted"
-						th:text="${#temporals.format(order.createAt, 'dd/MM/yyyy HH:mm')}">01/01/2025</small>
+
+					<!-- Hiển thị ngày tạo -->
+					<small class="text-muted d-block mt-1"
+						th:text="${#temporals.format(order.createAt, 'dd/MM/yyyy HH:mm')}">
+					</small>
+
 				</div>
+
 			</div>
 
 			<div class="row g-4">
