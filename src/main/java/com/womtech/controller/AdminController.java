@@ -914,32 +914,51 @@ public class AdminController {
 	@PostMapping("/posts/save")
 	public String savePost(
 	        @ModelAttribute Post post,
-	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile, Principal principal,
+	        @RequestParam(value = "thumbnailFile", required = false) MultipartFile thumbnailFile, 
+	        Principal principal,
 	        RedirectAttributes redirectAttributes) {
+
 	    try {
-	    	post.setUser(userService.findById(principal.getName()).orElse(null));
-	        // Xử lý upload thumbnail
+	        // --- Set user chắc chắn tồn tại ---
+	        User currentUser = userService.findById(principal.getName())
+	                .orElseThrow(() -> new RuntimeException("Người dùng đăng nhập không tồn tại"));
+	        post.setUser(currentUser);
+
+	        // --- Upload thumbnail nếu có ---
 	        if (thumbnailFile != null && !thumbnailFile.isEmpty()) {
-	            // Xóa thumbnail cũ nếu đã có
 	            if (post.getPostID() != null && post.getThumbnail() != null) {
 	                cloudinaryService.deleteImage(post.getThumbnail());
 	            }
-
-	            // Upload thumbnail mới lên Cloudinary
 	            String thumbnailUrl = cloudinaryService.uploadImage(thumbnailFile);
 	            post.setThumbnail(thumbnailUrl);
 	        }
 
-	        // Lưu bài viết
-	        if (post.getPostID() == null) {
+	        if (post.getPostID() == null || post.getPostID().isEmpty()) {
+	            // --- Tạo mới bài viết ---
+	        	post.setPostID(null);
+	            post.setCreateAt(LocalDateTime.now());
+	            post.setUpdateAt(LocalDateTime.now());
 	            postService.create(post);
 	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được tạo thành công!");
 	        } else {
-	            postService.update(post);
+	            // --- Cập nhật bài viết ---
+	            Post existing = postService.findById(post.getPostID())
+	                    .orElseThrow(() -> new RuntimeException("Bài viết không tồn tại"));
+
+	            existing.setTitle(post.getTitle());
+	            existing.setType(post.getType());
+	            existing.setContent(post.getContent());
+	            existing.setThumbnail(post.getThumbnail());
+	            existing.setStatus(post.getStatus());
+	            existing.setUpdateAt(LocalDateTime.now());
+
+	            postService.update(existing);
 	            redirectAttributes.addFlashAttribute("success", "Bài viết đã được cập nhật!");
 	        }
+
 	    } catch (Exception e) {
 	        redirectAttributes.addFlashAttribute("error", "Lỗi khi lưu bài viết: " + e.getMessage());
+	        e.printStackTrace();
 	    }
 
 	    return "redirect:/admin/posts";
