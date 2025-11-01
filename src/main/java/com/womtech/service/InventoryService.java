@@ -49,4 +49,8 @@ public interface InventoryService {
     List<Location> getAllLocations();
 
     List<Location> getActiveLocations();
+
+	void decreaseStock(Product product, int quantity);
+
+	void increaseStock(Product product, int quantity);
 }
