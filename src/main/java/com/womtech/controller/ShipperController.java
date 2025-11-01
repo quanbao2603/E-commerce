@@ -1,8 +1,11 @@
 package com.womtech.controller;
 
 import com.womtech.entity.Order;
+import com.womtech.entity.OrderItem;
 import com.womtech.entity.User;
+import com.womtech.repository.OrderItemRepository;
 import com.womtech.service.DeliveryProofService;
+import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
 import com.womtech.service.UserService;
 import com.womtech.util.AuthUtils;
@@ -32,6 +35,9 @@ import java.util.stream.Collectors;
 public class ShipperController {
 
     private final OrderService orderService;
+    private final OrderItemService orderItemService;
+    private final OrderItemRepository orderItemRepository; 
+
     private final UserService userService;
     private final DeliveryProofService deliveryProofService;
 
@@ -315,6 +321,14 @@ public class ShipperController {
 
             order.setUpdateAt(LocalDateTime.now());
             orderService.saveOrder(order);
+         // ✅ Cập nhật tất cả OrderItem → DELIVERED
+            List<OrderItem> items = orderItemService.findByOrder(order);
+            for (OrderItem item : items) {
+                if (item.getStatus() < OrderStatusHelper.ITEM_STATUS_DELIVERED) {
+                    item.setStatus(OrderStatusHelper.ITEM_STATUS_DELIVERED);
+                    orderItemRepository.save(item);
+                }
+            }
 
             ra.addFlashAttribute("success", "Đã xác nhận thu COD.");
         } catch (IllegalStateException e) {
