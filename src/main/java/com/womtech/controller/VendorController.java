@@ -556,6 +556,31 @@ public class VendorController {
 
 		return "redirect:/vendor/orders/" + orderId;
 	}
+	
+	@PostMapping("/orders/confirm-payment/{orderId}")
+	public String confirmPayment(@PathVariable String orderId, Authentication authentication, RedirectAttributes ra) {
+	    try {
+	        Order order = orderService.getOrderById(orderId)
+	                .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng"));
+
+	        if (order.getPaymentMethod() == null || !order.getPaymentMethod().toUpperCase().contains("COD")) {
+	            throw new IllegalStateException("Đơn này không phải COD.");
+	        }
+
+	        if (order.getPaymentStatus() != null && order.getPaymentStatus() == 1) {
+	            throw new IllegalStateException("Đơn đã thanh toán rồi.");
+	        }
+
+	        order.setPaymentStatus(1); // Paid
+	        order.setUpdateAt(LocalDateTime.now());
+	        orderService.saveOrder(order);
+
+	        ra.addFlashAttribute("success", "Đã xác nhận thanh toán COD từ khách hàng.");
+	    } catch (Exception e) {
+	        ra.addFlashAttribute("error", e.getMessage());
+	    }
+	    return "redirect:/vendor/orders/" + orderId;
+	}
 
 	@PostMapping("/orders/assign-shipper/{orderId}")
 	public String assignOrderToShipper(@PathVariable String orderId,

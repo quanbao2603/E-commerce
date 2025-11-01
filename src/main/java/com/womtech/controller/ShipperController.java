@@ -313,7 +313,6 @@ public class ShipperController {
                 return "redirect:/shipper/deliveries/" + orderId;
             }
 
-            order.setPaymentStatus(1); // đã thanh toán
             order.setUpdateAt(LocalDateTime.now());
             orderService.saveOrder(order);
 
