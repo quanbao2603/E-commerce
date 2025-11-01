@@ -119,7 +119,7 @@ public class ShipperController {
 	// ===== Danh sách giao hàng =====
 	@GetMapping("/deliveries")
 	public String deliveries(@RequestParam(required = false) Integer status,
-			@RequestParam(required = false, name = "q") String search, @RequestParam(required = false) String startDate,
+			@RequestParam(required = false, name = "search") String search, @RequestParam(required = false) String startDate,
 			@RequestParam(required = false) String endDate, @RequestParam(defaultValue = "0") int page,
 			@RequestParam(defaultValue = "10") int size, Principal principal, Model model) {
 
@@ -186,6 +186,7 @@ public class ShipperController {
 		model.addAttribute("startDate", startDate);
 		model.addAttribute("endDate", endDate);
 		model.addAttribute("OrderStatusHelper", OrderStatusHelper.class);
+		model.addAttribute("search", search); 
 		return "shipper/deliveries";
 	}
 

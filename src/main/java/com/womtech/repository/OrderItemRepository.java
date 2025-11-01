@@ -35,13 +35,12 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
 			@Param("vendorId") String vendorId);
 
 	// Doanh thu theo danh mục (qua SubCategory → Category)
-	@Query("SELECT c.name, SUM(oi.price * oi.quantity) " + "FROM OrderItem oi " + "JOIN oi.product p "
+	@Query("SELECT c.name, SUM(oi.netTotal * oi.quantity) " + "FROM OrderItem oi " + "JOIN oi.product p "
 			+ "LEFT JOIN p.subcategory sc " + "LEFT JOIN sc.category c "
 			+ "WHERE oi.product.ownerUser.userID = :vendorId " + "AND oi.order.createAt BETWEEN :start AND :end "
 			+ "AND oi.order.paymentStatus = 1 " + "GROUP BY c.name " + "ORDER BY SUM(oi.price * oi.quantity) DESC")
 	List<Object[]> findRevenueByCategoryAndVendor(@Param("vendorId") String vendorId,
 			@Param("start") LocalDateTime start, @Param("end") LocalDateTime end);
-
 	// Query cho top sản phẩm bán chạy
 	@Query("SELECT p.name, SUM(oi.quantity) " + "FROM OrderItem oi " + "JOIN oi.product p "
 			+ "WHERE oi.product.ownerUser.userID = :vendorId " + "AND oi.order.createAt BETWEEN :start AND :end "
@@ -50,7 +49,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
 			@Param("end") LocalDateTime end, Pageable pageable);
 
 	// Query cho tổng doanh thu
-	@Query("SELECT SUM(oi.price * oi.quantity) " + "FROM OrderItem oi "
+	@Query("SELECT SUM(oi.netTotal * oi.quantity) " + "FROM OrderItem oi "
 			+ "WHERE oi.product.ownerUser.userID = :vendorId " + "AND oi.order.createAt BETWEEN :start AND :end "
 			+ "AND oi.order.paymentStatus = 1")
 	BigDecimal calculateTotalRevenueByVendor(@Param("vendorId") String vendorId, @Param("start") LocalDateTime start,

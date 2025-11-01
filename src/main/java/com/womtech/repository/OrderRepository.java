@@ -47,7 +47,7 @@ public interface OrderRepository extends JpaRepository<Order, String> {
 	Long countOrdersByVendorIdAndStatus(@Param("vendorId") String vendorId, @Param("status") Integer status);
 
 	// Query cho biểu đồ doanh thu hàng ngày
-	@Query("SELECT DATE(oi.order.createAt), SUM(oi.price * oi.quantity) " + "FROM OrderItem oi "
+	@Query("SELECT DATE(oi.order.createAt), SUM(oi.netTotal * oi.quantity) " + "FROM OrderItem oi "
 			+ "WHERE oi.product.ownerUser.userID = :vendorId " + "AND oi.order.createAt BETWEEN :start AND :end "
 			+ "AND oi.order.paymentStatus = 1 " + "GROUP BY DATE(oi.order.createAt) "
 			+ "ORDER BY DATE(oi.order.createAt)")
