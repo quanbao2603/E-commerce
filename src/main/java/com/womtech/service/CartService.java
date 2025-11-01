@@ -23,4 +23,6 @@ public interface CartService extends BaseService<Cart, String> {
 	int totalQuantity(Cart cart);
 
 	BigDecimal totalPriceByOwner(Cart cart, User owner);
+
+	void validateCartInventory(Cart cart);
 }

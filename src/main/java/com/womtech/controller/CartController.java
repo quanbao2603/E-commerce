@@ -43,6 +43,9 @@ public class CartController {
 		User user = userOpt.get();
 		
 		Cart cart = cartService.findByUser(user);
+		cartService.validateCartInventory(cart);
+		cart = cartService.findByUser(user);
+		
 		BigDecimal totalPrice = cartService.totalPrice(cart);
 		int totalQuantity = cartService.totalQuantity(cart);
 		

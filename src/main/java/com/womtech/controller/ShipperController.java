@@ -282,18 +282,6 @@ public class ShipperController {
 
             orderService.updateOrderStatus(orderId, targetStatus);
 
-            if (Objects.equals(targetStatus, OrderStatusHelper.STATUS_DELIVERED)) {
-                Order saved = orderService.getOrderById(orderId)
-                        .orElseThrow(() -> new IllegalStateException("Không tìm thấy đơn hàng sau khi cập nhật"));
-                String pm = saved.getPaymentMethod() != null ? saved.getPaymentMethod().toUpperCase() : "";
-                Integer paySt = saved.getPaymentStatus();
-                if (pm.contains("COD") && (paySt == null || paySt == 0)) {
-                    saved.setPaymentStatus(1); // PAID
-                    saved.setUpdateAt(LocalDateTime.now());
-                    orderService.saveOrder(saved);
-                }
-            }
-
             ra.addFlashAttribute("success", "Cập nhật trạng thái thành công.");
         } catch (IllegalStateException e) {
             if ("AUTH_REDIRECT".equals(e.getMessage())) return "redirect:/auth/login";

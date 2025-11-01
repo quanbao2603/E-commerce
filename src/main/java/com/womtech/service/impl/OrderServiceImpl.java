@@ -2,6 +2,7 @@ package com.womtech.service.impl;
 
 import com.womtech.entity.Order;
 import com.womtech.entity.OrderItem;
+import com.womtech.entity.Product;
 import com.womtech.entity.User;
 import com.womtech.repository.CartRepository;
 import com.womtech.repository.OrderItemRepository;
@@ -20,6 +21,7 @@ import org.springframework.stereotype.Service;
 import com.womtech.entity.Address;
 import com.womtech.entity.Cart;
 import com.womtech.service.CommissionService;
+import com.womtech.service.InventoryService;
 import com.womtech.service.OrderItemService;
 import com.womtech.service.OrderService;
 import com.womtech.service.OrderVoucherService;
@@ -55,6 +57,9 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 
 	@Autowired
 	private UserRepository userRepository;
+	
+	@Autowired
+	private InventoryService inventoryService;
 
 	// 🔥 THÊM COMMISSION SERVICE
 	@Autowired
@@ -180,9 +185,14 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 		order.setStatus(OrderStatusHelper.STATUS_CANCELLED);
 		for (OrderItem item : order.getItems()) {
 			item.setStatus(OrderStatusHelper.ITEM_STATUS_CANCELLED);
+	        Product product = item.getProduct();
+	        int qty = item.getQuantity();
+
+	        inventoryService.increaseStock(product, qty);
 		}
 
 		order.setUpdateAt(LocalDateTime.now());
+		
 		orderRepository.save(order);
 	}
 
@@ -380,8 +390,14 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 			}
 		}
 		orderRepository.save(order);
+		
+		// 5. Chỉnh inventory
+		for (OrderItem item : orderItems) {
+		    Product product = item.getProduct();
+		    inventoryService.decreaseStock(product, item.getQuantity());
+		}
 
-		// 5. Xóa Cart
+		// 6. Xóa Cart
 		cart.getItems().clear();
 		cart.getCartVouchers().clear();
 		cartRepository.save(cart);

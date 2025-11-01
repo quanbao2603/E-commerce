@@ -141,4 +141,57 @@ public class InventoryServiceImpl implements InventoryService {
     public List<Location> getActiveLocations() {
         return locationRepository.findByStatus(1);
     }
+    
+    @Override
+	public void decreaseStock(Product product, int quantity) {
+        List<Inventory> inventories = inventoryRepository.findByProduct(product);
+
+        if (inventories.isEmpty()) {
+            System.out.println("⚠ Không tìm thấy inventory cho sản phẩm: " + product.getName());
+            return;
+        }
+
+        int remaining = quantity;
+
+        for (Inventory inventory : inventories) {
+            Integer currentStock = inventory.getQuantity();
+            if (currentStock == null || currentStock <= 0) continue;
+
+            // Nếu kho hiện tại đủ cho remaining
+            if (currentStock >= remaining) {
+                inventory.setQuantity(currentStock - remaining);
+
+                inventoryRepository.save(inventory);
+                return; // ✅ Đã trừ xong
+            }
+
+            // Nếu kho không đủ → lấy hết và còn tiếp
+            remaining -= currentStock;
+            inventory.setQuantity(0);
+            inventoryRepository.save(inventory);
+
+            // Nếu remaining còn > 0 → tiếp tục vòng lặp
+        }
+
+        // Nếu đến đây mà vẫn còn remaining > 0 → sản phẩm hết hàng
+        if (remaining > 0) {
+            System.out.println("⚠ Hết hàng, thiếu: " + remaining + " sản phẩm: " + product.getName());
+        }
+    }
+    
+    @Override
+	public void increaseStock(Product product, int quantity) {
+        List<Inventory> inventories = inventoryRepository.findByProduct(product);
+        if (inventories.isEmpty()) return;
+
+        // Ưu tiên cộng lại vào inventory theo chiều nào cũng được
+        int remaining = quantity;
+
+        for (Inventory inv : inventories) {
+            inv.setQuantity(inv.getQuantity() + remaining);
+            inventoryRepository.save(inv);
+            return;
+        }
+    }
+
 }

@@ -2,6 +2,7 @@ package com.womtech.service.impl;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Optional;
 
@@ -154,4 +155,24 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
         }
         return total;
     }
+	
+	@Override
+	public void validateCartInventory(Cart cart) {
+	    Iterator<CartItem> iterator = cart.getItems().iterator();
+
+	    while (iterator.hasNext()) {
+	        CartItem item = iterator.next();
+
+	        Integer available = inventoryRepository.sumAvailableByProduct(item.getProduct());
+	        if (available == null) available = 0;
+
+	        if (available <= 0) {
+	            iterator.remove();             
+	            cartItemRepository.delete(item);
+	        } else if (item.getQuantity() > available) {
+	            item.setQuantity(available);
+	            cartItemRepository.save(item);
+	        }
+	    }
+	}
 }
