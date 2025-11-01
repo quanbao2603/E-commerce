@@ -8,7 +8,7 @@ import com.womtech.entity.User;
 
 public interface CartService extends BaseService<Cart, String> {
 
-	void addToCart(User user, Product product, int quantity);
+	boolean addToCart(User user, Product product, int quantity);
 
 	Cart findByUser(User user);
 

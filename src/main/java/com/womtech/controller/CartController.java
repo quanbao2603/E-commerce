@@ -69,7 +69,10 @@ public class CartController {
 		if (productOpt.isEmpty()) {
 			throw new Exception("Không tìm thấy sản phẩm");
 		}
-		cartService.addToCart(user, productOpt.get(), quantity);
+		if (!cartService.addToCart(user, productOpt.get(), quantity)) {
+			redirect.addFlashAttribute("error", "Không còn hàng.");
+			return "redirect:/product/" + productID;
+		}
 		
 		redirect.addAttribute("added", true);
 		redirect.addAttribute("quantity", quantity);

@@ -21,7 +21,7 @@ public interface OrderItemRepository extends JpaRepository<OrderItem, String> {
 		    SELECT COUNT(oi) > 0 FROM OrderItem oi
 		    WHERE oi.product.productID = :productId
 		      AND oi.order.user.userID = :userId
-		      AND oi.order.status = 1
+		      AND oi.order.status = 6
 		""")
     boolean hasUserPurchasedProduct(@Param("userId") String userId, @Param("productId") String productId);
     

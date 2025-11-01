@@ -8,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
@@ -19,6 +20,14 @@ public interface InventoryRepository extends JpaRepository<Inventory, String> {
     List<Inventory> findByProduct(Product product);
     List<Inventory> findByLocation(Location location);
     List<Inventory> findByStatus(Integer status);
+    
+    @Query("""
+            SELECT COALESCE(SUM(i.quantity), 0)
+            FROM Inventory i
+            WHERE i.product = :product
+              AND i.status = 1
+        """)
+        Integer sumAvailableByProduct(@Param("product") Product product);
     
     @Query("SELECT i FROM Inventory i WHERE i.quantity <= 10 AND i.quantity > 0")
     List<Inventory> findLowStockItems();

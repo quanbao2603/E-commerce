@@ -9,6 +9,7 @@ import com.womtech.entity.Category;
 import com.womtech.entity.Post;
 import com.womtech.entity.Product;
 import com.womtech.entity.Review;
+import com.womtech.repository.InventoryRepository;
 import com.womtech.security.JwtService;
 import com.womtech.security.TokenRevokeService;
 import jakarta.servlet.http.HttpServletRequest;
@@ -43,6 +44,7 @@ public class HomeController {
     private final CategoryService categoryService;
     private final UserService userService;
     private final PostService postService;
+    private final InventoryRepository inventoryRepository;
     private final JwtService jwtService;
     private final TokenRevokeService tokenRevokeService;
 
@@ -270,7 +272,10 @@ public class HomeController {
         }
 
         Product product = productOpt.get();
-
+        
+        Integer stockQty = inventoryRepository.sumAvailableByProduct(product);
+        if (stockQty == null) stockQty = 0;
+        model.addAttribute("stockQty", stockQty);
         Pageable pageable = PageRequest.of(page, 10, Sort.by("createAt").descending());
         Page<Review> reviewPage = productService.getReviews(productId, pageable);
 

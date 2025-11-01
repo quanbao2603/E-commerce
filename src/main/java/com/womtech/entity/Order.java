@@ -60,6 +60,13 @@ public class Order {
 
     @Column(name = "assigned_by_vendor_id", length = 36)
     private String assignedByVendorId;
+    
+    @Column(name = "delivery_thumbnail", length = 500) 
+    private String deliveryThumbnail;
+    
+    
+    @Column(name = "delivery_image_uploaded_at")
+    private LocalDateTime deliveryImageUploadedAt;
    
 	@Builder.Default
 	@OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)

@@ -16,6 +16,7 @@ import com.womtech.entity.Product;
 import com.womtech.entity.User;
 import com.womtech.repository.CartItemRepository;
 import com.womtech.repository.CartRepository;
+import com.womtech.repository.InventoryRepository;
 import com.womtech.service.CartService;
 
 @Service
@@ -25,6 +26,8 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
 	CartRepository cartRepository;
 	@Autowired
 	CartItemRepository cartItemRepository;
+	@Autowired
+	InventoryRepository inventoryRepository;
 	
 	public CartServiceImpl(JpaRepository<Cart, String> repo) {
 		super(repo);
@@ -42,7 +45,10 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
 	}
 	
     @Override
-	public void addToCart(User user, Product product, int quantity) {
+	public boolean addToCart(User user, Product product, int quantity) {
+    	if (inventoryRepository.sumAvailableByProduct(product) <= 0) {
+    		return false;
+    	}
     	Cart cart = findByUser(user);
 		
 		CartItem item;
@@ -58,6 +64,7 @@ public class CartServiceImpl extends BaseServiceImpl<Cart, String> implements Ca
             item.setQuantity(item.getQuantity() + quantity);
         }
         cartItemRepository.save(item);
+        return true;
     }
     
     @Override

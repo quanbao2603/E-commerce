@@ -125,4 +125,31 @@ public class CloudinaryServiceImpl implements CloudinaryService {
         String transformation = "w_" + width + ",h_" + height + ",c_fill,q_auto,f_auto/";
         return imageUrl.replace("/upload/", "/upload/" + transformation);
     }
+    
+    @Override
+    public String uploadToFolder(MultipartFile file, String folder) {
+        if (file == null || file.isEmpty()) {
+            throw new IllegalArgumentException("Chưa chọn file để upload!");
+        }
+        if (!file.getContentType().startsWith("image/")) {
+            throw new IllegalArgumentException("Chỉ cho phép upload file ảnh!");
+        }
+
+        try {
+            Map uploadResult = cloudinary.uploader().upload(
+                file.getBytes(),
+                ObjectUtils.asMap(
+                    "folder", folder,             // <- thư mục động
+                    "resource_type", "image",
+                    // tối ưu tự động
+                    "transformation", new com.cloudinary.Transformation()
+                            .fetchFormat("auto").quality("auto")
+                )
+            );
+            return uploadResult.get("secure_url").toString();
+        } catch (IOException e) {
+            throw new RuntimeException("Lỗi khi upload ảnh lên Cloudinary!", e);
+        }
+    }
+
 }
