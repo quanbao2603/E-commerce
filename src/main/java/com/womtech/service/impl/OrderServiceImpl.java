@@ -379,16 +379,6 @@ public class OrderServiceImpl extends BaseServiceImpl<Order, String> implements 
 						"Lỗi khi tạo commission cho OrderItem " + orderItem.getOrderItemID() + ": " + e.getMessage());
 			}
 		}
-
-		// --- 3.1: Tính lại tổng đơn từ orderItem.netTotal ---
-		BigDecimal recalculatedTotal = BigDecimal.ZERO;
-		for (OrderItem item : orderItems) {
-			BigDecimal price = item.getPrice();
-			BigDecimal qty = BigDecimal.valueOf(item.getQuantity() == null ? 0 : item.getQuantity());
-			recalculatedTotal = recalculatedTotal.add(price.multiply(qty));
-		}
-		order.setTotalPrice(recalculatedTotal.setScale(2, RoundingMode.HALF_UP));
-
 		orderRepository.save(order);
 
 		// 5. Xóa Cart
