@@ -258,36 +258,6 @@
         </button>
       </form>
 
-      <!-- XÁC NHẬN THU COD (khi đã giao & chưa thu) -->
-<form th:action="@{'/shipper/deliveries/' + ${order.orderID} + '/confirm-cod'}"
-      method="post"
-      th:if="${order != null
-              and order.paymentMethod != null
-              and #strings.contains(order.paymentMethod.toUpperCase(),'COD')
-              and order.status == T(com.womtech.util.OrderStatusHelper).STATUS_DELIVERED
-              and (order.paymentStatus == null or order.paymentStatus == 0)}">
-
-  <!-- Ô cam kết -->
-  <div class="form-check mb-2">
-    <input class="form-check-input"
-           type="checkbox"
-           required
-           th:id="${'agreeCod__' + order.orderID}">
-    <label class="form-check-label" th:for="${'agreeCod__' + order.orderID}">
-      Tôi cam kết đã nhận đủ số tiền COD của đơn này và tất toán lại cho shop!
-    </label>
-  </div>
-
-  <!-- Nút xác nhận, mặc định disable cho tới khi tick -->
-  <button class="btn btn-primary"
-          type="submit"
-          th:id="${'btnConfirmCod__' + order.orderID}"
-          disabled>
-    <i class="fas fa-sack-dollar me-1"></i> Xác nhận đã thu COD
-  </button>
-
- 
-</form>
 
     </div>
   </div>

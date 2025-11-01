@@ -1,5 +1,6 @@
 package com.womtech.service;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
@@ -9,7 +10,9 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
 import com.womtech.entity.Order;
+import com.womtech.entity.OrderItem;
 import com.womtech.entity.User;
+import com.womtech.repository.OrderItemRepository;
 import com.womtech.repository.OrderRepository;
 import com.womtech.repository.UserRepository;
 import com.womtech.util.OrderStatusHelper;
@@ -23,6 +26,9 @@ public class DeliveryProofService {
     private final OrderRepository orderRepository;
     private final UserRepository userRepository;
     private final CloudinaryService cloudinaryService;
+    
+    private final OrderItemService orderItemService;
+    private final OrderItemRepository orderItemRepository; 
 
     // Cho phép upload khi PACKED hoặc SHIPPED
     private boolean canUploadForStatus(Integer status) {
@@ -78,6 +84,14 @@ public class DeliveryProofService {
         // Đánh dấu ĐÃ GIAO => phải set STATUS_DELIVERED (6)
         if (markDelivered) {
             order.setStatus(OrderStatusHelper.STATUS_DELIVERED);
+        }
+        //✅ Cập nhật tất cả OrderItem → DELIVERED
+        List<OrderItem> items = orderItemService.findByOrder(order);
+        for (OrderItem item : items) {
+            if (item.getStatus() < OrderStatusHelper.ITEM_STATUS_DELIVERED) {
+                item.setStatus(OrderStatusHelper.ITEM_STATUS_DELIVERED);
+                orderItemRepository.save(item);
+            }
         }
 
         orderRepository.save(order);
